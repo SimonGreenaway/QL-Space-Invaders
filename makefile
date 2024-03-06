@@ -16,7 +16,10 @@ interrupt.o:	interrupt.s
 		as68 -o interrupt.o interrupt.s
 
 clean:
-	rm -f image.o screen.o libimage.a sprite
+	rm -f image.o screen.o libimage.a  
+
+cleaner:	clean
+	rm -f sprite
 
 run:   	sprite
 	cp -v sprites.lib /home/simon/emulators/ql/emulators/sQLux/flp1/sprites_lib
@@ -33,11 +36,12 @@ bm:   	sprite
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1.0 -b "LRESPR flp1_sigext_rext:EW flp1_sprite,#1;'-bm'"
 
 dist:	sprite
+	rm -f image.o screen.o libimage.a interrupt.o
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cp ~/invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 -b "LRESPR flp1_sigext_rext:EW flp1_zip,#1;'flp1_invaders_zip sprite sprites_lib'"
 	mv /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_zip invaders.zip
-	qltools invaders_floppy.img -fhd invaders -W BOOT sprite sprites.lib
+	qltools invaders_floppy.img -fdd invaders -W BOOT sprite sprites.lib
 	qltools invaders_floppy.img -W BOOT sprite sprites.lib
 	
 
