@@ -199,87 +199,270 @@ _plot:
 	.align	2
 	.extern _spritePlot
 _spritePlot:
-	link	a6,#-36
-	movem.l	d3/d4/d5/a2/a3/a4/a5,-(a7)
-	move.l	8(a6),a3
-	move.l	52(a3),d0
+	link	a6,#-32
+	movem.l	d3/d4/d5/d6/d7/a2/a3/a4/a5,-(a7)
+	move.l	8(a6),d5
+	move.l	d5,a0
+	move.l	52(a0),d0
 	asl.l	#2,d0
 	move.l	d0,a0
-	add.l	a3,a0
-	move.l	4(a0),a4
+	add.l	d5,a0
+	move.l	4(a0),a5
 	pea	4
-	move.l	36(a3),-(a7)
+	move.l	d5,a0
+	move.l	36(a0),-(a7)
 	jsr	.Xldiv
 	add.l	d0,d0
-	move.l	40(a3),d1
+	move.l	d5,a0
+	move.l	40(a0),d1
 	asl.l	#2,d1
 	move.l	d1,a0
 	add.l	#_addresses,a0
 	add.l	(a0),d0
-	move.l	d0,-8(a6)
-	move.l	-8(a6),a2
+	move.l	d0,a2
 	move.l	#64,d0
-	move.w	2(a4),d1
+	move.w	2(a5),d1
 	ext.l	d1
 	sub.l	d1,d0
-	move.l	d0,-16(a6)
-	move.l	36(a3),d0
+	move.l	d0,d4
+	move.l	d5,a0
+	move.l	36(a0),d0
 	move.l	#3,d1
 	and.l	d1,d0
 	asl.l	#2,d0
 	move.l	d0,a0
-	add.l	a4,a0
-	move.l	16(a0),a5
-	move.l	36(a3),d0
+	add.l	a5,a0
+	move.l	16(a0),a3
+	move.l	d5,a0
+	move.l	36(a0),d0
 	and.l	d1,d0
 	asl.l	#2,d0
 	move.l	d0,a0
-	add.l	a4,a0
-	move.l	32(a0),d3
+	add.l	a5,a0
+	move.l	32(a0),a4
 	pea	2
-	move.w	2(a4),d0
+	move.w	2(a5),d0
 	ext.l	d0
 	move.l	d0,-(a7)
 	jsr	.Xldiv
-	move.l	d0,-32(a6)
-	move.l	#0,d5
-	bra	I_31
-I_30:
-	move.l	#0,d4
-	bra	I_35
-I_34:
-	move.l	d3,a0
-	add.l	#2,d3
-	move.w	(a0),d0
+	move.l	d0,d7
+	sub.l	#4,d0
+	beq	I_32
+	add.l	#1,d0
+	beq	I_33
+	add.l	#1,d0
+	beq	I_34
+	add.l	#1,d0
+	beq	I_35
+	move.l	#0,d3
+	bra	I_53
+I_32:
+	move.l	#0,d3
+	bra	I_37
+I_36:
+	move.w	(a4)+,d0
 	and.w	(a2),d0
-	or.w	(a5)+,d0
+	or.w	(a3)+,d0
 	move.w	d0,(a2)+
-	move.l	d3,a0
-	add.l	#2,d3
-	move.w	(a0),d0
+	move.w	(a4)+,d0
 	and.w	(a2),d0
-	or.w	(a5)+,d0
+	or.w	(a3)+,d0
 	move.w	d0,(a2)+
-	move.l	d3,a0
-	add.l	#2,d3
-	move.w	(a0),d0
+	move.w	(a4)+,d0
 	and.w	(a2),d0
-	or.w	(a5)+,d0
+	or.w	(a3)+,d0
 	move.w	d0,(a2)
-	add.l	#1,d4
-I_35:
-	cmp.l	-32(a6),d4
-	bcs	I_34
-	move.l	-16(a6),d0
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	move.l	d4,d0
 	add.l	d0,d0
 	add.l	d0,a2
-	add.l	#1,d5
-I_31:
-	move.w	(a4),d0
+	add.l	#1,d3
+I_37:
+	move.w	(a5),d0
 	ext.l	d0
-	cmp.l	d0,d5
-	bcs	I_30
-	movem.l	(a7)+,d3/d4/d5/a2/a3/a4/a5
+	cmp.l	d0,d3
+	bcs	I_36
+	bra	I_54
+I_33:
+	move.l	#0,d3
+	bra	I_41
+I_40:
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	move.l	d4,d0
+	add.l	d0,d0
+	add.l	d0,a2
+	add.l	#1,d3
+I_41:
+	move.w	(a5),d0
+	ext.l	d0
+	cmp.l	d0,d3
+	bcs	I_40
+	bra	I_54
+I_34:
+	move.l	#0,d3
+	bra	I_45
+I_44:
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	move.l	d4,d0
+	add.l	d0,d0
+	add.l	d0,a2
+	add.l	#1,d3
+I_45:
+	move.w	(a5),d0
+	ext.l	d0
+	cmp.l	d0,d3
+	bcs	I_44
+	bra	I_54
+I_35:
+	move.l	#0,d3
+	bra	I_49
+I_48:
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	move.l	d4,d0
+	add.l	d0,d0
+	add.l	d0,a2
+	add.l	#1,d3
+I_49:
+	move.w	(a5),d0
+	ext.l	d0
+	cmp.l	d0,d3
+	bcs	I_48
+	bra	I_54
+I_52:
+	move.l	#0,d6
+	bra	I_57
+I_56:
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)+
+	move.w	(a4)+,d0
+	and.w	(a2),d0
+	or.w	(a3)+,d0
+	move.w	d0,(a2)
+	add.l	#1,d6
+I_57:
+	cmp.l	d7,d6
+	bcs	I_56
+	move.l	d4,d0
+	add.l	d0,d0
+	add.l	d0,a2
+	add.l	#1,d3
+I_53:
+	move.w	(a5),d0
+	ext.l	d0
+	cmp.l	d0,d3
+	bcs	I_52
+I_54:
+	movem.l	(a7)+,d3/d4/d5/d6/d7/a2/a3/a4/a5
 	unlk	a6
 	rts
 	.align	2
@@ -316,11 +499,11 @@ _imagePlot:
 	sub.l	d0,a0
 	move.l	a0,-20(a6)
 	move.l	#0,d6
-	bra	I_41
-I_40:
+	bra	I_63
+I_62:
 	move.l	#0,d5
-	bra	I_45
-I_44:
+	bra	I_67
+I_66:
 	clr.l	(a3)
 	move.l	d4,a0
 	clr.l	(a0)
@@ -377,19 +560,19 @@ I_44:
 	move.b	d0,(a0)
 	move.l	#2,d0
 	add.l	d0,d5
-I_45:
+I_67:
 	move.w	2(a4),d0
 	ext.l	d0
 	cmp.l	d0,d5
-	blt	I_44
+	blt	I_66
 	move.l	-20(a6),d0
 	add.l	d0,a2
 	add.l	#1,d6
-I_41:
+I_63:
 	move.w	(a4),d0
 	ext.l	d0
 	cmp.l	d0,d6
-	bcs	I_40
+	bcs	I_62
 	movem.l	(a7)+,d3/d4/d5/d6/d7/a2/a3/a4/a5
 	unlk	a6
 	rts
@@ -402,11 +585,11 @@ _tilePlot:
 	move.l	8(a2),-4(a6)
 	move.l	12(a2),a3
 	move.l	#0,d4
-	bra	I_51
-I_50:
+	bra	I_73
+I_72:
 	move.l	#0,d3
-	bra	I_55
-I_54:
+	bra	I_77
+I_76:
 	pea	4
 	clr.l	d0
 	move.w	8(a6),d0
@@ -426,21 +609,21 @@ I_54:
 	add.l	#2,-4(a6)
 	add.w	#2,a3
 	add.l	#1,d3
-I_55:
+I_77:
 	move.w	2(a2),d0
 	ext.l	d0
 	cmp.l	d0,d3
-	blt	I_54
+	blt	I_76
 	add.l	#1,d4
-I_51:
+I_73:
 	move.w	(a2),d0
 	ext.l	d0
 	cmp.l	d0,d4
-	blt	I_50
+	blt	I_72
 	movem.l	(a7)+,d3/d4/a2/a3
 	unlk	a6
 	rts
-I_58:
+I_80:
 	.ascii	"Error reading library!"
 	.data1	0xa,0x0
 	.align	2
@@ -449,17 +632,17 @@ _readLine:
 	link	a6,#0
 	move.l	d3,-(a7)
 	move.l	12(a6),d3
-I_61:
+I_83:
 	move.l	8(a6),a0
 	move.w	24(a0),d0
 	and.w	#32,d0
-	beq	I_64
-	pea	I_58
+	beq	I_86
+	pea	I_80
 	jsr	_puts
 	pea	1
 	jsr	_exit
 	add.w	#8,a7
-I_64:
+I_86:
 	move.l	8(a6),-(a7)
 	pea	80
 	move.l	d3,-(a7)
@@ -467,7 +650,7 @@ I_64:
 	lea	12(a7),a7
 	move.l	d3,a0
 	cmp.b	#35,(a0)
-	beq	I_61
+	beq	I_83
 	move.l	d3,d0
 	move.l	-4(a6),d3
 	unlk	a6
@@ -487,8 +670,8 @@ _preShift:
 	jsr	.Xldiv
 	move.l	d0,-20(a6)
 	move.l	#0,d4
-	bra	I_69
-I_68:
+	bra	I_91
+I_90:
 	move.l	8(a2),a5
 	move.l	12(a2),-44(a6)
 	move.l	d4,d0
@@ -525,11 +708,11 @@ I_68:
 	move.l	d0,32(a0)
 	move.l	d0,-56(a6)
 	move.l	#0,d7
-	bra	I_73
-I_72:
+	bra	I_95
+I_94:
 	move.l	#0,d6
-	bra	I_77
-I_76:
+	bra	I_99
+I_98:
 	clr.l	(a3)
 	clr.l	-28(a6)
 	clr.l	-24(a6)
@@ -553,8 +736,8 @@ I_76:
 	not.l	d0
 	move.l	d0,(a3)
 	move.l	#0,d3
-	bra	I_81
-I_80:
+	bra	I_103
+I_102:
 	lea	-24(a6),a0
 	move.b	0(a0,d3.l),1(a4)
 	lea	-28(a6),a0
@@ -568,45 +751,45 @@ I_80:
 	add.l	#2,-56(a6)
 	move.w	(a4),(a0)
 	add.l	#1,d3
-I_81:
+I_103:
 	move.l	#3,d0
 	cmp.l	d3,d0
-	bgt	I_80
+	bgt	I_102
 	move.l	#2,d0
 	add.l	d0,d6
-I_77:
+I_99:
 	move.w	2(a2),d0
 	ext.l	d0
 	cmp.l	d0,d6
-	blt	I_76
+	blt	I_98
 	add.l	#1,d7
-I_73:
+I_95:
 	move.w	(a2),d0
 	ext.l	d0
 	cmp.l	d0,d7
-	blt	I_72
+	blt	I_94
 	add.w	#8,a7
 	add.l	#1,d4
-I_69:
+I_91:
 	move.l	#4,d0
 	cmp.l	d4,d0
-	bgt	I_68
+	bgt	I_90
 	movem.l	-92(a6),d3/d4/d5/d6/d7/a2/a3/a4/a5
 	unlk	a6
 	rts
-I_88:
+I_110:
 	.ascii	"Sprites loaded."
 	.data1	0xa,0x0
-I_87:
+I_109:
 	.ascii	"  %s"
 	.data1	0x0
-I_86:
+I_108:
 	.ascii	" images: %d"
 	.data1	0xa,0x0
-I_85:
+I_107:
 	.ascii	"Loading library..."
 	.data1	0x0
-I_84:
+I_106:
 	.ascii	"r"
 	.data1	0x0
 	.align	2
@@ -621,11 +804,11 @@ _loadLibrary:
 	lea	_readLine,a3
 	lea	__Strtoul,a4
 	lea	_mymalloc,a5
-	pea	I_84
+	pea	I_106
 	move.l	12(a6),-(a7)
 	jsr	_fopen
 	move.l	d0,d6
-	pea	I_85
+	pea	I_107
 	jsr	_puts
 	lea	12(a7),a7
 	move.l	d7,-(a7)
@@ -638,7 +821,7 @@ _loadLibrary:
 	jsr	(a4)
 	move.l	d0,(a2)
 	move.l	(a2),-(a7)
-	pea	I_86
+	pea	I_108
 	jsr	_printf
 	lea	20(a7),a7
 	move.l	d5,-(a7)
@@ -649,13 +832,13 @@ _loadLibrary:
 	jsr	(a5)
 	move.l	d0,4(a2)
 	move.l	#0,d3
-	bra	I_92
-I_91:
+	bra	I_114
+I_113:
 	move.l	d7,-(a7)
 	move.l	d6,-(a7)
 	jsr	(a3)
 	move.l	d7,-(a7)
-	pea	I_87
+	pea	I_109
 	jsr	_printf
 	lea	16(a7),a7
 	move.l	d7,-(a7)
@@ -786,11 +969,11 @@ I_91:
 	move.l	d0,8(a0)
 	move.l	d0,-20(a6)
 	clr.l	-12(a6)
-	bra	I_96
-I_95:
+	bra	I_118
+I_117:
 	move.l	#0,d4
-	bra	I_100
-I_99:
+	bra	I_122
+I_121:
 	move.l	d7,-(a7)
 	move.l	d6,-(a7)
 	jsr	(a3)
@@ -816,7 +999,7 @@ I_99:
 	move.w	d0,(a0)
 	lea	12(a7),a7
 	add.l	#1,d4
-I_100:
+I_122:
 	move.l	4(a2),a0
 	move.l	a0,-(a7)
 	move.l	d5,-(a7)
@@ -828,9 +1011,9 @@ I_100:
 	move.w	2(a0),d0
 	ext.l	d0
 	cmp.l	d0,d4
-	blt	I_99
+	blt	I_121
 	add.l	#1,-12(a6)
-I_96:
+I_118:
 	move.l	4(a2),a0
 	move.l	a0,-(a7)
 	move.l	d5,-(a7)
@@ -842,10 +1025,10 @@ I_96:
 	move.w	(a0),d0
 	ext.l	d0
 	cmp.l	-12(a6),d0
-	bgt	I_95
+	bgt	I_117
 	move.l	#0,d4
-	bra	I_104
-I_103:
+	bra	I_126
+I_125:
 	move.l	4(a2),a0
 	move.l	a0,-(a7)
 	move.l	d5,-(a7)
@@ -1042,7 +1225,7 @@ I_103:
 	move.w	-112(a6),(a0)
 	move.l	#2,d0
 	add.l	d0,d4
-I_104:
+I_126:
 	move.l	4(a2),a0
 	move.l	a0,-(a7)
 	move.l	d5,-(a7)
@@ -1068,9 +1251,9 @@ I_104:
 	move.l	d0,-(a7)
 	jsr	.Xlmul
 	cmp.l	d0,d4
-	blt	I_103
+	blt	I_125
 	tst.l	16(a6)
-	beq	I_107
+	beq	I_129
 	move.l	4(a2),a0
 	move.l	a0,-(a7)
 	move.l	d5,-(a7)
@@ -1082,14 +1265,14 @@ I_104:
 	pea	(a0)
 	jsr	_preShift
 	add.w	#4,a7
-I_107:
+I_129:
 	add.l	#1,d3
-I_92:
+I_114:
 	cmp.l	(a2),d3
-	blt	I_91
+	blt	I_113
 	move.l	d6,-(a7)
 	jsr	_fclose
-	pea	I_88
+	pea	I_110
 	jsr	_puts
 	movem.l	-148(a6),d3/d4/d5/d6/d7/a2/a3/a4/a5
 	unlk	a6

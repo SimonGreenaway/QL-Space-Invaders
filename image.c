@@ -88,27 +88,91 @@ void spritePlot(struct sprite *sprite)
 {
 	struct image *image=sprite->image[sprite->currentImage];
 
-	unsigned char *address=(unsigned char *)addresses[sprite->y]+2*(sprite->x/4);
-	unsigned short *address2=(unsigned short *)address;
-	unsigned int addressRow=64-image->x;
+	unsigned short *address=(unsigned short *)addresses[sprite->y]+(sprite->x/4);
+	unsigned int addressDelta=64-image->x;
 
 	unsigned short *shifter=image->datashifter[sprite->x&3];
 	unsigned short *maskshifter=image->maskshifter[sprite->x&3];
 
 	unsigned int a,xlim=image->x/2;
 
-	for(a=0;a<image->y;a++)
+	switch(xlim) // Welcome to loop unroll City....
 	{
-		unsigned int b;
+		case 4:	for(a=0;a<image->y;a++)
+			{
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+	
+				address+=addressDelta;
+			}
 
-		for(b=0;b<xlim;b++)
-		{
-			*address2++=((*address2)&(*maskshifter++))|*shifter++; 
-			*address2++=((*address2)&(*maskshifter++))|*shifter++; 
-			*address2=((*address2)&(*maskshifter++))|*shifter++; 
-		}
+			break;
 
-		address2+=addressRow;
+		case 3:	for(a=0;a<image->y;a++)
+			{
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+	
+				address+=addressDelta;
+			}
+
+			break;
+	
+		case 2:	for(a=0;a<image->y;a++)
+			{
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+	
+				address+=addressDelta;
+			}
+
+			break;
+
+		case 1:	for(a=0;a<image->y;a++)
+			{
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address++=((*address)&(*maskshifter++))|*shifter++; 
+				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+	
+				address+=addressDelta;
+			}
+
+			break;
+
+		default:	for(a=0;a<image->y;a++)
+				{
+					unsigned int b;
+	
+					for(b=0;b<xlim;b++)
+					{
+						*address++=((*address)&(*maskshifter++))|*shifter++; 
+						*address++=((*address)&(*maskshifter++))|*shifter++; 
+						*address=((*address)&(*maskshifter++))|*shifter++; 
+					}
+	
+					address+=addressDelta;
+				}
 	}
 }
 

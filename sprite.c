@@ -141,7 +141,15 @@ int main(int argc, char *argv[])
 		int i;
 
 		init();
+
 		loadLibrary(&lib,"sprites.lib",1);
+
+ 		if(lib.n==0)
+ 		{
+ 			puts("Error: Cannot find 'flp1_invaders_lib'");
+ 			exit(1);
+ 		}
+
 		cls();
 
 		for(i=0;i<SPRITES;i++)
