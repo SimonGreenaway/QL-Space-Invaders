@@ -781,7 +781,7 @@ I_110:
 	.ascii	"Sprites loaded."
 	.data1	0xa,0x0
 I_109:
-	.ascii	"  %s"
+	.ascii	"  %d %s"
 	.data1	0x0
 I_108:
 	.ascii	" images: %d"
@@ -838,9 +838,10 @@ I_113:
 	move.l	d6,-(a7)
 	jsr	(a3)
 	move.l	d7,-(a7)
+	move.l	d3,-(a7)
 	pea	I_109
 	jsr	_printf
-	lea	16(a7),a7
+	lea	20(a7),a7
 	move.l	d7,-(a7)
 	jsr	__StrLen
 	add.w	#4,a7

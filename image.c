@@ -324,7 +324,7 @@ void loadLibrary(struct library *library,char *filename,int shift)
 	{
 		int n;
 
-		readLine(in,buffer); printf("  %s",buffer);
+		readLine(in,buffer); printf("  %d %s",i,buffer);
 
 		library->images[i].name=(char *)mymalloc(strlen(buffer)+1);
 		strcpy(library->images[i].name,buffer);

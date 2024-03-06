@@ -27,16 +27,32 @@ int do_something()
 
 		if((key==2)&&(player.x>0)) player.x-=2;
 		else if((key==16)&&(player.x<256-player.image[0]->x)) player.x+=2;
-		else if((key==64)&&(player_bullet.y=-1))
+		else if((key==64)&&(player_bullet.y<0))
 		{
-			//Fire!
+			player_bullet.y=255-15;
+			player_bullet.x=player.x+4;
 		}
-		else printf ("Pressed: %c Code: ; %d\n", key, key);
+		//else printf ("Pressed: %c Code: ; %d\n", key, key);
 	}
 
 	BGtoScratch();
 
+	if(player_bullet.y>-1)
+	{
+		player_bullet.y-=8;
+
+		if(player_bullet.y==0)
+		{
+			player_bullet.currentImage++;
+			player_bullet.x-=3;
+			spritePlot(&player_bullet);
+			player_bullet.currentImage--;
+		}
+		else if(player_bullet.y>-1) spritePlot(&player_bullet);
+	}
+
 	spritePlot(&player);
+
 
 	bounce=0;
 
@@ -142,11 +158,11 @@ int main(int argc, char *argv[])
 
 		init();
 
-		loadLibrary(&lib,"sprites.lib",1);
+		loadLibrary(&lib,"sprites_lib",1);
 
  		if(lib.n==0)
  		{
- 			puts("Error: Cannot find 'flp1_invaders_lib'");
+ 			puts("Error: Cannot find 'flp1_sprites_lib'");
  			exit(1);
  		}
 
@@ -184,6 +200,12 @@ int main(int argc, char *argv[])
 		player.currentImage=0;
 		player.x=(256-player.image[0]->x)/2;
 		player.y=256-player.image[0]->y;
+
+		player_bullet.image[0]=&lib.images[12];
+		player_bullet.image[1]=&lib.images[11];
+		player_bullet.currentImage=0;
+		player_bullet.x=0;
+		player_bullet.y=-1;
 
 		ufo.image[0]=&lib.images[7];
 		ufo.currentImage=0;

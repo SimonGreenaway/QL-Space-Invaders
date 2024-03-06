@@ -19,8 +19,8 @@ clean:
 	rm -f image.o screen.o libimage.a sprite
 
 run:   	sprite
-	cp ~/invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib
-	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
+	cp -v sprites.lib /home/simon/emulators/ql/emulators/sQLux/flp1/sprites_lib
+	cp -v sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1.0 -b "LRESPR flp1_sigext_rext:EW flp1_sprite,#1;'-s 0'"
 
 runfast:   	sprite
@@ -35,6 +35,6 @@ bm:   	sprite
 dist:	sprite
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cp ~/invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 -b "LRESPR flp1_sigext_rext:EW flp1_zip,#1;'flp1_invaders_zip sprite sprites.lib'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 -b "LRESPR flp1_sigext_rext:EW flp1_zip,#1;'flp1_invaders_zip sprite sprites_lib'"
 	mv /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_zip invaders.zip
 
