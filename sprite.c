@@ -7,130 +7,265 @@
 
 #include "image.h"
 
-struct library lib;
+struct library lib;	// Image library
+struct library font;	// Image library
 
-int sprite=0,perSecond=10000;
+//int sprite=0;
 
-#define SPRITES (11*5)
+#define SPRITESX 11			// Number of invaders in a row
+#define SPRITESY 5			// Number of invader rows
+#define SPRITES (SPRITESX*SPRITESY)	// Total number of invaders
 
-struct sprite sprites[SPRITES];
-struct sprite player,ufo,player_bullet;
+#define FRAMES ((unsigned short *)163886)	// Location of frame counter
 
-int do_something()
+struct sprite sprites[SPRITES];		// Invader sprites
+struct sprite player,ufo,player_bullet;	// Other sprites
+int scores[3]={0,0,0};			// Player scores
+int invaderScores[5]={30,20,20,10,10};
+
+unsigned int invaders=SPRITES;		// Number of sprites alive
+
+void printCharAt(unsigned int x,unsigned int y,char c)
 {
-	int i,bounce,z;
+	struct sprite s;
 
-    	int key=keyrow(1);
-
-	if(key)
+	if(c-33>=font.n)
 	{
-
-		if((key==2)&&(player.x>0)) player.x-=2;
-		else if((key==16)&&(player.x<256-player.image[0]->x)) player.x+=2;
-		else if((key==64)&&(player_bullet.y<0))
-		{
-			player_bullet.y=255-15;
-			player_bullet.x=player.x+4;
-		}
-		//else printf ("Pressed: %c Code: ; %d\n", key, key);
+		printf("Font error: %d>=%d\n",c-33,font.n);
+		exit(1);
 	}
 
-	BGtoScratch();
+	s.x=x; s.y=y;
+	s.image[0]=&font.images[c-33];
+	s.currentImage=0;
 
-	if(player_bullet.y>-1)
+	spritePlot(&s);
+}
+
+void printAt(unsigned int x,unsigned y,char *s)
+{
+	while(*s!=0)
 	{
-		player_bullet.y-=8;
+		//printf("%d %d %c\n",s,*s,*s);
 
-		if(player_bullet.y==0)
-		{
+		printCharAt(x,y,*s++);
+		x+=6;
+	}
+}
+
+///////////////////////////////
+// Handle keyboard commands. //
+///////////////////////////////
+
+void handleKeys()
+{
+	int key=keyrow(1);	// Read the bottom row of the keyboard
+
+        if(key)		// If a key was pressed
+        {
+                if((key==2)&&(player.x>0)) player.x-=2;		// Move left
+                else if((key==16)&&(player.x<256-player.image[0]->x)) player.x+=2;	// Move right
+                else if((key==64)&&(player_bullet.y<0))	// Fire (if not already fired)
+                {
+                        player_bullet.y=255-15;		// Set player bullets start location
+                        player_bullet.x=player.x+4;
+                }
+                //else printf ("Pressed: %c Code: ; %d\n", key, key);
+        }
+}
+
+////////////////////////////////
+// HandlePlayerBullet         //
+//                            //
+// returns: 1 - wave complete //
+////////////////////////////////
+
+int handlePlayerBullet()
+{
+        if(player_bullet.y>-1)	// Fired?
+        {
+       	        player_bullet.y-=8;	// Move up
+
+		if(player_bullet.y==8)	// Reached the top
+              	{
+			// Explosion!!!
+
 			player_bullet.currentImage++;
 			player_bullet.x-=3;
 			spritePlot(&player_bullet);
-			player_bullet.currentImage--;
-		}
-		else if(player_bullet.y>-1) spritePlot(&player_bullet);
-	}
+                     	player_bullet.currentImage--;
 
-	spritePlot(&player);
-
-
-	bounce=0;
-
-	for(i=0;i<SPRITES;i++)
-	{
-		if((sprites[i].x<=0)||(sprites[i].x+16>=255))
+			player_bullet.y=-1;
+       		}
+              	else
 		{
-			bounce=1; break;
+			unsigned int i;
+
+			for(i=0;i<SPRITES;i++)
+			{
+				if((sprites[i].x-3<player_bullet.x)
+				&&(sprites[i].x+9>player_bullet.x)
+				&&(sprites[i].y<player_bullet.y)
+				&&(sprites[i].y+8>player_bullet.y))
+				{
+					unsigned int newDelta=(50*--invaders)/SPRITES;
+					if(invaders==0) return 1;	// Wave over!
+
+					if(newDelta<sprites[i].timerDelta)
+					{
+						unsigned int j;
+
+						for(j=0;j<SPRITES;j++) sprites[j].timerDelta=newDelta;
+					}
+
+					// Set up explosion at the invader's locations
+
+					player_bullet.currentImage++;
+					player_bullet.x=sprites[i].x;
+					player_bullet.y=sprites[i].y;
+
+					sprites[i].y=-1;	
+
+					spritePlot(&player_bullet);
+
+                     			player_bullet.currentImage--;
+
+					player_bullet.y=-1;
+
+					scores[0]+=invaderScores[i/SPRITESX];
+					
+					break;	// Can only hit one thing!
+				}
+			}
+
+			if(player_bullet.y>-1) spritePlot(&player_bullet);	// Draw bullet if still active
 		}
 	}
 
-	if(bounce)
-	{
-		for(i=0;i<SPRITES;i++)
+	return 0;	// Wave still ongoing
+}
+
+///////////////////////////////
+// handleInvaders            //
+//                           //
+// returns: 1 - invaders win //
+//          0 - still going! // 
+///////////////////////////////
+
+int handleInvaders()
+{
+	unsigned short frames=*FRAMES;
+	unsigned int i,bounce=0;
+
+        for(i=0;i<SPRITES;i++)
+        {
+		if(sprites[i].y>-1)	// Sprite alive?
 		{
-			struct sprite *s=&sprites[i];
-
-			s->dx=-s->dx;
-			s->y+=8;
-
-			// Game over?
-			if(s->y+s->image[s->currentImage]->y>=255)  return 1;
+			if(sprites[i].timer<=frames)	// Time to move?
+			{
+				sprites[i].x+=sprites[i].dx;	// Move invader
+	
+		                sprites[i].currentImage=1-sprites[i].currentImage;	// Change image for animation
+	
+				sprites[i].timer=frames+sprites[i].timerDelta;	// Set up timer for next movement 
+	
+				if((sprites[i].x<=0)||(sprites[i].x+16>=255)) bounce=1;	// Check for edge hit
+			}
+	
+			spritePlot(&sprites[i]);	// Draw invader
 		}
-	}
+        }
 
-	for(i=0;i<SPRITES;i++)
+	if(bounce)	// Move the invaders down and reverse direction
 	{
-		sprites[i].x+=sprites[i].dx;
-		//sprites[i].y+=sprites[i].dy;
+                for(i=0;i<SPRITES;i++)
+                {
+                        struct sprite *s=&sprites[i];
 
-		sprites[i].currentImage=1-sprites[i].currentImage;
-		spritePlot(&sprites[i]);
+			if(s->y>-1)	// Is sprite alive?
+			{
+	                        s->dx=-s->dx;	// Reverse direction
+        	                s->y+=8;	// Move invader down
+
+                	        // Game over?
+                        	if(s->y+s->image[s->currentImage]->y>=255)  return 1;
+			}
+                }
 	}
-
-	if(ufo.x==-1)
-	{
-		unsigned int r=rand();
-
-		if((r&31)==0)
-		{
-			ufo.x=(r&256)?0:255-ufo.image[0]->x;
-			ufo.dx=(ufo.x==0)?4:-4;
-		}
-	}
-	else
-	{
-		ufo.x+=ufo.dx;
-
-		spritePlot(&ufo);
-
-		if((ufo.x<=0)||(ufo.x+ufo.image[0]->x>=255)) ufo.x=-1;
-	}
-
-	showScratch(0,256);
 
 	return 0;
 }
 
-void timeLoop(unsigned char perSecond,unsigned int delay,int (*do_something)())
-{
-	while(1)
-	{
-		unsigned long t=mt_rclck(),c=0,d=0;
+///////////////
+// handleUFO //
+///////////////
 
-		while(mt_rclck()==t)
+void handleUFO()
+{
+	if(ufo.x==-1)	// No ufo moving?
+        {
+		// TODO: Convert to timer?
+
+		unsigned int r=rand(); // Get a random integer
+
+                if((r&127)==0)		// Every 128 frames fire a UFO
+                {
+                        ufo.x=(r&256)?0:255-ufo.image[0]->x;	// Use a random bit for side to start on
+			ufo.dx=(ufo.x==0)?4:-4;		//  direction depends on start location
+			ufo.timer=0;
+			ufo.timerDelta=5;		// Move every 5 frames
+                }
+        }
+        else
+        {
+		unsigned short frames=*FRAMES;
+
+		if(ufo.timer<frames) // Is it time to move?
 		{
-			if((c++%delay)==0)
+			ufo.x+=ufo.dx;		// Move
+
+       	        	if((ufo.x<=0)||(ufo.x+ufo.image[0]->x>=255))	// Reached other end?
 			{
-				if((*do_something)()) return;	
-				d++;
+				ufo.x=-1;	// Switch off the UFO
+				return;
 			}
+
+			ufo.timer+=ufo.timerDelta;	// Set the next time to run
 		}
 
-		if(d!=perSecond) delay=(d*delay)/perSecond;
-	}
+                spritePlot(&ufo);	// Draw the UGO
+       }
 }
 
-void binPrint(unsigned int i,unsigned char d);
+//////////////
+// mainloop //
+//////////////
+
+void mainLoop()
+{
+	scores[0]=scores[1]=0;
+
+	while(1)
+	{
+		char s[80];
+
+		BGtoScratch();
+
+		sprintf(s,"SCORE<1> %04d  %04d  %04d SCORE<2>",scores[0],scores[2],scores[1]);
+
+		printAt((256-strlen(s)*6)/2,0,s);	
+
+		handleKeys();
+		if(handlePlayerBullet()) return; // LEVEL CLEARED!
+
+	        spritePlot(&player);
+
+		if(handleInvaders()) return; // GAME OVER!
+		handleUFO();
+
+	        showScratch(0,256);
+	}
+}
 
 int main(int argc, char *argv[])
 {
@@ -140,15 +275,6 @@ int main(int argc, char *argv[])
 	for(s=1;s<argc;s++)
 	{
 		if(strcmp(argv[s],"-bm")==0) bm=1;
-		else if(strcmp(argv[s],"-s")==0)
-			sprite=atoi(argv[++s]);
-		else if(strcmp(argv[s],"-p")==0)
-			perSecond=atoi(argv[++s]);
-		else 
-		{
-			printf("Usage: sprite [-bm] [-s spritenum] [-p persecond]\n");
-			exit(0);
-		}
 	}
 
 
@@ -159,6 +285,7 @@ int main(int argc, char *argv[])
 		init();
 
 		loadLibrary(&lib,"sprites_lib",1);
+		loadLibrary(&font,"font_lib",1); 
 
  		if(lib.n==0)
  		{
@@ -177,12 +304,13 @@ int main(int argc, char *argv[])
 			sprites[i].currentImage=0;
 
 			sprites[i].x=x*20+(y==0?1:0)+1;
-			sprites[i].y=y*20+10;
+			sprites[i].y=y*20+16;
 			
 			sprites[i].dx=1;
 			sprites[i].dy=0;
 
 			sprites[i].timer=0;
+			sprites[i].timerDelta=50;
 		}
 
 		for(i=0;i<4;i++)
@@ -195,6 +323,8 @@ int main(int argc, char *argv[])
 
 			spritePlot(&s); 
 		}
+
+		scores[0]=scores[1]=0;
 
 		player.image[0]=&lib.images[8];
 		player.currentImage=0;
@@ -210,11 +340,12 @@ int main(int argc, char *argv[])
 		ufo.image[0]=&lib.images[7];
 		ufo.currentImage=0;
 		ufo.x=-1;
-		ufo.y=0;
+		ufo.y=8;
 
 		showScratch(0,256);
 		initBG();
-		timeLoop(perSecond,0,do_something);
+
+		mainLoop();
 		exit(0);
 	}
 
@@ -233,7 +364,6 @@ int main(int argc, char *argv[])
 			sprite[c].currentImage=0;
 			sprite[c].x=c;
 			sprite[c].y=c*sprite[c].image[0]->y;
-			sprite[c].timer=0;
 		}
 
 		t=mt_rclck();

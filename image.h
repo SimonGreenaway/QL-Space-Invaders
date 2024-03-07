@@ -19,7 +19,9 @@ struct sprite
 {
 	int images;
 	struct image *image[8];
-	int x,y,dx,dy,currentImage,timer;
+
+	int x,y,dx,dy,currentImage;
+	unsigned int timer,timerDelta;
 };
 
 struct library

@@ -25,7 +25,7 @@ void binPrint(unsigned int i,unsigned char d)
 
 	for(z=15;z>=0;z--)
 	{
-		if(z<=d-1) printf("%c",i&b?'1':'0');
+		if(z<=d-1) putchar(i&b?'1':'0');
 
 		b>>=1;
 	}
@@ -42,21 +42,13 @@ long _memqdos = 20L * 1024L; /* minimum for QDOS */
 
 //long _stack = 500*1024L; /* size of stack */
 
-unsigned int memused=0;
-
-void *mymalloc(unsigned int size)
-{
-	memused+=size;
-
-	return malloc(size);
-}
 void init()
 {
 	int i;
 	short colours=8,mode=0;
 
-	background=(unsigned short *)mymalloc(32768);
-	scratch=(unsigned char *)mymalloc(32768);
+	background=(unsigned short *)malloc(32768);
+	scratch=(unsigned char *)malloc(32768);
 	secondAddress=(int)(background)-0x20000;
 
 	mt_dmode(&colours,&mode);
@@ -270,8 +262,8 @@ void preShift(struct image *image)
                 unsigned short *pmask=(unsigned short *)image->mask,*data=(unsigned short *)image->data;
                 const unsigned int shifts=2*x;
 
-                unsigned short *ss=image->datashifter[x]=(unsigned short *)mymalloc(sizeof(unsigned short)*n*3);
-                unsigned short *mm=image->maskshifter[x]=(unsigned short *)mymalloc(sizeof(unsigned short)*n*3);
+                unsigned short *ss=image->datashifter[x]=(unsigned short *)malloc(sizeof(unsigned short)*n*3);
+                unsigned short *mm=image->maskshifter[x]=(unsigned short *)malloc(sizeof(unsigned short)*n*3);
 
                 for(a=0;a<image->y;a++)
                 {
@@ -318,7 +310,7 @@ void loadLibrary(struct library *library,char *filename,int shift)
 
 	printf(" images: %d\n",library->n);
 	
-	library->images=(struct image *)(mymalloc(sizeof(struct image)*library->n));
+	library->images=(struct image *)(malloc(sizeof(struct image)*library->n));
 
 	for(i=0;i<library->n;i++)
 	{
@@ -326,7 +318,7 @@ void loadLibrary(struct library *library,char *filename,int shift)
 
 		readLine(in,buffer); printf("  %d %s",i,buffer);
 
-		library->images[i].name=(char *)mymalloc(strlen(buffer)+1);
+		library->images[i].name=(char *)malloc(strlen(buffer)+1);
 		strcpy(library->images[i].name,buffer);
 
 		readLine(in,buffer); library->images[i].x=atoi(buffer); 
@@ -335,9 +327,9 @@ void loadLibrary(struct library *library,char *filename,int shift)
 		n=2*sizeof(unsigned short)*library->images[i].x*library->images[i].y;
 		//printf("\t%dx%d\n",library->images[i].x,library->images[i].y);
 
-		d=library->images[i].data=(unsigned short *)(mymalloc(n));
+		d=library->images[i].data=(unsigned short *)(malloc(n));
 
-		m=library->images[i].mask=(unsigned short *)(mymalloc(n));
+		m=library->images[i].mask=(unsigned short *)(malloc(n));
 
 		for(b=0;b<library->images[i].y;b++)
 		{
@@ -371,7 +363,13 @@ void loadLibrary(struct library *library,char *filename,int shift)
 			library->images[i].mask[a+1]=lo;
 		}
 
-                if(shift) preShift(&library->images[i]);
+                if(shift)
+		{
+			preShift(&library->images[i]);
+
+			free(library->images[i].data);
+			free(library->images[i].mask);
+		}
 	}
 
 	fclose(in);

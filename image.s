@@ -12,42 +12,57 @@ _masks:
 _shifts:
 	.data1	64,16,4,1
 	.sect	.text
-I_1:
-	.ascii	"%c"
-	.data1	0x0
 	.align	2
 	.extern _binPrint
 _binPrint:
 	link	a6,#-8
-	movem.l	d3/d4,-(a7)
+	movem.l	d3/d4/a2,-(a7)
+	lea	___stdout,a2
 	move.l	#32768,d4
 	move.l	#15,d3
-	bra	I_5
-I_4:
+	bra	I_4
+I_3:
 	clr.l	d0
 	move.b	13(a6),d0
 	sub.l	#1,d0
 	cmp.l	d0,d3
-	bgt	I_8
+	bgt	I_9
+	move.l	8(a2),a0
+	cmp.l	12(a2),a0
+	bcs	I_8
+	move.l	a2,-(a7)
 	move.l	8(a6),d0
 	and.l	d4,d0
-	beq	I_9
+	beq	I_10
 	move.l	#49,d0
-	bra	I_10
-I_9:
-	move.l	#48,d0
+	bra	I_11
 I_10:
+	move.l	#48,d0
+I_11:
 	move.l	d0,-(a7)
-	pea	I_1
-	jsr	_printf
+	move.l	32(a2),a0
+	jsr	(a0)
 	add.w	#8,a7
+	bra	I_9
 I_8:
+	move.l	8(a6),d0
+	and.l	d4,d0
+	beq	I_12
+	move.l	#49,d0
+	bra	I_13
+I_12:
+	move.l	#48,d0
+I_13:
+	add.l	#1,8(a2)
+	move.b	d0,(a0)
+	and.l	#255,d0
+I_9:
 	asr.l	#1,d4
 	sub.l	#1,d3
-I_5:
+I_4:
 	tst.l	d3
-	bge	I_4
-	movem.l	-16(a6),d3/d4
+	bge	I_3
+	movem.l	-20(a6),d3/d4/a2
 	unlk	a6
 	rts
 	.sect	.data
@@ -67,20 +82,7 @@ __memincr:
 	.extern __memqdos
 __memqdos:
 	.data4	20480
-	.extern _memused
-_memused:
-	.data4	0
 	.sect	.text
-	.align	2
-	.extern _mymalloc
-_mymalloc:
-	link	a6,#0
-	move.l	8(a6),d0
-	add.l	d0,_memused
-	move.l	8(a6),-(a7)
-	jsr	_malloc
-	unlk	a6
-	rts
 	.align	2
 	.extern _init
 _init:
@@ -89,10 +91,10 @@ _init:
 	move.w	#8,-6(a6)
 	clr.w	-8(a6)
 	pea	32768
-	jsr	_mymalloc
+	jsr	_malloc
 	move.l	d0,_background
 	pea	32768
-	jsr	_mymalloc
+	jsr	_malloc
 	move.l	d0,_scratch
 	move.l	_background,a0
 	sub.l	#131072,a0
@@ -685,7 +687,7 @@ I_90:
 	move.l	#0,d2
 	asl.l	d2,d0
 	move.l	d0,-(a7)
-	jsr	_mymalloc
+	jsr	_malloc
 	move.l	d4,d1
 	asl.l	#2,d1
 	move.l	d1,a0
@@ -700,7 +702,7 @@ I_90:
 	move.l	#0,d2
 	asl.l	d2,d0
 	move.l	d0,-(a7)
-	jsr	_mymalloc
+	jsr	_malloc
 	move.l	d4,d1
 	asl.l	#2,d1
 	move.l	d1,a0
@@ -803,7 +805,7 @@ _loadLibrary:
 	move.l	a0,d7
 	lea	_readLine,a3
 	lea	__Strtoul,a4
-	lea	_mymalloc,a5
+	lea	_malloc,a5
 	pea	I_106
 	move.l	12(a6),-(a7)
 	jsr	_fopen
@@ -1265,7 +1267,27 @@ I_126:
 	add.l	d0,a0
 	pea	(a0)
 	jsr	_preShift
-	add.w	#4,a7
+	move.l	4(a2),a0
+	move.l	a0,-(a7)
+	move.l	d5,-(a7)
+	move.l	d3,-(a7)
+	lea	.Xulmul,a1
+	jsr	(a1)
+	move.l	(a7)+,a0
+	add.l	d0,a0
+	move.l	12(a0),-(a7)
+	jsr	_free
+	move.l	4(a2),a0
+	move.l	a0,-(a7)
+	move.l	d5,-(a7)
+	move.l	d3,-(a7)
+	lea	.Xulmul,a1
+	jsr	(a1)
+	move.l	(a7)+,a0
+	add.l	d0,a0
+	move.l	8(a0),-(a7)
+	jsr	_free
+	lea	12(a7),a7
 I_129:
 	add.l	#1,d3
 I_114:
