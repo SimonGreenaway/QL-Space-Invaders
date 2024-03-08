@@ -1,5 +1,5 @@
-sprite:	sprite.o image.o interrupt.o
-	qld -lm -o sprite sprite.o interrupt.o image.o
+sprite:	sprite.o image.o 
+	qld -lm -o sprite sprite.o image.o
 
 sprite.o:	sprite.c image.h
 		@echo $(PATH)
@@ -12,17 +12,14 @@ image.o:	image.c image.h
 		qcc -O -o image.o -c image.c
 		qcc -O -S image.c
 
-interrupt.o:	interrupt.s
-		as68 -o interrupt.o interrupt.s
-
 clean:
-	rm -f image.o screen.o libimage.a interrupt.o sprice.o
+	rm -f image.o screen.o libimage.a interrupt.o sprite.o invaders_floppy.img invaders.zip image.s
 
 cleaner:	clean
 	rm -f sprite
 
 run:   	sprite
-	cp sprites.lib /home/simon/emulators/ql/emulators/sQLux/flp1/sprites_lib
+	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1.0 -b "LRESPR flp1_sigext_rext:EW flp1_sprite,#1;'-s 0'"
@@ -37,9 +34,9 @@ dist:	sprite
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 -b "LRESPR flp1_sigext_rext:EW flp1_zip,#1;'flp1_invaders_zip sprite sprites_lib'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 -b "LRESPR flp1_sigext_rext:EW flp1_zip,#1;'flp1_invaders_zip sprite invaders_lib'"
 	mv /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_zip invaders.zip
-	qltools invaders_floppy.img -fdd invaders -W BOOT sprite sprites.lib
-	qltools invaders_floppy.img -W BOOT sprite sprites.lib
+	qltools invaders_floppy.img -fdd invaders -W BOOT sprite invaders.lib
+	qltools invaders_floppy.img -W BOOT sprite invaders.lib
 	
 

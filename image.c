@@ -92,18 +92,18 @@ void spritePlot(struct sprite *sprite)
 	{
 		case 4:	for(a=0;a<image->y;a++)
 			{
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=(*address&*maskshifter++|*shifter++)
+						&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=(*address&*maskshifter++|*shifter++)
+						&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=(*address&*maskshifter++|*shifter++)
+						&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address=  *address&*maskshifter++|*shifter++; 
 	
 				address+=addressDelta;
 			}
@@ -112,15 +112,15 @@ void spritePlot(struct sprite *sprite)
 
 		case 3:	for(a=0;a<image->y;a++)
 			{
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=(*address&*maskshifter++|*shifter++)
+						&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=(*address&*maskshifter++|*shifter++)
+						&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address=  *address&*maskshifter++|*shifter++; 
 	
 				address+=addressDelta;
 			}
@@ -129,12 +129,12 @@ void spritePlot(struct sprite *sprite)
 	
 		case 2:	for(a=0;a<image->y;a++)
 			{
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=(*address&*maskshifter++|*shifter++)
+						&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address=  *address&*maskshifter++|*shifter++; 
 	
 				address+=addressDelta;
 			}
@@ -143,9 +143,9 @@ void spritePlot(struct sprite *sprite)
 
 		case 1:	for(a=0;a<image->y;a++)
 			{
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address++=((*address)&(*maskshifter++))|*shifter++; 
-				*address=  ((*address)&(*maskshifter++))|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address++=*address&*maskshifter++|*shifter++; 
+				*address=  *address&*maskshifter++|*shifter++; 
 	
 				address+=addressDelta;
 			}
@@ -158,9 +158,9 @@ void spritePlot(struct sprite *sprite)
 	
 					for(b=0;b<xlim;b++)
 					{
-						*address++=((*address)&(*maskshifter++))|*shifter++; 
-						*address++=((*address)&(*maskshifter++))|*shifter++; 
-						*address=((*address)&(*maskshifter++))|*shifter++; 
+						*address++=*address&*maskshifter++|*shifter++; 
+						*address++=*address&*maskshifter++|*shifter++; 
+						*address=*address&*maskshifter++|*shifter++; 
 					}
 	
 					address+=addressDelta;

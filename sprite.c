@@ -15,10 +15,13 @@ struct library font;	// Image library
 #define SPRITESX 11			// Number of invaders in a row
 #define SPRITESY 5			// Number of invader rows
 #define SPRITES (SPRITESX*SPRITESY)	// Total number of invaders
+#define MAXBULLETS 4
 
 #define FRAMES ((unsigned short *)163886)	// Location of frame counter
 
-struct sprite sprites[SPRITES];		// Invader sprites
+struct sprite sprites[SPRITES],bullets[3];	// Invader sprites
+int maxBulletCount=1,bulletCount=0;
+
 struct sprite player,ufo,player_bullet;	// Other sprites
 int scores[3]={0,0,0};			// Player scores
 int invaderScores[5]={30,20,20,10,10};
@@ -74,6 +77,45 @@ void handleKeys()
         }
 }
 
+//////////////////////////
+// HandleInvaderBullets //
+//////////////////////////
+
+int handleInvaderBullets()
+{
+	int i;
+
+	if(bulletCount>0) for(i=0;i<maxBulletCount;i++)
+	{
+	        if(bullets[i].y>-1)	// Fired?
+	        {
+	       	        bullets[i].y+=8;	// Move up
+			bullets[i].currentImage=1-bullets[i].currentImage;
+
+			if(bullets[i].y>=255-8)	// Reached the bottom
+	              	{
+				if((bullets[i].x>=player.x)&&(bullets[i].x<player.x+16))
+				{
+					bullets[i].currentImage=4;
+					spritePlot(&bullets[i]);
+					bullets[i].currentImage=0;
+					return 1;
+				}
+
+				bullets[i].y=++bullets[i].y&4;
+				bulletCount--;
+	       		}
+	              	else
+			{
+
+				if(bullets[i].y>-1) spritePlot(&bullets[i]);	// Draw bullet if still active
+			}
+		}
+	}
+
+	return 0;
+}
+
 ////////////////////////////////
 // HandlePlayerBullet         //
 //                            //
@@ -91,7 +133,7 @@ int handlePlayerBullet()
 			// Explosion!!!
 
 			player_bullet.currentImage++;
-			player_bullet.x-=3;
+			player_bullet.x=3;
 			spritePlot(&player_bullet);
                      	player_bullet.currentImage--;
 
@@ -121,7 +163,7 @@ int handlePlayerBullet()
 					// Set up explosion at the invader's locations
 
 					player_bullet.currentImage++;
-					player_bullet.x=sprites[i].x;
+					player_bullet.x=sprites[i].x+3;
 					player_bullet.y=sprites[i].y;
 
 					sprites[i].y=-1;	
@@ -170,6 +212,23 @@ int handleInvaders()
 				sprites[i].timer=frames+sprites[i].timerDelta;	// Set up timer for next movement 
 	
 				if((sprites[i].x<=0)||(sprites[i].x+16>=255)) bounce=1;	// Check for edge hit
+
+				if((bulletCount<maxBulletCount)&&((rand()&31)==0))
+				{
+					unsigned int j;
+
+					for(j=0;j<maxBulletCount;j++)
+					{
+						if(bullets[j].y==-1)
+						{
+							bulletCount++;
+
+							bullets[j].y=sprites[i].y+8;
+							bullets[j].x=sprites[i].x+4;
+							break;
+						}
+					}
+				}
 			}
 	
 			spritePlot(&sprites[i]);	// Draw invader
@@ -263,6 +322,12 @@ void mainLoop()
 		if(handleInvaders()) return; // GAME OVER!
 		handleUFO();
 
+		if(handleInvaderBullets())
+		{
+	        	showScratch(0,256);
+			return; // LOSE A LIFE!
+		}
+
 	        showScratch(0,256);
 	}
 }
@@ -284,12 +349,12 @@ int main(int argc, char *argv[])
 
 		init();
 
-		loadLibrary(&lib,"sprites_lib",1);
+		loadLibrary(&lib,"invaders_lib",1);
 		loadLibrary(&font,"font_lib",1); 
 
  		if(lib.n==0)
  		{
- 			puts("Error: Cannot find 'flp1_sprites_lib'");
+ 			puts("Error: Cannot find 'sprites_lib'");
  			exit(1);
  		}
 
@@ -317,11 +382,25 @@ int main(int argc, char *argv[])
 		{
 			struct sprite s;
 
-			s.image[0]=&lib.images[6];
+			s.image[0]=&lib.images[26];
 			s.currentImage=0;
-			s.x=i*48+32; s.y=256-32-16;
+			s.x=i*48+32; s.y=256-16-13;
 
 			spritePlot(&s); 
+		}
+
+		for(i=0;i<MAXBULLETS;i++)
+		{
+			bullets[i].x=0; bullets[i].y=-1;
+			bullets[i].dx=0; bullets[i].dy=0;
+
+			bullets[i].image[0]=&lib.images[16];
+			bullets[i].image[1]=&lib.images[9];
+			bullets[i].image[2]=&lib.images[17];
+			bullets[i].image[3]=&lib.images[13];
+			bullets[i].image[4]=&lib.images[18];
+
+			bullets[i].currentImage=0;
 		}
 
 		scores[0]=scores[1]=0;
@@ -332,7 +411,7 @@ int main(int argc, char *argv[])
 		player.y=256-player.image[0]->y;
 
 		player_bullet.image[0]=&lib.images[12];
-		player_bullet.image[1]=&lib.images[11];
+		player_bullet.image[1]=&lib.images[15];
 		player_bullet.currentImage=0;
 		player_bullet.x=0;
 		player_bullet.y=-1;
