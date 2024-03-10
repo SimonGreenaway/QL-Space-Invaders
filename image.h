@@ -49,3 +49,4 @@ void restoreBG();
 void BGtoScratch();
 void showScratch(int from,int to);
 void cls();
+void clsAll();

@@ -65,6 +65,14 @@ void cls()
 	memset((unsigned char *)0x20000,0,32768);
 }
 
+void clsAll()
+{
+	cls();
+
+	memset(scratch,0,32768);
+	memset(background,0,32768);
+}
+
 // Plot a point in the given colour
 
 void plot(unsigned short x,unsigned short y,unsigned char c)
@@ -328,7 +336,6 @@ void loadLibrary(struct library *library,char *filename,int shift)
 		//printf("\t%dx%d\n",library->images[i].x,library->images[i].y);
 
 		d=library->images[i].data=(unsigned short *)(malloc(n));
-
 		m=library->images[i].mask=(unsigned short *)(malloc(n));
 
 		for(b=0;b<library->images[i].y;b++)

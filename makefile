@@ -24,6 +24,12 @@ run:   	sprite
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1.0 -b "LRESPR flp1_sigext_rext:EW flp1_sprite,#1;'-s 0'"
 
+runfast:   	sprite
+	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
+	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
+	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=10 -b "LRESPR flp1_sigext_rext:EW flp1_sprite,#1;'-s 0'"
+
 bm:   	sprite
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cp ~/invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib

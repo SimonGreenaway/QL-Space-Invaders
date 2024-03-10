@@ -1,6 +1,5 @@
-#include <qdos.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <qdos.h>
@@ -49,11 +48,48 @@ void printAt(unsigned int x,unsigned y,char *s)
 {
 	while(*s!=0)
 	{
-		//printf("%d %d %c\n",s,*s,*s);
+		if(*s!=32) printCharAt(x,y,*s);
 
-		printCharAt(x,y,*s++);
+		s++;
 		x+=6;
 	}
+}
+
+int keysleep(unsigned int frames)
+{
+	unsigned int target=*FRAMES+frames;
+
+	while(*FRAMES<target)
+	{
+		unsigned int key=keyrow(-1);
+
+		if(key) return key;
+	}
+
+	return 0;
+}
+
+int slowPrintAt(unsigned int x,unsigned y,char *s)
+{
+	while(*s!=0)
+	{
+
+		unsigned int frames=*FRAMES;
+
+		if(keyrow(1)) return 1;
+
+		if(*s!=32) printCharAt(x,y,*s);
+
+                showScratch(0,256);
+
+		s++;
+		x+=6;
+
+		while(frames+10>*FRAMES);
+
+	}
+
+	return 0;
 }
 
 ///////////////////////////////
@@ -70,8 +106,8 @@ void handleKeys()
                 else if((key==16)&&(player.x<256-player.image[0]->x)) player.x+=2;	// Move right
                 else if((key==64)&&(player_bullet.y<0))	// Fire (if not already fired)
                 {
-                        player_bullet.y=255-15;		// Set player bullets start location
-                        player_bullet.x=player.x+4;
+                        player_bullet.y=player.y;		// Set player bullets start location
+                        player_bullet.x=player.x+3;
                 }
                 //else printf ("Pressed: %c Code: ; %d\n", key, key);
         }
@@ -81,14 +117,15 @@ void handleKeys()
 // HandleInvaderBullets //
 //////////////////////////
 
-int handleInvaderBullets()
+int handleInvaderBullets(unsigned int frames)
 {
 	int i;
 
 	if(bulletCount>0) for(i=0;i<maxBulletCount;i++)
 	{
-	        if(bullets[i].y>-1)	// Fired?
+	        if((bullets[i].y>-1)&&(bullets[i].timer>=frames))	// Fired?
 	        {
+			bullets[i].timer+=bullets[i].timerDelta;
 	       	        bullets[i].y+=8;	// Move up
 			bullets[i].currentImage=1-bullets[i].currentImage;
 
@@ -147,8 +184,8 @@ int handlePlayerBullet()
 			{
 				if((sprites[i].x-3<player_bullet.x)
 				&&(sprites[i].x+9>player_bullet.x)
-				&&(sprites[i].y<player_bullet.y)
-				&&(sprites[i].y+8>player_bullet.y))
+				&&(sprites[i].y<=player_bullet.y)
+				&&(sprites[i].y+8>=player_bullet.y))
 				{
 					unsigned int newDelta=(50*--invaders)/SPRITES;
 					if(invaders==0) return 1;	// Wave over!
@@ -225,6 +262,7 @@ int handleInvaders()
 
 							bullets[j].y=sprites[i].y+8;
 							bullets[j].x=sprites[i].x+4;
+							bullets[j].timer=frames;
 							break;
 						}
 					}
@@ -247,7 +285,7 @@ int handleInvaders()
         	                s->y+=8;	// Move invader down
 
                 	        // Game over?
-                        	if(s->y+s->image[s->currentImage]->y>=255)  return 1;
+                        	if(s->y>=player.y)  return 1;
 			}
                 }
 	}
@@ -259,7 +297,7 @@ int handleInvaders()
 // handleUFO //
 ///////////////
 
-void handleUFO()
+void handleUFO(unsigned int frames)
 {
 	if(ufo.x==-1)	// No ufo moving?
         {
@@ -277,7 +315,6 @@ void handleUFO()
         }
         else
         {
-		unsigned short frames=*FRAMES;
 
 		if(ufo.timer<frames) // Is it time to move?
 		{
@@ -289,11 +326,195 @@ void handleUFO()
 				return;
 			}
 
-			ufo.timer+=ufo.timerDelta;	// Set the next time to run
+			ufo.timer=frames+ufo.timerDelta;	// Set the next time to run
 		}
 
                 spritePlot(&ufo);	// Draw the UGO
        }
+}
+
+void setupBG(unsigned int lives,unsigned int bases)
+{
+        unsigned int i;
+        char buffer[80];
+        struct sprite base;
+
+        clsAll();
+
+        sprintf(buffer,"%d",lives); printAt(8,256-7,buffer);
+        printAt(50,0,"SCORE<1> HI-SCORE SCORE<2>");
+        printAt(150,256-7,"CREDIT 01");
+
+        if(bases) for(i=0;i<4;i++)
+        {
+                struct sprite s;
+
+                s.image[0]=&lib.images[26];
+                s.currentImage=0;
+                s.x=i*48+32; s.y=256-16-13-32;
+
+                spritePlot(&s);
+        }
+
+        base.image[0]=&lib.images[8];
+        base.currentImage=0;
+        base.y=256-8;
+        base.x=24;
+
+        for(i=0;i<lives-1;i++)
+        {
+                spritePlot(&base);
+                base.x+=16;
+        }
+
+        base.image[0]=&lib.images[28];
+        base.y--;
+
+        for(i=0;i<256;i+=32)
+        {
+                base.x=i;
+                //spritePlot(&base);
+        }
+
+        showScratch(0,256);
+        initBG();
+}
+
+//////////////////
+// IntroScreens //
+//////////////////
+
+void introScreens()
+{
+	char s[80];
+
+	clsAll();
+	setupBG(6,0);
+
+
+	while(1)
+	{
+		BGtoScratch();
+		printAt(92,100,"INSERT  COIN"); showScratch(0,256);
+		if(slowPrintAt(80,140,"<1 OR 2 PLAYERS>")) return;
+		if(slowPrintAt(80,140+24,"*1 PLAYER  1 COIN")) return;
+		if(slowPrintAt(80,140+48,"*2 PLAYERS 2 COINS")) return;
+
+		if(keysleep(100)) return;
+
+		BGtoScratch(); showScratch(0,256);
+
+		if(slowPrintAt(120,70,"PLAY")) return;
+		if(slowPrintAt(90,100,"SPACE INVADERS")) return;
+
+		if(keysleep(50)) return;
+
+		printAt(80,130,"*SCORE ADVANCE TABLE*");
+		ufo.x=100; ufo.y=150;
+		ufo.image[0]=&lib.images[29];
+		spritePlot(&ufo); ufo.image[0]=&lib.images[7]; ufo.y=-1;
+
+		sprites[0].x=104; sprites[0].y=170; spritePlot(&sprites[0]);
+		sprites[SPRITES/2].x=103; sprites[SPRITES/2].y=190; spritePlot(&sprites[SPRITES/2]);
+		sprites[SPRITES-1].x=103; sprites[SPRITES-1].y=210; sprites[SPRITES-1].image[0]=&lib.images[30]; spritePlot(&sprites[SPRITES-1]); sprites[SPRITES-1].image[0]=&lib.images[0];
+
+		showScratch(0,256);
+
+		if(slowPrintAt(120,150,"=? MYSTERY")) return; 
+		if(slowPrintAt(120,170,"=30 POINTS")) return; 
+		if(slowPrintAt(120,190,"=20 POINTS")) return; 
+		if(slowPrintAt(120,210,"=10 POINTS")) return; 
+
+		if(keysleep(500)) return;
+	}
+}
+
+//////////
+// game //
+//////////
+
+int play()
+{
+	scores[0]=scores[1]=0;
+
+	#ifdef DEBUG
+	puts("Main loop start");
+	#endif
+
+	while(1)
+	{
+		char s[80];
+
+		unsigned short frames=*FRAMES;
+
+		#ifdef DEBUG
+		puts("Loop");
+		#endif
+
+		BGtoScratch();
+
+		#ifdef DEBUG
+		puts("Scores");
+		#endif
+
+		sprintf(s,"%04d     %04d     %04d",scores[0],scores[2],scores[1]);
+		printAt(64,16,s);	
+
+		#ifdef DEBUG
+		puts("Keys");
+		#endif
+
+		handleKeys();
+		if(handlePlayerBullet()) return 0; // LEVEL CLEARED!
+
+	        spritePlot(&player);
+
+		#ifdef DEBUG
+		puts("Invaders");
+		#endif
+
+		if(handleInvaders()) return 2; // GAME OVER!
+		handleUFO(frames);
+
+		if(handleInvaderBullets(frames))
+		{
+	        	showScratch(0,256);
+			return 1; // LOSE A LIFE!
+		}
+
+		showScratch(0,256);
+	}
+
+	if(scores[0]>scores[2]) scores[2]=scores[0];
+	if(scores[1]>scores[2]) scores[2]=scores[1];
+}
+
+///////////////////
+// setupInvaders //
+///////////////////
+
+void setupInvaders()
+{
+	unsigned int i;
+
+	for(i=0;i<SPRITES;i++)
+        {
+		int x=(i%11),y=i/11,s=y==0?2:(y<3?4:0);
+
+                sprites[i].image[0]=&lib.images[s];
+                sprites[i].image[1]=&lib.images[s+1];
+                sprites[i].currentImage=0;
+
+                sprites[i].x=x*16+(y==0?1:0)+1;
+                sprites[i].y=y*16+48;
+
+                sprites[i].dx=1;
+                sprites[i].dy=0;
+
+                sprites[i].timer=0;
+                sprites[i].timerDelta=50;
+        }
+
 }
 
 //////////////
@@ -302,33 +523,29 @@ void handleUFO()
 
 void mainLoop()
 {
-	scores[0]=scores[1]=0;
+
+	scores[2]=0; // Hi-score
 
 	while(1)
 	{
-		char s[80];
+		unsigned int lives=7;
 
-		BGtoScratch();
+		introScreens();
 
-		sprintf(s,"SCORE<1> %04d  %04d  %04d SCORE<2>",scores[0],scores[2],scores[1]);
-
-		printAt((256-strlen(s)*6)/2,0,s);	
-
-		handleKeys();
-		if(handlePlayerBullet()) return; // LEVEL CLEARED!
-
-	        spritePlot(&player);
-
-		if(handleInvaders()) return; // GAME OVER!
-		handleUFO();
-
-		if(handleInvaderBullets())
+		while(lives>0)
 		{
-	        	showScratch(0,256);
-			return; // LOSE A LIFE!
-		}
+			setupBG(lives,1); 
 
-	        showScratch(0,256);
+			setupInvaders();
+
+			switch(play())
+			{
+				case 0: // Reset vaders
+					break;
+				case 1: lives--; break;
+				case 2: lives=0; break;
+			}
+		}
 	}
 }
 
@@ -358,8 +575,7 @@ int main(int argc, char *argv[])
  			exit(1);
  		}
 
-		cls();
-
+		
 		for(i=0;i<SPRITES;i++)
 		{
 			int x=(i%11),y=i/11,s=y==0?2:(y<3?4:0);
@@ -368,25 +584,14 @@ int main(int argc, char *argv[])
 			sprites[i].image[1]=&lib.images[s+1];
 			sprites[i].currentImage=0;
 
-			sprites[i].x=x*20+(y==0?1:0)+1;
-			sprites[i].y=y*20+16;
+			sprites[i].x=x*16+(y==0?1:0)+1;
+			sprites[i].y=y*16+48;
 			
 			sprites[i].dx=1;
 			sprites[i].dy=0;
 
 			sprites[i].timer=0;
 			sprites[i].timerDelta=50;
-		}
-
-		for(i=0;i<4;i++)
-		{
-			struct sprite s;
-
-			s.image[0]=&lib.images[26];
-			s.currentImage=0;
-			s.x=i*48+32; s.y=256-16-13;
-
-			spritePlot(&s); 
 		}
 
 		for(i=0;i<MAXBULLETS;i++)
@@ -408,7 +613,7 @@ int main(int argc, char *argv[])
 		player.image[0]=&lib.images[8];
 		player.currentImage=0;
 		player.x=(256-player.image[0]->x)/2;
-		player.y=256-player.image[0]->y;
+		player.y=256-player.image[0]->y-24;
 
 		player_bullet.image[0]=&lib.images[12];
 		player_bullet.image[1]=&lib.images[15];
@@ -419,10 +624,8 @@ int main(int argc, char *argv[])
 		ufo.image[0]=&lib.images[7];
 		ufo.currentImage=0;
 		ufo.x=-1;
-		ufo.y=8;
+		ufo.y=32;
 
-		showScratch(0,256);
-		initBG();
 
 		mainLoop();
 		exit(0);
