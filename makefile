@@ -1,19 +1,6 @@
-sprite:	sprite.o image.o 
-	qld -lm -o sprite sprite.o image.o
-
-sprite.o:	sprite.c image.h
-		@echo $(PATH)
-		qcc -O -o sprite.o -c sprite.c
-
-libimage.a:	image.o
-		qdos-ar -rc libimage.a image.o
-
-image.o:	image.c image.h
-		qcc -O -o image.o -c image.c
-		qcc -O -S image.c
 
 clean:
-	rm -f image.o screen.o libimage.a interrupt.o sprite.o invaders_floppy.img invaders.zip image.s
+	rm -f image.o screen.o libimage.a interrupt.o sprite.o invaders_floppy.img invaders.zip image.s invaders.mdv
 
 cleaner:	clean
 	rm -f sprite
@@ -44,5 +31,6 @@ dist:	sprite
 	mv /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_zip invaders.zip
 	qltools invaders_floppy.img -fdd invaders -W
 	qltools invaders_floppy.img -W BOOT sprite invaders.lib font.lib
+	mdvtool create name invaders zip_import invaders.zip write invaders.mdv
 	
 

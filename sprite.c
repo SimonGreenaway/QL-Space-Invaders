@@ -129,6 +129,8 @@ void handleKeys()
 // HandleInvaderBullets //
 //////////////////////////
 
+unsigned char reload=0x30+*FRAMES;
+
 int handleInvaderBullets(unsigned int frames)
 {
 	int i;
@@ -146,6 +148,12 @@ int handleInvaderBullets(unsigned int frames)
 				bullets[i].y=-1;
 				bulletCount--;
 
+				if(scores[0]<200) reload=frames+0x30;
+				else if(scores[0]<1000) reload=frames+0x10;
+				else if(scores[0]<2000) reload=frames+0x0B;
+				else if(scores[0]<3000) reload=frames+0x08;
+				else reload=*FRAMES+0x07;
+				 
 				if((bullets[i].x>=player.x)&&(bullets[i].x<player.x+16))
 				{
 					bullets[i].currentImage=3;
@@ -279,7 +287,16 @@ int handleInvaders()
 	
 				if((sprites[i].x<=0)||(sprites[i].x+16>=255)) bounce=1;	// Check for edge hit
 
-				if((bulletCount<maxBulletCount)&&((rand()&31)==0))
+				//ShotReloadRate:
+				//; The tables at 1CB8 and 1AA1 control how fast shots are created. The speed is based
+				//; on the upper byte of the player's score. For a score of less than or equal 0200 then
+				//; the fire speed is 30. For a score less than or equal 1000 the shot speed is 10. Less
+				//; than or equal 2000 the speed is 0B. Less than or equal 3000 is 08. And anything
+				//; above 3000 is 07.
+				//;
+				//; 1CB8: 02 10 20 30
+
+				if((bulletCount<maxBulletCount)&&(reload<*FRAMES))
 				{
 					unsigned int j;
 
