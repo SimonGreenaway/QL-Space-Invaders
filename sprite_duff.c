@@ -25,8 +25,6 @@ unsigned maxBulletCount=1,bulletCount=0,shotCount;
 struct sprite player,ufo,player_bullet;	// Other sprites
 int scores[3]={0,0,0};			// Player scores
 int invaderScores[5]={30,20,20,10,10};
-unsigned char ufoScores[]={10,05,05,10,15,10,10,05,30,10,10,10,05,15,10,05};
-unsigned char ufoScorePointer=0;
 
 unsigned int invaders=SPRITES;		// Number of sprites alive
 
@@ -139,7 +137,7 @@ int handleInvaderBullets(unsigned int frames)
 	        {
 			bullets[i].timer=*FRAMES+bullets[i].timerDelta;
 	       	        bullets[i].y+=(invaders<=8?5:4);	// Move down
-			bullets[i].currentImage=(bullets[i].currentImage+1)&3;
+			bullets[i].currentImage=1-bullets[i].currentImage;
 
 			if(bullets[i].y>=player.y)	// Reached the bottom
 	              	{
@@ -148,7 +146,7 @@ int handleInvaderBullets(unsigned int frames)
 
 				if((bullets[i].x>=player.x)&&(bullets[i].x<player.x+16))
 				{
-					bullets[i].currentImage=3;
+					bullets[i].currentImage=4;
 					spritePlot(&bullets[i]);
 					bullets[i].currentImage=0;
 					return 1;
@@ -175,11 +173,12 @@ int handlePlayerBullet()
        	        player_bullet.y-=2;	// Move up
 		player_bullet.timer=*FRAMES+player_bullet.timerDelta;
 
-		if(player_bullet.y<=32)	// Reached the top
+		if(player_bullet.y==8)	// Reached the top
               	{
 			// Explosion!!!
 
 			player_bullet.currentImage++;
+			player_bullet.x=3;
 			spritePlot(&player_bullet);
                      	player_bullet.currentImage--;
 
@@ -208,15 +207,15 @@ int handlePlayerBullet()
 
 					// Set up explosion at the invader's locations
 
-					player_bullet.currentImage=2;
-					player_bullet.x=sprites[i].x;
+					player_bullet.currentImage++;
+					player_bullet.x=sprites[i].x+3;
 					player_bullet.y=sprites[i].y;
 
 					sprites[i].y=-1;	
 
 					spritePlot(&player_bullet);
 
-                     			player_bullet.currentImage=0;
+                     			player_bullet.currentImage--;
 
 					player_bullet.y=-1;
 
@@ -225,26 +224,6 @@ int handlePlayerBullet()
 					break;	// Can only hit one thing!
 				}
 			}
-
-			if((ufo.y>-1)&&(ufo.x<player_bullet.x)
-				     &&(ufo.x+9>player_bullet.x)
-			             &&(ufo.y<=player_bullet.y)
-			             &&(ufo.y+8>=player_bullet.y))
-			{
-
-				player_bullet.currentImage=3;
-				player_bullet.x=ufo.x;
-				player_bullet.y=ufo.y;
-				spritePlot(&player_bullet);
-				player_bullet.currentImage=0;
-
-				player_bullet.y=-1;
-				ufo.x=-1;
-
-				scores[0]+=ufoScores[ufoScorePointer]*10;
-				ufoScorePointer=(ufoScorePointer+1)&15;
-			}
-
 		}
 	}
 
@@ -273,7 +252,7 @@ int handleInvaders()
 			{
 				sprites[i].x+=sprites[i].dx;	// Move invader
 	
-		                sprites[i].currentImage=1-sprites[i].currentImage; 	// Change image for animation
+		                sprites[i].currentImage=(sprites[i].currentImage+1)&3;	// Change image for animation
 	
 				sprites[i].timer=frames+sprites[i].timerDelta;	// Set up timer for next movement 
 	
@@ -293,21 +272,10 @@ int handleInvaders()
 
 							switch(bulletTypes[j])
 							{
-								case 0:  bullets[j].image[0]=&lib.images[19];
-									 bullets[j].image[1]=&lib.images[20];
-									 bullets[j].image[2]=&lib.images[21];
-									 bullets[j].image[3]=&lib.images[22];
-									 break;
-								case 1:  bullets[j].image[0]=&lib.images[23];
-									 bullets[j].image[1]=&lib.images[24];
-									 bullets[j].image[2]=&lib.images[23];
-									 bullets[j].image[3]=&lib.images[25];
-									 break;
 								default: bullets[j].image[0]=&lib.images[16];
 									 bullets[j].image[1]=&lib.images[9];
-									 bullets[j].image[2]=&lib.images[17];
-									 bullets[j].image[3]=&lib.images[13];
-									 break;
+								         bullets[j].image[2]=&lib.images[17];
+									 bullets[j].image[3]=&lib.images[13]; break;
 
 							}
 
@@ -617,8 +585,6 @@ void setupGame()
 
 	player_bullet.image[0]=&lib.images[12];
 	player_bullet.image[1]=&lib.images[15];
-	player_bullet.image[2]=&lib.images[11];
-	player_bullet.image[3]=&lib.images[27];
 	player_bullet.currentImage=0;
 	player_bullet.x=0;
 	player_bullet.y=-1;
