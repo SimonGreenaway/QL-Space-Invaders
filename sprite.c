@@ -64,7 +64,7 @@ int keysleep(unsigned int frames)
 
 	while(*FRAMES<target)
 	{
-		unsigned int key=keyrow(-1);
+		int key=keyrow(-1);
 
 		if(key) return key;
 	}
@@ -280,7 +280,7 @@ void invaderFire(unsigned int frames)
 		{
 			if(bullets[j].y==-1)
 			{
-				unsigned int k;
+				int k;
 
 				// Pick type
 
@@ -307,19 +307,42 @@ void invaderFire(unsigned int frames)
 
 				bulletCount++;
 
-				// Make bullet come from bottom invader
-
-				do
+				if(bulletTypes[j]==0)
 				{
-					i=rand()/(RAND_MAX/11);
-				}
-				while(sprites[i].y==-1);
+					int nearest=INT_MAX;
 
-				for(k=j+11;k<SPRITES;k++)
+					for(k=0;k<SPRITES;k++)
+					{
+						if(sprites[k].y>-1)
+						{
+							int d=sprites[k].x>player.x?sprites[k].x-player.x
+										   :player.x-sprites[k].x;
+
+							if(d<=nearest)
+							{
+								i=k; nearest=d;
+							}
+						}
+					}
+
+					printf("%d %d\n",i,nearest); 
+				}
+				else 
 				{
-					if(sprites[k].y>-1) bullets[j].y=sprites[k].y+8;
+					unsigned int k;
+
+					// Make bullet come from random bottom invader
+
+					do
+					{
+						i=rand()/(RAND_MAX/SPRITES);
+					}
+					while(sprites[i].y==-1);
+
+					for(k=i+11;k<SPRITES;k++) if(sprites[k].y>-1) i=k;
 				}
 
+				bullets[j].y=sprites[i].y+8;
 				bullets[j].x=sprites[i].x+4;
 				bullets[j].timer=frames;
 				bullets[j].timerDelta=3;
@@ -471,6 +494,33 @@ void setupBG(unsigned int lives,unsigned int bases)
         initBG();
 }
 
+///////////////////
+// setupInvaders //
+///////////////////
+
+void setupInvaders()
+{
+	unsigned int i;
+
+	for(i=0;i<SPRITES;i++)
+        {
+		int x=(i%11),y=i/11,s=y==0?2:(y<3?4:0);
+
+                sprites[i].image[0]=&lib.images[s];
+                sprites[i].image[1]=&lib.images[s+1];
+                sprites[i].currentImage=0;
+
+                sprites[i].x=45+x*16+(y==0?1:0)+1;
+                sprites[i].y=y*16+48;
+
+                sprites[i].dx=1;
+                sprites[i].dy=0;
+
+                sprites[i].timer=0;
+                sprites[i].timerDelta=50;
+        }
+}
+
 //////////////////
 // IntroScreens //
 //////////////////
@@ -481,6 +531,7 @@ void introScreens()
 
 	clsAll();
 	setupBG(6,0);
+	setupInvaders();
 
 	while(1)
 	{
@@ -515,7 +566,7 @@ void introScreens()
 		if(slowPrintAt(120,190,"=20 POINTS")) return; 
 		if(slowPrintAt(120,210,"=10 POINTS")) return; 
 
-		if(keysleep(500)) return;
+		if(keysleep(50)) return;
 	}
 }
 
@@ -595,33 +646,6 @@ int play()
 	if(scores[1]>scores[2]) scores[2]=scores[1];
 }
 
-///////////////////
-// setupInvaders //
-///////////////////
-
-void setupInvaders()
-{
-	unsigned int i;
-
-	for(i=0;i<SPRITES;i++)
-        {
-		int x=(i%11),y=i/11,s=y==0?2:(y<3?4:0);
-
-                sprites[i].image[0]=&lib.images[s];
-                sprites[i].image[1]=&lib.images[s+1];
-                sprites[i].currentImage=0;
-
-                sprites[i].x=45+x*16+(y==0?1:0)+1;
-                sprites[i].y=y*16+48;
-
-                sprites[i].dx=1;
-                sprites[i].dy=0;
-
-                sprites[i].timer=0;
-                sprites[i].timerDelta=50;
-        }
-
-}
 
 void setupGame()
 {
