@@ -129,7 +129,7 @@ void handleKeys()
 // HandleInvaderBullets //
 //////////////////////////
 
-unsigned char reload=0x30+*FRAMES;
+unsigned char reload;
 
 int handleInvaderBullets(unsigned int frames)
 {
@@ -261,6 +261,76 @@ int handlePlayerBullet()
 	return 0;	// Wave still ongoing
 }
 
+void invaderFire(unsigned int frames)
+{
+	//ShotReloadRate:
+	//; The tables at 1CB8 and 1AA1 control how fast shots are created. The speed is based
+	//; on the upper byte of the player's score. For a score of less than or equal 0200 then
+	//; the fire speed is 30. For a score less than or equal 1000 the shot speed is 10. Less
+	//; than or equal 2000 the speed is 0B. Less than or equal 3000 is 08. And anything
+	//; above 3000 is 07.
+	//;
+	//; 1CB8: 02 10 20 30
+
+	if((bulletCount<maxBulletCount)&&(reload<*FRAMES))
+	{
+		unsigned int i,j;
+
+		for(j=0;j<maxBulletCount;j++)
+		{
+			if(bullets[j].y==-1)
+			{
+				unsigned int k;
+
+				// Pick type
+
+				bulletTypes[j]=rand()/(RAND_MAX/3);
+
+				switch(bulletTypes[j])
+				{
+					case 0:  bullets[j].image[0]=&lib.images[19];
+						 bullets[j].image[1]=&lib.images[20];
+						 bullets[j].image[2]=&lib.images[21];
+						 bullets[j].image[3]=&lib.images[22];
+						 break;
+					case 1:  bullets[j].image[0]=&lib.images[23];
+						 bullets[j].image[1]=&lib.images[24];
+						 bullets[j].image[2]=&lib.images[23];
+						 bullets[j].image[3]=&lib.images[25];
+						 break;
+					default: bullets[j].image[0]=&lib.images[16];
+						 bullets[j].image[1]=&lib.images[9];
+						 bullets[j].image[2]=&lib.images[17];
+						 bullets[j].image[3]=&lib.images[13];
+						 break;
+				}
+
+				bulletCount++;
+
+				// Make bullet come from bottom invader
+
+				do
+				{
+					i=rand()/(RAND_MAX/11);
+				}
+				while(sprites[i].y==-1);
+
+				for(k=j+11;k<SPRITES;k++)
+				{
+					if(sprites[k].y>-1) bullets[j].y=sprites[k].y+8;
+				}
+
+				bullets[j].x=sprites[i].x+4;
+				bullets[j].timer=frames;
+				bullets[j].timerDelta=3;
+				bullets[j].currentImage=0;
+
+				break;
+			}
+		}
+	}
+}
+
 ///////////////////////////////
 // handleInvaders            //
 //                           //
@@ -286,60 +356,6 @@ int handleInvaders()
 				sprites[i].timer=frames+sprites[i].timerDelta;	// Set up timer for next movement 
 	
 				if((sprites[i].x<=0)||(sprites[i].x+16>=255)) bounce=1;	// Check for edge hit
-
-				//ShotReloadRate:
-				//; The tables at 1CB8 and 1AA1 control how fast shots are created. The speed is based
-				//; on the upper byte of the player's score. For a score of less than or equal 0200 then
-				//; the fire speed is 30. For a score less than or equal 1000 the shot speed is 10. Less
-				//; than or equal 2000 the speed is 0B. Less than or equal 3000 is 08. And anything
-				//; above 3000 is 07.
-				//;
-				//; 1CB8: 02 10 20 30
-
-				if((bulletCount<maxBulletCount)&&(reload<*FRAMES))
-				{
-					unsigned int j;
-
-					for(j=0;j<maxBulletCount;j++)
-					{
-						if(bullets[j].y==-1)
-						{
-							// Pick type
-
-							bulletTypes[j]=rand()/(RAND_MAX/3);
-
-							switch(bulletTypes[j])
-							{
-								case 0:  bullets[j].image[0]=&lib.images[19];
-									 bullets[j].image[1]=&lib.images[20];
-									 bullets[j].image[2]=&lib.images[21];
-									 bullets[j].image[3]=&lib.images[22];
-									 break;
-								case 1:  bullets[j].image[0]=&lib.images[23];
-									 bullets[j].image[1]=&lib.images[24];
-									 bullets[j].image[2]=&lib.images[23];
-									 bullets[j].image[3]=&lib.images[25];
-									 break;
-								default: bullets[j].image[0]=&lib.images[16];
-									 bullets[j].image[1]=&lib.images[9];
-									 bullets[j].image[2]=&lib.images[17];
-									 bullets[j].image[3]=&lib.images[13];
-									 break;
-
-							}
-
-							bulletCount++;
-
-							bullets[j].y=sprites[i].y+8;
-							bullets[j].x=sprites[i].x+4;
-							bullets[j].timer=frames;
-							bullets[j].timerDelta=3;
-							bullets[j].currentImage=0;
-
-							break;
-						}
-					}
-				}
 			}
 	
 			spritePlot(&sprites[i]);	// Draw invader
@@ -362,6 +378,8 @@ int handleInvaders()
 			}
                 }
 	}
+
+	invaderFire(frames);
 
 	return 0;
 }
@@ -393,7 +411,7 @@ void handleUFO(unsigned int frames)
 		{
 			ufo.x+=ufo.dx;		// Move
 
-       	        	if((ufo.x<=0)||(ufo.x+ufo.image[0]->x>=255))	// Reached other end?
+       	        	if((ufo.x<=0)||(ufo.x>=220))	// Reached other end?
 			{
 				ufo.x=-1;	// Switch off the UFO
 				return;
@@ -593,7 +611,7 @@ void setupInvaders()
                 sprites[i].image[1]=&lib.images[s+1];
                 sprites[i].currentImage=0;
 
-                sprites[i].x=x*16+(y==0?1:0)+1;
+                sprites[i].x=45+x*16+(y==0?1:0)+1;
                 sprites[i].y=y*16+48;
 
                 sprites[i].dx=1;
@@ -626,10 +644,11 @@ void setupGame()
 	}
 
 	scores[0]=scores[1]=0;
+	reload=0x30+*FRAMES;
 
 	player.image[0]=&lib.images[8];
 	player.currentImage=0;
-	player.x=(256-player.image[0]->x)/2;
+	player.x=0;
 	player.y=256-player.image[0]->y-24;
 
 	player_bullet.image[0]=&lib.images[12];
