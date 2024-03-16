@@ -1,7 +1,7 @@
 sprite:	sprite.o image.o 
-	qld -lm -o sprite sprite.o image.o
+	qld -lm -o sprite sprite.o image.o 
 
-sprite.o:	sprite.c image.h
+sprite.o:	sprite.c image.h 
 		@echo $(PATH)
 		qcc -O -o sprite.o -c sprite.c
 
@@ -10,7 +10,7 @@ libimage.a:	image.o
 
 image.o:	image.c image.h
 		qcc -O -o image.o -c image.c
-		qcc -O -S image.c
+		#qcc -O -S image.c
 
 clean:
 	rm -f image.o screen.o libimage.a interrupt.o sprite.o invaders_floppy.img invaders.zip image.s invaders.mdv

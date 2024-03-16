@@ -47,13 +47,13 @@ void init()
 	int i;
 	short colours=8,mode=0;
 
-	background=(unsigned short *)malloc(32768);
-	scratch=(unsigned char *)malloc(32768);
+	background=(unsigned short *)createBuffer(256);
+	scratch=createBuffer(256);
 	secondAddress=(int)(background)-0x20000;
 
 	mt_dmode(&colours,&mode);
 
-	for(i=0;i<256;i++) addresses[i]=(unsigned char *)(scratch+i*128);
+	for(i=0;i<256;i++) addresses[i]=(unsigned char *)(i*128);
 
 	for(i=0;i<8;i++) bits[i]=(i&3)+(i&4)*128;
 }
@@ -82,19 +82,26 @@ void plot(unsigned short x,unsigned short y,unsigned char c)
 	(*address)=((*address)&masks[x&3])|(bits[c]*shifts[x&3]);
 }
 
+void spritePlot(struct sprite *sprite)
+{
+	spritePlot0((unsigned char *)scratch,sprite);
+}
+
 // Draw an image, erasing old one if needed
 
-void spritePlot(struct sprite *sprite)
+void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 {
 	struct image *image=sprite->image[sprite->currentImage];
 
-	unsigned short *address=(unsigned short *)addresses[sprite->y]+(sprite->x/4);
+	unsigned short *address=(unsigned short *)buffer;
 	unsigned int addressDelta=64-image->x;
 
 	unsigned short *shifter=image->datashifter[sprite->x&3];
 	unsigned short *maskshifter=image->maskshifter[sprite->x&3];
 
 	unsigned int a,xlim=image->x/2;
+
+	address+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
 
 	switch(xlim) // Welcome to loop unroll City....
 	{
@@ -384,22 +391,63 @@ void loadLibrary(struct library *library,char *filename,int shift)
 	puts("Sprites loaded.\n");
 }
 
+////////////////////////////////
+// Buffer creation and moving //
+////////////////////////////////
+
+// Create a buffer //
+
+unsigned char* createbuffer(unsigned int rows)
+{
+	return (unsigned char *)malloc(rows*128);
+}
+
+// Copy from buffer to buffer (or the screen)
+
+void bufferCopy(unsigned char *to,unsigned char *from,unsigned int rowStart,unsigned int rowEnd)
+{
+	memcpy(to+rowStart*128,from+rowStart*128,(rowEnd-rowStart)*128);
+}
+
+// Screen -> background
+
 void initBG()
 {
-	memcpy(background,(unsigned char *)0x20000,32768);
+	bufferCopy((unsigned char *)background,(unsigned char *)0x20000,0,256);
 }
+
+// Background -> Screen
 
 void restoreBG()
 {
-	memcpy((unsigned char *)0x20000,background,32768);
+	bufferCopy((unsigned char *)0x20000,(unsigned char *)background,0,256);
 }
+
+// Background -> scratch
 
 void BGtoScratch()
 {
-	memcpy((unsigned char *)scratch,background,32768);
+	bufferCopy((unsigned char *)scratch,(unsigned char *)background,0,256);
 }
 
 void showScratch(int from,int to)
 {
-	memcpy((unsigned char *)(0x20000+from*128),scratch+from*128,(to-from)*128);
+	bufferCopy((unsigned char *)0x20000,scratch,0,256);
+}
+
+unsigned short peek(unsigned int y,unsigned int x)
+{
+	unsigned short *address=(unsigned short *)scratch;
+	unsigned short data;
+	address+=(unsigned short*)addresses[y]+(x/4);
+
+	data=*address;
+
+	switch(x&3)
+	{
+		case 0: return data&0x0203;
+		case 1: return data&0x080C;
+		case 2: return data&0x2030;
+		default: return data&0x80C0;
+	}
 }

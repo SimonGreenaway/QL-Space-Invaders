@@ -40,13 +40,22 @@ struct shifter
 	} z;
 };
 
+void spritePlot0(unsigned char *buffer,struct sprite *sprite);
+void bufferCopy(unsigned char *from,unsigned char *to,unsigned int rowStart,unsigned int rowEnd);
+unsigned char* createBuffer(unsigned int rows);
+
+void spritePlot(struct sprite *sprite);
+
 void tilePlot(unsigned short x,unsigned short y,struct image *image);
 void imagePlot(unsigned int x,unsigned int y,struct image *image);
-void spritePlot(struct sprite *sprite);
 void loadLibrary(struct library *library,char *filename,int shift);
-void initBG();
-void restoreBG();
-void BGtoScratch();
+
 void showScratch(int from,int to);
 void cls();
 void clsAll();
+
+void initBG();
+void restoreBG();
+void BGtoScratch();
+
+unsigned short peek(unsigned int y,unsigned int x);
