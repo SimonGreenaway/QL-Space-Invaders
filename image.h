@@ -41,10 +41,14 @@ struct shifter
 };
 
 void spritePlot0(unsigned char *buffer,struct sprite *sprite);
+void spritePlotM0(unsigned char *buffer,struct sprite *sprite);
+
 void bufferCopy(unsigned char *from,unsigned char *to,unsigned int rowStart,unsigned int rowEnd);
 unsigned char* createBuffer(unsigned int rows);
 
 void spritePlot(struct sprite *sprite);
+void spritePlotM(struct sprite *sprite);
+void bgSpritePlot(struct sprite *sprite);
 
 void tilePlot(unsigned short x,unsigned short y,struct image *image);
 void imagePlot(unsigned int x,unsigned int y,struct image *image);

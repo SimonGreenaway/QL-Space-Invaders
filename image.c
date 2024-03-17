@@ -87,6 +87,11 @@ void spritePlot(struct sprite *sprite)
 	spritePlot0((unsigned char *)scratch,sprite);
 }
 
+void bgSpritePlot(struct sprite *sprite)
+{
+	spritePlot0((unsigned char *)background,sprite);
+}
+
 // Draw an image, erasing old one if needed
 
 void spritePlot0(unsigned char *buffer,struct sprite *sprite)
@@ -183,6 +188,103 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 	}
 }
 
+void spritePlotM0(unsigned char *buffer,struct sprite *sprite)
+{
+	struct image *image=sprite->image[sprite->currentImage];
+
+	unsigned short *address=(unsigned short *)buffer;
+	unsigned int addressDelta=64-image->x;
+
+	unsigned short *shifter=image->datashifter[sprite->x&3];
+
+	unsigned int a,xlim=image->x/2;
+
+	address+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
+
+	switch(xlim) // Welcome to loop unroll City....
+	{
+		case 4:	for(a=0;a<image->y;a++)
+			{
+				*address++=*address|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address++=(*address|*shifter++)
+						|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address++=(*address|*shifter++)
+						|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address++=(*address|*shifter++)
+						|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address=  *address|*shifter++; 
+	
+				address+=addressDelta;
+			}
+
+			break;
+
+		case 3:	for(a=0;a<image->y;a++)
+			{
+				*address++=*address|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address++=(*address|*shifter++)
+						|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address++=(*address|*shifter++)
+						|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address=  *address|*shifter++; 
+	
+				address+=addressDelta;
+			}
+
+			break;
+	
+		case 2:	for(a=0;a<image->y;a++)
+			{
+				*address++=*address|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address++=(*address|*shifter++)
+						|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address=  *address|*shifter++; 
+	
+				address+=addressDelta;
+			}
+
+			break;
+
+		case 1:	for(a=0;a<image->y;a++)
+			{
+				*address++=*address|*shifter++; 
+				*address++=*address|*shifter++; 
+				*address=  *address|*shifter++; 
+	
+				address+=addressDelta;
+			}
+
+			break;
+
+		default:	for(a=0;a<image->y;a++)
+				{
+					unsigned int b;
+	
+					for(b=0;b<xlim;b++)
+					{
+						*address++=*address|*shifter++; 
+						*address++=*address|*shifter++; 
+						*address=*address|*shifter++; 
+					}
+	
+					address+=addressDelta;
+				}
+	}
+}
+
+void spritePlotM(struct sprite *sprite)
+{
+	spritePlotM0((unsigned char *)scratch,sprite);
+}
 // Draw an image, erasing old one if needed
 
 void imagePlot(unsigned int x,unsigned int y,struct image *image)

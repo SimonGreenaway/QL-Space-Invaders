@@ -25,7 +25,7 @@ struct timer
 
 struct sprite sprites[SPRITES],bullets[3];
 unsigned char bulletTypes[3];	// Invader sprites
-unsigned maxBulletCount=1,bulletCount=0,shotCount;
+unsigned maxBulletCount=1,bulletCount=0,shotCount,credits=0;
 
 struct sprite player,ufo,player_bullet;	// Other sprites
 int scores[3]={0,0,0};			// Player scores
@@ -78,7 +78,7 @@ int keysleep(unsigned int frames)
 
 	while(*FRAMES<target)
 	{
-		int key=keyrow(-1);
+		int key=keyrow(1);
 
 		if(key) return key;
 	}
@@ -88,6 +88,8 @@ int keysleep(unsigned int frames)
 
 int slowPrintAt(unsigned int x,unsigned y,char *s)
 {
+	unsigned key;
+
 	while(*s!=0)
 	{
 
@@ -205,11 +207,16 @@ int handleInvaderBullets(unsigned int frames)
 	       		}
 			else
 			{
-				if(peek(bullets[i].y,bullets[i].x))
+				if(peek(bullets[i].y+4,bullets[i].x)
+				 ||peek(bullets[i].y+6,bullets[i].x))
 				{
 					// Hit something!
 
-				//	putchar('!');
+					bullets[i].currentImage=4;
+					bgSpritePlot(&bullets[i]);
+					bullets[i].currentImage=0;
+					bullets[i].y=-1;
+					bulletCount--;
 				}
 			}
 		}
@@ -387,7 +394,8 @@ void invaderFire(unsigned int frames)
 					}
 					while(sprites[i].y==-1);
 
-					for(k=i+11;k<SPRITES;k++) if(sprites[k].y>-1) i=k;
+					for(k=i+11;k<SPRITES;k+=11) if(sprites[k].y>-1) i=k;
+
 				}
 
 				bullets[j].y=sprites[i].y+8;
@@ -429,7 +437,7 @@ int handleInvaders()
 				if((sprites[i].x<=0)||(sprites[i].x+16>=255)) bounce=1;	// Check for edge hit
 			}
 	
-			spritePlot(&sprites[i]);	// Draw invader
+			spritePlotM(&sprites[i]);	// Draw invader
 		}
         }
 
@@ -505,7 +513,8 @@ void setupBG(unsigned int lives,unsigned int bases)
 
         sprintf(buffer,"%d",lives); printAt(8,256-7,buffer);
         printAt(50,0,"SCORE<1> HI-SCORE SCORE<2>");
-        printAt(150,256-7,"CREDIT 01");
+	sprintf(buffer,"CREDIT %02d",credits);
+        printAt(150,256-7,buffer);
 
         if(bases) for(i=0;i<4;i++)
         {
@@ -828,7 +837,7 @@ int main(int argc, char *argv[])
 
 	for(s=0;s<3;s++)
 	{
-		unsigned long t,c=0;
+		unsigned long t,c=0,pass;
 		struct sprite sprite[8];
 
 		for(c=0;c<8;c++)
@@ -839,44 +848,49 @@ int main(int argc, char *argv[])
 			sprite[c].y=c*sprite[c].image[0]->y;
 		}
 
-		t=mt_rclck();
-		while(mt_rclck()==t);
-		t=mt_rclck()+10;
-	
-		while(mt_rclck()<t)
+		for(pass=1;pass<=2;pass++)
 		{
-			unsigned int i,y=0,x=0,ymin=1024,ymax=0;
-
-			BGtoScratch();
-
-			for(i=0;i<8;i++)
+			t=mt_rclck();
+			while(mt_rclck()==t);
+			t=mt_rclck()+10;
+	
+			while(mt_rclck()<t)
 			{
-				unsigned char ox=x,oy=y;
+				unsigned int i,y=0,x=0,ymin=1024,ymax=0;
 
-				if(y+lib.images[s].y>=256)
+				BGtoScratch();
+
+				for(i=0;i<8;i++)
 				{
-					y=0;
-					x+=lib.images[s].x*2+16;
+					unsigned char ox=x,oy=y;
+
+					if(y+lib.images[s].y>=256)
+					{
+						y=0;
+						x+=lib.images[s].x*2+16;
+					}
+	
+					x++;
+	
+					if(pass==1) spritePlot(&sprite[i]);
+					else spritePlotM(&sprite[i]);
+	
+					if(y>ymax) ymax=y;
+					else if(y<ymin) ymin=y;
+	
+					y+=lib.images[s].y;
 				}
 
-				x++;
+				showScratch(ymin,ymax+lib.images[s].y);
 
-				spritePlot(&sprite[i]);
+				c+=8;
 
-				if(y>ymax) ymax=y;
-				else if(y<ymin) ymin=y;
-
-				y+=lib.images[s].y;
 			}
 
-			showScratch(ymin,ymax+lib.images[s].y);
-
-			c+=8;
+			showScratch(0,256);
+			printf("%c %d x %d\t-> %d\n",pass==1?'M':' ',lib.images[s].x*4,lib.images[s].y,c);
+			initBG();
 		}
-
-		showScratch(0,256);
-		printf("%d x %d\t-> %d\n",lib.images[s].x*4,lib.images[s].y,c);
-		initBG();
 	}
 }
 
