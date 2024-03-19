@@ -23,11 +23,15 @@ struct timer
 	unsigned int timer,delta;
 };
 
+char *drive="";
+
 struct sprite sprites[SPRITES],bullets[3];
 unsigned char bulletTypes[3];	// Invader sprites
 unsigned maxBulletCount=1,bulletCount=0,shotCount,credits=0;
 
 struct sprite player,ufo,player_bullet;	// Other sprites
+unsigned int playerVisible;
+
 int scores[3]={0,0,0};			// Player scores
 int invaderScores[5]={30,20,20,10,10};
 unsigned char ufoScores[]={10,05,05,10,15,10,10,05,30,10,10,10,05,15,10,05};
@@ -121,24 +125,32 @@ void handleKeys(unsigned int frames)
 {
 	unsigned int key;
 
-	if(frames>=keyTimer.timer)
+	if(!playerVisible)
 	{
-		unsigned int droppedFrames=(frames-keyTimer.timer)/keyTimer.delta+1;
+		if(player.timer>frames) return;
+
+		playerVisible=1;
+		player.timer=frames;
+	}
+
+	while(frames>=keyTimer.timer)
+	{
 		key=keyrow(1);	// Read the bottom row of the keyboard
 
-		keyTimer.timer=frames+keyTimer.delta;
+		keyTimer.timer+=keyTimer.delta;
 
         	if(key)		// If a key was pressed
 		{
         	        if((key&2)&&(player.x>0))
-				player.x-=droppedFrames;		// Move left
-                	else if((key&16)&&(player.x<256-player.image[0]->x))
-					player.x+=droppedFrames;	// Move right
+				player.x--;	// Move left
+                	else if((key&16)&&(player.x<256-player.image[0]->x*4))
+				player.x++;	// Move right
 
 			if((key&64)&&(player_bullet.y<0))	// Fire (if not already fired)
                 	{
 	                        player_bullet.y=player.y;		// Set player bullets start location
         	                player_bullet.x=player.x+3;
+				player_bullet.timer=frames;
 				shotCount++;
 			}
         	}
@@ -233,12 +245,14 @@ int handleInvaderBullets(unsigned int frames)
 // returns: 1 - wave complete //
 ////////////////////////////////
 
-int handlePlayerBullet()
+int handlePlayerBullet(unsigned int frames)
 {
-        if((player_bullet.y>-1)&&(player_bullet.timer<*FRAMES))	// Fired?
-        {
-       	        player_bullet.y-=player_bullet.timer>player_bullet.timer?8:4;	// Move up (with slow bodge)
-		player_bullet.timer=*FRAMES+player_bullet.timerDelta;
+	unsigned int i;
+
+	while((player_bullet.y>-1)&&player_bullet.timer<frames);
+	{
+       	        player_bullet.y-=4;
+		player_bullet.timer+=player_bullet.timerDelta;
 
 		if(player_bullet.y<=32)	// Reached the top
               	{
@@ -246,13 +260,14 @@ int handlePlayerBullet()
 
 			player_bullet.currentImage++;
 			spritePlot(&player_bullet);
-                     	player_bullet.currentImage--;
+       	              	player_bullet.currentImage--;
 
 			player_bullet.y=-1;
-       		}
-              	else
+		}
+
+		//if(peek(player_bullet.y,player_bullet.x))
 		{
-			unsigned int i;
+			// Invader hit?
 
 			for(i=0;i<SPRITES;i++)
 			{
@@ -281,12 +296,12 @@ int handlePlayerBullet()
 
 					spritePlot(&player_bullet);
 
-                     			player_bullet.currentImage=0;
+	              			player_bullet.currentImage=0;
 
 					player_bullet.y=-1;
 
 					scores[0]+=invaderScores[i/SPRITESX];
-					
+				
 					break;	// Can only hit one thing!
 				}
 			}
@@ -306,10 +321,9 @@ int handlePlayerBullet()
 				player_bullet.y=-1;
 				ufo.x=-1;
 
-				scores[0]+=ufoScores[ufoScorePointer]*10;
+					scores[0]+=ufoScores[ufoScorePointer]*10;
 				ufoScorePointer=(ufoScorePointer+1)&15;
 			}
-
 		}
 	}
 
@@ -437,7 +451,7 @@ int handleInvaders()
 				if((sprites[i].x<=0)||(sprites[i].x+16>=255)) bounce=1;	// Check for edge hit
 			}
 	
-			spritePlotM(&sprites[i]);	// Draw invader
+			spritePlot(&sprites[i]);	// Draw invader
 		}
         }
 
@@ -555,7 +569,7 @@ void setupBG(unsigned int lives,unsigned int bases)
 // setupInvaders //
 ///////////////////
 
-void setupInvaders()
+void setupInvaders(unsigned int frames)
 {
 	unsigned int i;
 
@@ -573,8 +587,10 @@ void setupInvaders()
                 sprites[i].dx=1;
                 sprites[i].dy=0;
 
-                sprites[i].timer=0;
+                sprites[i].timer=frames+(SPRITES-i)/3;
                 sprites[i].timerDelta=50;
+
+		sprites[i].mask=0;
         }
 }
 
@@ -588,7 +604,7 @@ void introScreens()
 
 	clsAll();
 	setupBG(6,0);
-	setupInvaders();
+	setupInvaders(*FRAMES);
 
 	while(1)
 	{
@@ -629,10 +645,17 @@ void introScreens()
 
 void initiate()
 {
+	char buffer[80],buffer2[80];
+
 	init();
 
-	loadLibrary(&lib,"invaders_lib",1);
-	loadLibrary(&font,"font_lib",1); 
+	sprintf(buffer,"%sinvaders_lib",drive);
+	sprintf(buffer2,"%sinvaders_csh",drive);
+	loadLibrary(&lib,buffer,buffer2,1);
+
+	sprintf(buffer,"%sfont_lib",drive);
+	sprintf(buffer2,"%sfont_csh",drive);
+	loadLibrary(&font,buffer,buffer2,1); 
 
  	if(lib.n==0)
  	{
@@ -677,8 +700,7 @@ int play()
 		#endif
 
 		handleKeys(frames);
-		if(handlePlayerBullet()) return 0; // LEVEL CLEARED!
-
+		if(handlePlayerBullet(frames)) return 0; // LEVEL CLEARED!
 
 		#ifdef DEBUG
 		puts("Invaders");
@@ -703,11 +725,11 @@ int play()
 }
 
 
-void setupGame()
+void setupGame(unsigned int frames)
 {
 	unsigned int i;
 
-	setupInvaders();
+	setupInvaders(frames);
 
 	for(i=0;i<MAXBULLETS;i++)
 	{
@@ -721,6 +743,7 @@ void setupGame()
 		bullets[i].image[4]=&lib.images[18];
 
 		bullets[i].currentImage=0;
+		bullets[i].mask=1;
 	}
 
 	scores[0]=scores[1]=0;
@@ -731,6 +754,7 @@ void setupGame()
 	player.image[2]=&lib.images[14];
 	player.image[3]=&lib.images[31];
 	player.currentImage=0;
+	player.mask=0;
 	player.x=0;
 	player.y=256-player.image[0]->y-24;
 
@@ -743,10 +767,12 @@ void setupGame()
 	player_bullet.y=-1;
 	player_bullet.timer=0;
 	player_bullet.timerDelta=1;
+	player_bullet.mask=1;
 	shotCount=0;
 
 	ufo.image[0]=&lib.images[7];
 	ufo.currentImage=0;
+	ufo.mask=0;
 	ufo.x=-1;
 	ufo.y=32;
 
@@ -771,7 +797,7 @@ void mainLoop()
 
 		while(keyrow(1)); // Wait for key up
 
-		setupGame();
+		setupGame(*FRAMES);
 
 		while(lives>0)
 		{
@@ -803,10 +829,11 @@ void mainLoop()
 
 			setupBG(lives,1); 
 
-			setupInvaders();
+			setupInvaders(frames);
 
 		        scores[0]=scores[1]=0;
 			player.timer=frames+100;
+			playerVisible=0;
 
 			switch(play())
 			{
@@ -827,12 +854,16 @@ int main(int argc, char *argv[])
 	for(s=1;s<argc;s++)
 	{
 		if(strcmp(argv[s],"-bm")==0) bm=1;
+		else if(strcmp(argv[s],"-d")==0)
+		{
+			drive=argv[++s];
+		}
 	}
 
 	if(!bm) mainLoop();
 
 	init();
-	loadLibrary(&lib,"/home/simon/test5.lib",1);
+	loadLibrary(&lib,"/home/simon/test5.lib","/home/simon/test5.csh",1);
 	initBG();
 
 	for(s=0;s<3;s++)
@@ -848,8 +879,10 @@ int main(int argc, char *argv[])
 			sprite[c].y=c*sprite[c].image[0]->y;
 		}
 
-		for(pass=1;pass<=2;pass++)
+		for(pass=0;pass<2;pass++)
 		{
+			for(c=0;c<8;c++) sprite[c].mask=pass;
+
 			t=mt_rclck();
 			while(mt_rclck()==t);
 			t=mt_rclck()+10;
@@ -872,8 +905,7 @@ int main(int argc, char *argv[])
 	
 					x++;
 	
-					if(pass==1) spritePlot(&sprite[i]);
-					else spritePlotM(&sprite[i]);
+					spritePlot(&sprite[i]);
 	
 					if(y>ymax) ymax=y;
 					else if(y<ymin) ymin=y;
@@ -888,7 +920,7 @@ int main(int argc, char *argv[])
 			}
 
 			showScratch(0,256);
-			printf("%c %d x %d\t-> %d\n",pass==1?'M':' ',lib.images[s].x*4,lib.images[s].y,c);
+			printf("%c %d x %d -> %d\n",pass==1?'M':' ',lib.images[s].x*4,lib.images[s].y,c);
 			initBG();
 		}
 	}

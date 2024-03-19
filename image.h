@@ -21,6 +21,7 @@ struct sprite
 	struct image *image[8];
 
 	int x,y,dx,dy,currentImage;
+	unsigned int mask;
 	unsigned int timer,timerDelta;
 };
 
@@ -41,18 +42,16 @@ struct shifter
 };
 
 void spritePlot0(unsigned char *buffer,struct sprite *sprite);
-void spritePlotM0(unsigned char *buffer,struct sprite *sprite);
 
 void bufferCopy(unsigned char *from,unsigned char *to,unsigned int rowStart,unsigned int rowEnd);
 unsigned char* createBuffer(unsigned int rows);
 
 void spritePlot(struct sprite *sprite);
-void spritePlotM(struct sprite *sprite);
 void bgSpritePlot(struct sprite *sprite);
 
 void tilePlot(unsigned short x,unsigned short y,struct image *image);
 void imagePlot(unsigned int x,unsigned int y,struct image *image);
-void loadLibrary(struct library *library,char *filename,int shift);
+void loadLibrary(struct library *library,char *filename,char *cachefilename,int shift);
 
 void showScratch(int from,int to);
 void cls();
