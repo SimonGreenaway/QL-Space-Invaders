@@ -108,8 +108,7 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 
 	address+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
 
-
-	if(sprite->mask)
+	if(sprite->mask&&sprite->draw)
 	{
 		switch(xlim) // Welcome to loop unroll City....
 		{
@@ -190,7 +189,7 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 					}
 		}
 	}
-	else
+	else if(sprite->draw)
 	{
 		switch(xlim) // Welcome to loop unroll City....
 		{
@@ -265,6 +264,87 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 							*address++=*address|*shifter++; 
 							*address++=*address|*shifter++; 
 							*address=*address|*shifter++; 
+						}
+		
+						address+=addressDelta;
+					}
+		}
+	}
+	else //if(sprite->mask)
+	{
+		switch(xlim) // Welcome to loop unroll City....
+		{
+			case 4:	for(a=0;a<image->y;a++)
+				{
+					*address++=*address&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address++=(*address&*maskshifter++)
+							&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address++=(*address&*maskshifter++)
+							&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address++=(*address&*maskshifter++)
+							&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address=  *address&*maskshifter++; 
+		
+					address+=addressDelta;
+				}
+	
+				break;
+	
+			case 3:	for(a=0;a<image->y;a++)
+				{
+					*address++=*address&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address++=(*address&*maskshifter++)
+							&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address++=(*address&*maskshifter++)
+							&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address=  *address&*maskshifter++; 
+		
+					address+=addressDelta;
+				}
+	
+				break;
+		
+			case 2:	for(a=0;a<image->y;a++)
+				{
+					*address++=*address&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address++=(*address&*maskshifter++)
+							&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address=  *address&*maskshifter++; 
+		
+					address+=addressDelta;
+				}
+	
+				break;
+	
+			case 1:	for(a=0;a<image->y;a++)
+				{
+					*address++=*address&*maskshifter++; 
+					*address++=*address&*maskshifter++; 
+					*address=  *address&*maskshifter++; 
+		
+					address+=addressDelta;
+				}
+	
+				break;
+	
+			default:	for(a=0;a<image->y;a++)
+					{
+						unsigned int b;
+		
+						for(b=0;b<xlim;b++)
+						{
+							*address++=*address&*maskshifter++; 
+							*address++=*address&*maskshifter++; 
+							*address=*address&*maskshifter++; 
 						}
 		
 						address+=addressDelta;
@@ -358,7 +438,7 @@ char *readLine(FILE *in,char *buffer)
 
 void preShift(struct image *image)
 {
-        int a,b,x,i,n=image->y*image->x/2;
+        int a,b,x,i,n=image->y*image->x/2*8;
 
         for(x=0;x<4;x++)
         {
@@ -367,8 +447,10 @@ void preShift(struct image *image)
                 unsigned short *pmask=(unsigned short *)image->mask,*data=(unsigned short *)image->data;
                 const unsigned int shifts=2*x;
 
-                unsigned short *ss=image->datashifter[x]=(unsigned short *)malloc(sizeof(unsigned short)*n*3);
-                unsigned short *mm=image->maskshifter[x]=(unsigned short *)malloc(sizeof(unsigned short)*n*3);
+                unsigned short *ss=image->datashifter[x]=(unsigned short *)malloc(n);
+                unsigned short *mm=image->maskshifter[x]=(unsigned short *)malloc(n);
+		
+		unsigned short *ss0=ss,*mm0=mm;
 
                 for(a=0;a<image->y;a++)
                 {
@@ -398,27 +480,33 @@ void preShift(struct image *image)
 				}
                         }
                 }
+
+		if((ss-ss0>n)||(mm-mm0>n))
+		{
+			printf("loadLibrary error: [%d:%d/%d]",n,ss-ss0,mm-mm0);
+
+			exit(1);
+		}
         }
 }
-
 void loadLibrary(struct library *library,char *filename,char *cachefilename,int shift)
 {
 	int i,a,b;
 	unsigned short *d,*m;
 
-	FILE *in,*out=0; // =fopen(filename,"r");
+	FILE *in;
 	char buffer[80];
 
 	puts("Loading library...");
 
-	in=fopen(cachefilename,"r");
+	in=fopen(filename,"r");
 
-	//if(in==0)
+	if(in==NULL)
 	{
-		puts("(Creating cache file)");
-		in=fopen(filename,"r");
+		printf("ERROR: Cannot read %s\n",filename);
+		exit(1);
 	}
-	
+
 	readLine(in,buffer); library->n=atoi(buffer);
 
 	printf(" images: %d\n",library->n);
@@ -486,24 +574,6 @@ void loadLibrary(struct library *library,char *filename,char *cachefilename,int 
 
 	fclose(in);
 
-	out=fopen(cachefilename,"wb");
-
-	fwrite(library,sizeof(struct library),1,out);
-
-	for(i=0;i<library->n;i++)
-	{
-		unsigned int n=2*sizeof(unsigned short)*library->images[i].x*library->images[i].y;
-
-		fwrite(&library->images[i],sizeof(struct image),1,out);
-		
-		for(a=0;a<4;a++)
-		{
-			fwrite(&library->images[i].datashifter[a],n,1,out);
-			fwrite(&library->images[i].maskshifter[a],n,1,out);
-		}
-	}
-
-	fclose(out);
 	puts("Sprites loaded.\n");
 }
 

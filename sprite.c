@@ -442,21 +442,32 @@ int handleInvaders()
 		{
 			if(sprites[i].timer<=frames)	// Time to move?
 			{
+				sprites[i].draw=0;
+				bgSpritePlot(&sprites[i]);
+				sprites[i].draw=1;
+
 				sprites[i].x+=sprites[i].dx;	// Move invader
 	
 		                sprites[i].currentImage=1-sprites[i].currentImage; 	// Change image for animation
 	
-				sprites[i].timer=frames+sprites[i].timerDelta;	// Set up timer for next movement 
+				sprites[i].timer+=sprites[i].timerDelta;	// Set up timer for next movement 
 	
 				if((sprites[i].x<=0)||(sprites[i].x+16>=255)) bounce=1;	// Check for edge hit
+				bgSpritePlot(&sprites[i]);	// Draw invader
 			}
 	
-			spritePlot(&sprites[i]);	// Draw invader
 		}
         }
 
 	if(bounce)	// Move the invaders down and reverse direction
 	{
+                for(i=0;i<SPRITES;i++)
+		{
+			sprites[i].draw=0;
+			bgSpritePlot(&sprites[i]);
+			sprites[i].draw=1;
+		}
+
                 for(i=0;i<SPRITES;i++)
                 {
                         struct sprite *s=&sprites[i];
@@ -469,6 +480,8 @@ int handleInvaders()
                 	        // Game over?
                         	if(s->y>=player.y)  return 1;
 			}
+			
+			bgSpritePlot(&sprites[i]);
                 }
 	}
 
@@ -591,6 +604,9 @@ void setupInvaders(unsigned int frames)
                 sprites[i].timerDelta=50;
 
 		sprites[i].mask=0;
+		sprites[i].draw=1;
+
+		bgSpritePlot(&sprites[i]);
         }
 }
 
@@ -604,7 +620,7 @@ void introScreens()
 
 	clsAll();
 	setupBG(6,0);
-	setupInvaders(*FRAMES);
+	//setupInvaders(*FRAMES);
 
 	while(1)
 	{
@@ -686,6 +702,11 @@ int play()
 		puts("Loop");
 		#endif
 
+		#ifdef DEBUG
+		puts("Invaders");
+		#endif
+
+		if(handleInvaders()) return 2; // GAME OVER!
 		BGtoScratch();
 
 		#ifdef DEBUG
@@ -702,11 +723,6 @@ int play()
 		handleKeys(frames);
 		if(handlePlayerBullet(frames)) return 0; // LEVEL CLEARED!
 
-		#ifdef DEBUG
-		puts("Invaders");
-		#endif
-
-		if(handleInvaders()) return 2; // GAME OVER!
 		handleUFO(frames);
 
 		if(handleInvaderBullets(frames))
@@ -744,6 +760,7 @@ void setupGame(unsigned int frames)
 
 		bullets[i].currentImage=0;
 		bullets[i].mask=1;
+		bullets[i].draw=1;
 	}
 
 	scores[0]=scores[1]=0;
@@ -755,6 +772,7 @@ void setupGame(unsigned int frames)
 	player.image[3]=&lib.images[31];
 	player.currentImage=0;
 	player.mask=0;
+	player.draw=1;
 	player.x=0;
 	player.y=256-player.image[0]->y-24;
 
@@ -768,11 +786,13 @@ void setupGame(unsigned int frames)
 	player_bullet.timer=0;
 	player_bullet.timerDelta=1;
 	player_bullet.mask=1;
+	player_bullet.draw=1;
 	shotCount=0;
 
 	ufo.image[0]=&lib.images[7];
 	ufo.currentImage=0;
 	ufo.mask=0;
+	ufo.draw=1;
 	ufo.x=-1;
 	ufo.y=32;
 
@@ -877,6 +897,7 @@ int main(int argc, char *argv[])
 			sprite[c].currentImage=0;
 			sprite[c].x=c;
 			sprite[c].y=c*sprite[c].image[0]->y;
+			sprite[c].draw=1;
 		}
 
 		for(pass=0;pass<2;pass++)

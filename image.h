@@ -21,7 +21,7 @@ struct sprite
 	struct image *image[8];
 
 	int x,y,dx,dy,currentImage;
-	unsigned int mask;
+	unsigned int mask,draw;
 	unsigned int timer,timerDelta;
 };
 
