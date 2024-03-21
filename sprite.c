@@ -6,30 +6,22 @@
 
 #include "image.h"
 
-struct library lib;	// Image library
-struct library font;	// Image library
-
-//int sprite=0;
+library lib,font;	// Image libraries
 
 #define SPRITESX 11			// Number of invaders in a row
 #define SPRITESY 5			// Number of invader rows
 #define SPRITES (SPRITESX*SPRITESY)	// Total number of invaders
 #define MAXBULLETS 4
 
-#define FRAMES ((unsigned short *)163886)	// Location of frame counter
-
-struct timer
-{
-	unsigned int timer,delta;
-};
-
 char *drive="";
 
-struct sprite sprites[SPRITES],bullets[3];
+sprite sprites[SPRITES],bullets[3];
+unsigned int newDelta=50;
+
 unsigned char bulletTypes[3];	// Invader sprites
 unsigned maxBulletCount=1,bulletCount=0,shotCount,credits=0;
 
-struct sprite player,ufo,player_bullet;	// Other sprites
+sprite player,ufo,player_bullet;	// Other sprites
 unsigned int playerVisible;
 
 int scores[3]={0,0,0};			// Player scores
@@ -41,9 +33,11 @@ int currentPlayer=0;
 
 unsigned int invaders=SPRITES;		// Number of sprites alive
 
+unsigned int invaderSoundTimer;
+
 void printCharAt(unsigned int x,unsigned int y,char c)
 {
-	struct sprite s;
+	sprite s;
 
 	if(c-33>=font.n)
 	{
@@ -119,7 +113,7 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 // Handle keyboard commands. //
 ///////////////////////////////
 
-struct timer keyTimer;
+timer keyTimer;
 
 void handleKeys(unsigned int frames)
 {
@@ -127,17 +121,17 @@ void handleKeys(unsigned int frames)
 
 	if(!playerVisible)
 	{
-		if(player.timer>frames) return;
+		if(player.timer.value>frames) return;
 
 		playerVisible=1;
-		player.timer=frames;
+		player.timer.value=frames;
 	}
 
-	while(frames>=keyTimer.timer)
+	while(frames>=keyTimer.value)
 	{
 		key=keyrow(1);	// Read the bottom row of the keyboard
 
-		keyTimer.timer+=keyTimer.delta;
+		keyTimer.value+=keyTimer.delta;
 
         	if(key)		// If a key was pressed
 		{
@@ -150,7 +144,7 @@ void handleKeys(unsigned int frames)
                 	{
 	                        player_bullet.y=player.y;		// Set player bullets start location
         	                player_bullet.x=player.x+3;
-				player_bullet.timer=frames;
+				player_bullet.timer.value=frames;
 				shotCount++;
 			}
         	}
@@ -176,9 +170,9 @@ int handleInvaderBullets(unsigned int frames)
 
 	if(bulletCount>0) for(i=0;i<maxBulletCount;i++)
 	{
-	        if((bullets[i].y>-1)&&(bullets[i].timer<=frames))	// Fired?
+	        if((bullets[i].y>-1)&&(bullets[i].timer.value<=frames))	// Fired?
 	        {
-			bullets[i].timer=*FRAMES+bullets[i].timerDelta;
+			bullets[i].timer.value=*FRAMES+bullets[i].timer.delta;
 	       	        bullets[i].y+=(invaders<=8?5:4);	// Move down
 			bullets[i].currentImage=(bullets[i].currentImage+1)&3;
 
@@ -249,10 +243,10 @@ int handlePlayerBullet(unsigned int frames)
 {
 	unsigned int i;
 
-	while((player_bullet.y>-1)&&player_bullet.timer<frames);
+	while((player_bullet.y>-1)&&player_bullet.timer.value<frames);
 	{
        	        player_bullet.y-=4;
-		player_bullet.timer+=player_bullet.timerDelta;
+		player_bullet.timer.value+=player_bullet.timer.delta;
 
 		if(player_bullet.y<=32)	// Reached the top
               	{
@@ -276,14 +270,15 @@ int handlePlayerBullet(unsigned int frames)
 				&&(sprites[i].y<=player_bullet.y)
 				&&(sprites[i].y+8>=player_bullet.y))
 				{
-					unsigned int newDelta=(50*--invaders)/SPRITES;
+					newDelta=(50*--invaders)/SPRITES;
+
 					if(invaders==0) return 1;	// Wave over!
 
-					if(newDelta<sprites[i].timerDelta)
+					if(newDelta<sprites[i].timer.delta)
 					{
 						unsigned int j;
 
-						for(j=0;j<SPRITES;j++) sprites[j].timerDelta=newDelta;
+						for(j=0;j<SPRITES;j++) sprites[j].timer.delta=newDelta;
 					}
 
 					// Set up explosion at the invader's locations
@@ -414,8 +409,8 @@ void invaderFire(unsigned int frames)
 
 				bullets[j].y=sprites[i].y+8;
 				bullets[j].x=sprites[i].x+4;
-				bullets[j].timer=frames;
-				bullets[j].timerDelta=3;
+				bullets[j].timer.value=frames;
+				bullets[j].timer.delta=3;
 				bullets[j].currentImage=0;
 
 				break;
@@ -440,7 +435,7 @@ int handleInvaders()
         {
 		if(sprites[i].y>-1)	// Sprite alive?
 		{
-			if(sprites[i].timer<=frames)	// Time to move?
+			if(sprites[i].timer.value<=frames)	// Time to move?
 			{
 				sprites[i].draw=0;
 				bgSpritePlot(&sprites[i]);
@@ -450,7 +445,7 @@ int handleInvaders()
 	
 		                sprites[i].currentImage=1-sprites[i].currentImage; 	// Change image for animation
 	
-				sprites[i].timer+=sprites[i].timerDelta;	// Set up timer for next movement 
+				sprites[i].timer.value+=sprites[i].timer.delta;	// Set up timer for next movement 
 	
 				if((sprites[i].x<=0)||(sprites[i].x+16>=255)) bounce=1;	// Check for edge hit
 				bgSpritePlot(&sprites[i]);	// Draw invader
@@ -458,6 +453,12 @@ int handleInvaders()
 	
 		}
         }
+
+	if(frames>=invaderSoundTimer)
+	{
+		invaderSoundTimer+=newDelta;
+		//do_sound(2000,200,200,5,1,0,0,0);
+	}
 
 	if(bounce)	// Move the invaders down and reverse direction
 	{
@@ -470,7 +471,7 @@ int handleInvaders()
 
                 for(i=0;i<SPRITES;i++)
                 {
-                        struct sprite *s=&sprites[i];
+                        sprite *s=&sprites[i];
 
 			if(s->y>-1)	// Is sprite alive?
 			{
@@ -506,14 +507,14 @@ void handleUFO(unsigned int frames)
                 {
                         ufo.x=(r&256)?0:255-ufo.image[0]->x;	// Use a random bit for side to start on
 			ufo.dx=(ufo.x==0)?4:-4;		//  direction depends on start location
-			ufo.timer=0;
-			ufo.timerDelta=5;		// Move every 5 frames
+			ufo.timer.value=0;
+			ufo.timer.delta=5;		// Move every 5 frames
                 }
         }
         else
         {
 
-		if(ufo.timer<frames) // Is it time to move?
+		if(ufo.timer.value<frames) // Is it time to move?
 		{
 			ufo.x+=ufo.dx;		// Move
 
@@ -523,7 +524,7 @@ void handleUFO(unsigned int frames)
 				return;
 			}
 
-			ufo.timer=frames+ufo.timerDelta;	// Set the next time to run
+			ufo.timer.value=frames+ufo.timer.delta;	// Set the next time to run
 		}
 
                 spritePlot(&ufo);	// Draw the UGO
@@ -534,7 +535,7 @@ void setupBG(unsigned int lives,unsigned int bases)
 {
         unsigned int i;
         char buffer[80];
-        struct sprite base;
+        sprite base;
 
         clsAll();
 
@@ -545,7 +546,7 @@ void setupBG(unsigned int lives,unsigned int bases)
 
         if(bases) for(i=0;i<4;i++)
         {
-                struct sprite s;
+                sprite s;
 
                 s.image[0]=&lib.images[26];
                 s.currentImage=0;
@@ -600,14 +601,16 @@ void setupInvaders(unsigned int frames)
                 sprites[i].dx=1;
                 sprites[i].dy=0;
 
-                sprites[i].timer=frames+(SPRITES-i)/3;
-                sprites[i].timerDelta=50;
+                sprites[i].timer.value=frames+(SPRITES-i)/3;
+                sprites[i].timer.delta=50;
 
 		sprites[i].mask=0;
 		sprites[i].draw=1;
 
 		bgSpritePlot(&sprites[i]);
         }
+
+	invaderSoundTimer=0;
 }
 
 //////////////////
@@ -731,7 +734,7 @@ int play()
 			return 1; // LOSE A LIFE!
 		}
 
-	        if(player.timer<frames) spritePlot(&player);
+	        if(player.timer.value<frames) spritePlot(&player);
 
 		showScratch(0,256);
 	}
@@ -783,8 +786,8 @@ void setupGame(unsigned int frames)
 	player_bullet.currentImage=0;
 	player_bullet.x=0;
 	player_bullet.y=-1;
-	player_bullet.timer=0;
-	player_bullet.timerDelta=1;
+	player_bullet.timer.value=0;
+	player_bullet.timer.delta=1;
 	player_bullet.mask=1;
 	player_bullet.draw=1;
 	shotCount=0;
@@ -796,7 +799,7 @@ void setupGame(unsigned int frames)
 	ufo.x=-1;
 	ufo.y=32;
 
-	keyTimer.timer=*FRAMES;
+	keyTimer.value=*FRAMES;
 	keyTimer.delta=1;
 }
 
@@ -831,6 +834,8 @@ void mainLoop()
 
 			showScratch(0,256);
 
+			// Blink the score of the next player
+
 			frames=*FRAMES+150;
 
 			while(*FRAMES<frames)
@@ -851,36 +856,27 @@ void mainLoop()
 
 			setupInvaders(frames);
 
-		        scores[0]=scores[1]=0;
-			player.timer=frames+100;
+		        scores[0]=scores[1]=0;	// Reset the scores
+
+			// Start the player a few seconds into the game
+			player.timer.value=frames+100;
 			playerVisible=0;
+
+			// Play until death, then...
 
 			switch(play())
 			{
-				case 0: // Reset vaders
-					break;
-				case 1: lives--; break;
-				case 2: lives=0; break;
+				case 0: break;		// Wave completed
+				case 1: lives--; break;	// Base hit
+				case 2: lives=0; break;	// Invaders hit the bottom
 			}
 		}
 	}
 }
 
-int main(int argc, char *argv[])
+void benchmark()
 {
-	int s;
-	int bm=0;
-
-	for(s=1;s<argc;s++)
-	{
-		if(strcmp(argv[s],"-bm")==0) bm=1;
-		else if(strcmp(argv[s],"-d")==0)
-		{
-			drive=argv[++s];
-		}
-	}
-
-	if(!bm) mainLoop();
+	unsigned int s;
 
 	init();
 	loadLibrary(&lib,"/home/simon/test5.lib","/home/simon/test5.csh",1);
@@ -888,8 +884,10 @@ int main(int argc, char *argv[])
 
 	for(s=0;s<3;s++)
 	{
+		const int n=10;
+
 		unsigned long t,c=0,pass;
-		struct sprite sprite[8];
+		sprite sprite[8];
 
 		for(c=0;c<8;c++)
 		{
@@ -904,20 +902,16 @@ int main(int argc, char *argv[])
 		{
 			for(c=0;c<8;c++) sprite[c].mask=pass;
 
-			t=mt_rclck();
-			while(mt_rclck()==t);
-			t=mt_rclck()+10;
+			t=*FRAMES+n*50;
 	
-			while(mt_rclck()<t)
+			while(t>*FRAMES)
 			{
-				unsigned int i,y=0,x=0,ymin=1024,ymax=0;
+				unsigned int i,y=0,x=0;
 
 				BGtoScratch();
 
 				for(i=0;i<8;i++)
 				{
-					unsigned char ox=x,oy=y;
-
 					if(y+lib.images[s].y>=256)
 					{
 						y=0;
@@ -928,44 +922,38 @@ int main(int argc, char *argv[])
 	
 					spritePlot(&sprite[i]);
 	
-					if(y>ymax) ymax=y;
-					else if(y<ymin) ymin=y;
-	
 					y+=lib.images[s].y;
+
+					c++;
 				}
 
-				showScratch(ymin,ymax+lib.images[s].y);
-
-				c+=8;
-
+				showScratch(0,256);
 			}
 
 			showScratch(0,256);
+
 			printf("%c %d x %d -> %d\n",pass==1?'M':' ',lib.images[s].x*4,lib.images[s].y,c);
 			initBG();
 		}
 	}
 }
 
-void plotTest()
-{	
-	short y;
+//////////
+// main //
+//////////
 
-	for(y=0;y<8;y++)
+int main(int argc, char *argv[])
+{
+	int s;
+
+	// Parse the args
+
+	for(s=1;s<argc;s++)
 	{
-		short x;
-
-		for(x=0;x<8;x++)
-		{
-			unsigned char a;
-
-			for(a=0;a<32;a++)
-			{
-				unsigned char b; for(b=0;b<16;b++)
-				{
-					plot(x*32+a,y*16+b,y);
-				}
-			}
-		}
+		if(strcmp(argv[s],"-bm")==0) benchmark();
+		else if(strcmp(argv[s],"-d")==0) drive=argv[++s];
 	}
+
+	mainLoop();
 }
+

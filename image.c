@@ -82,21 +82,21 @@ void plot(unsigned short x,unsigned short y,unsigned char c)
 	(*address)=((*address)&masks[x&3])|(bits[c]*shifts[x&3]);
 }
 
-void spritePlot(struct sprite *sprite)
+void spritePlot(sprite *sprite)
 {
 	spritePlot0((unsigned char *)scratch,sprite);
 }
 
-void bgSpritePlot(struct sprite *sprite)
+void bgSpritePlot(sprite *sprite)
 {
 	spritePlot0((unsigned char *)background,sprite);
 }
 
 // Draw an image, erasing old one if needed
 
-void spritePlot0(unsigned char *buffer,struct sprite *sprite)
+void spritePlot0(unsigned char *buffer,sprite *sprite)
 {
-	struct image *image=sprite->image[sprite->currentImage];
+	image *image=sprite->image[sprite->currentImage];
 
 	unsigned short *address=(unsigned short *)buffer;
 	unsigned int addressDelta=64-image->x;
@@ -197,14 +197,11 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 				{
 					*address++=*address|*shifter++; 
 					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)
-							|*shifter++; 
+					*address++=(*address|*shifter++)|*shifter++; 
 					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)
-							|*shifter++; 
+					*address++=(*address|*shifter++)|*shifter++; 
 					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)
-							|*shifter++; 
+					*address++=(*address|*shifter++)|*shifter++; 
 					*address++=*address|*shifter++; 
 					*address=  *address|*shifter++; 
 		
@@ -217,11 +214,9 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 				{
 					*address++=*address|*shifter++; 
 					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)
-							|*shifter++; 
+					*address++=(*address|*shifter++)|*shifter++; 
 					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)
-							|*shifter++; 
+					*address++=(*address|*shifter++)|*shifter++; 
 					*address++=*address|*shifter++; 
 					*address=  *address|*shifter++; 
 		
@@ -234,8 +229,7 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 				{
 					*address++=*address|*shifter++; 
 					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)
-							|*shifter++; 
+					*address++=(*address|*shifter++)|*shifter++; 
 					*address++=*address|*shifter++; 
 					*address=  *address|*shifter++; 
 		
@@ -278,14 +272,11 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 				{
 					*address++=*address&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
-					*address++=(*address&*maskshifter++)
-							&*maskshifter++; 
+					*address++=(*address&*maskshifter++)&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
-					*address++=(*address&*maskshifter++)
-							&*maskshifter++; 
+					*address++=(*address&*maskshifter++)&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
-					*address++=(*address&*maskshifter++)
-							&*maskshifter++; 
+					*address++=(*address&*maskshifter++)&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
 					*address=  *address&*maskshifter++; 
 		
@@ -298,11 +289,9 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 				{
 					*address++=*address&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
-					*address++=(*address&*maskshifter++)
-							&*maskshifter++; 
+					*address++=(*address&*maskshifter++)&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
-					*address++=(*address&*maskshifter++)
-							&*maskshifter++; 
+					*address++=(*address&*maskshifter++)&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
 					*address=  *address&*maskshifter++; 
 		
@@ -315,8 +304,7 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 				{
 					*address++=*address&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
-					*address++=(*address&*maskshifter++)
-							&*maskshifter++; 
+					*address++=(*address&*maskshifter++)&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
 					*address=  *address&*maskshifter++; 
 		
@@ -355,7 +343,7 @@ void spritePlot0(unsigned char *buffer,struct sprite *sprite)
 
 // Draw an image, erasing old one if needed
 
-void imagePlot(unsigned int x,unsigned int y,struct image *image)
+void imagePlot(unsigned int x,unsigned int y,image *image)
 {
 	unsigned short *pmask=image->mask,*data=image->data;
 	const int shifts=2*(x&3);
@@ -396,7 +384,7 @@ void imagePlot(unsigned int x,unsigned int y,struct image *image)
 	}
 }
 
-void tilePlot(unsigned short x,unsigned short y,struct image *image)
+void tilePlot(unsigned short x,unsigned short y,image *image)
 {
 	unsigned short *mask=(unsigned short *)image->mask;
 	unsigned short *data=(unsigned short *)image->data;
@@ -436,7 +424,7 @@ char *readLine(FILE *in,char *buffer)
 	return buffer;
 }
 
-void preShift(struct image *image)
+void preShift(image *image)
 {
         int a,b,x,i,n=image->y*image->x/2*8;
 
@@ -489,7 +477,7 @@ void preShift(struct image *image)
 		}
         }
 }
-void loadLibrary(struct library *library,char *filename,char *cachefilename,int shift)
+void loadLibrary(library *library,char *filename,char *cachefilename,int shift)
 {
 	int i,a,b;
 	unsigned short *d,*m;
@@ -511,7 +499,7 @@ void loadLibrary(struct library *library,char *filename,char *cachefilename,int 
 
 	printf(" images: %d\n",library->n);
 	
-	library->images=(struct image *)(malloc(sizeof(struct image)*library->n));
+	library->images=(image *)(malloc(sizeof(image)*library->n));
 
 	for(i=0;i<library->n;i++)
 	{
