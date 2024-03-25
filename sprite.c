@@ -15,9 +15,17 @@ library lib,font;	// Image libraries
 
 char *drive="";
 
-sprite sprites[SPRITES],bullets[3];
-unsigned int newDelta=50;
+struct player
+{
+	sprite sprites[SPRITES];
+	unsigned int newDelta,invaderCount;
+};
 
+struct player players[2];
+
+int currentPlayer=0;
+
+sprite bullets[3];
 unsigned char bulletTypes[3];	// Invader sprites
 unsigned maxBulletCount=1,bulletCount=0,shotCount,credits=0;
 
@@ -29,7 +37,6 @@ int invaderScores[5]={30,20,20,10,10};
 unsigned char ufoScores[]={10,05,05,10,15,10,10,05,30,10,10,10,05,15,10,05};
 unsigned char ufoScorePointer=0;
 
-int currentPlayer=0;
 
 unsigned int invaders=SPRITES;		// Number of sprites alive
 
@@ -245,8 +252,8 @@ int handlePlayerBullet(unsigned int frames)
 
 	while((player_bullet.y>-1)&&player_bullet.timer.value<frames);
 	{
-       	        player_bullet.y-=4;
-		player_bullet.timer.value+=player_bullet.timer.delta;
+       	        player_bullet.y--;
+		player_bullet.timer.value=frames+player_bullet.timer.delta;
 
 		if(player_bullet.y<=32)	// Reached the top
               	{
@@ -265,39 +272,45 @@ int handlePlayerBullet(unsigned int frames)
 
 			for(i=0;i<SPRITES;i++)
 			{
-				if((sprites[i].x-3<player_bullet.x)
-				&&(sprites[i].x+9>player_bullet.x)
-				&&(sprites[i].y<=player_bullet.y)
-				&&(sprites[i].y+8>=player_bullet.y))
+				sprite *s=&players[currentPlayer].sprites[i];
+
+				if((s->y>-1)&&(s->x-3<player_bullet.x)
+				&&(s->x+9>player_bullet.x)
+				&&(s->y<=player_bullet.y)
+				&&(s->y+8>=player_bullet.y))
 				{
-					newDelta=(50*--invaders)/SPRITES;
+					players[currentPlayer].newDelta=(50*--invaders)/SPRITES;
 
 					if(invaders==0) return 1;	// Wave over!
 
-					if(newDelta<sprites[i].timer.delta)
+					if(players[currentPlayer].newDelta<s->timer.delta)
 					{
 						unsigned int j;
 
-						for(j=0;j<SPRITES;j++) sprites[j].timer.delta=newDelta;
+						for(j=0;j<SPRITES;j++) players[currentPlayer].sprites[j].timer.delta=players[currentPlayer].newDelta;
 					}
 
 					// Set up explosion at the invader's locations
 
 					player_bullet.currentImage=2;
-					player_bullet.x=sprites[i].x;
-					player_bullet.y=sprites[i].y;
-
-					sprites[i].y=-1;	
+					player_bullet.x=players[currentPlayer].sprites[i].x;
+					player_bullet.y=players[currentPlayer].sprites[i].y;
 
 					spritePlot(&player_bullet);
 
 	              			player_bullet.currentImage=0;
 
+	                                s->draw=0;
+        	                        bgSpritePlot(s);
+                	                s->draw=1;
+
+					s->y=-1;	
+
 					player_bullet.y=-1;
 
 					scores[0]+=invaderScores[i/SPRITESX];
-				
-					break;	// Can only hit one thing!
+			
+					return --players[currentPlayer].invaderCount==0;	// Can only hit one thing!
 				}
 			}
 
@@ -379,10 +392,10 @@ void invaderFire(unsigned int frames)
 
 					for(k=0;k<SPRITES;k++)
 					{
-						if(sprites[k].y>-1)
+						if(players[currentPlayer].sprites[k].y>-1)
 						{
-							int d=sprites[k].x>player.x?sprites[k].x-player.x
-										   :player.x-sprites[k].x;
+							int d=players[currentPlayer].sprites[k].x>player.x?players[currentPlayer].sprites[k].x-player.x
+										   :player.x-players[currentPlayer].sprites[k].x;
 
 							if(d<=nearest)
 							{
@@ -401,14 +414,14 @@ void invaderFire(unsigned int frames)
 					{
 						i=rand()/(RAND_MAX/SPRITES);
 					}
-					while(sprites[i].y==-1);
+					while(players[currentPlayer].sprites[i].y==-1);
 
-					for(k=i+11;k<SPRITES;k+=11) if(sprites[k].y>-1) i=k;
+					for(k=i+11;k<SPRITES;k+=11) if(players[currentPlayer].sprites[k].y>-1) i=k;
 
 				}
 
-				bullets[j].y=sprites[i].y+8;
-				bullets[j].x=sprites[i].x+4;
+				bullets[j].y=players[currentPlayer].sprites[i].y+8;
+				bullets[j].x=players[currentPlayer].sprites[i].x+4;
 				bullets[j].timer.value=frames;
 				bullets[j].timer.delta=3;
 				bullets[j].currentImage=0;
@@ -433,22 +446,24 @@ int handleInvaders()
 
         for(i=0;i<SPRITES;i++)
         {
-		if(sprites[i].y>-1)	// Sprite alive?
-		{
-			if(sprites[i].timer.value<=frames)	// Time to move?
-			{
-				sprites[i].draw=0;
-				bgSpritePlot(&sprites[i]);
-				sprites[i].draw=1;
+		sprite *s=&players[currentPlayer].sprites[i];
 
-				sprites[i].x+=sprites[i].dx;	// Move invader
+		if(s->y>-1)	// Sprite alive?
+		{
+			if(s->timer.value<=frames)	// Time to move?
+			{
+				s->draw=0;
+				bgSpritePlot(s);
+				s->draw=1;
+
+				s->x+=s->dx;	// Move invader
 	
-		                sprites[i].currentImage=1-sprites[i].currentImage; 	// Change image for animation
+		                s->currentImage=1-s->currentImage; 	// Change image for animation
 	
-				sprites[i].timer.value+=sprites[i].timer.delta;	// Set up timer for next movement 
+				s->timer.value+=s->timer.delta;	// Set up timer for next movement 
 	
-				if((sprites[i].x<=0)||(sprites[i].x+16>=255)) bounce=1;	// Check for edge hit
-				bgSpritePlot(&sprites[i]);	// Draw invader
+				if((s->x<=0)||(s->x+16>=255)) bounce=1;	// Check for edge hit
+				bgSpritePlot(s);	// Draw invader
 			}
 	
 		}
@@ -456,7 +471,7 @@ int handleInvaders()
 
 	if(frames>=invaderSoundTimer)
 	{
-		invaderSoundTimer+=newDelta;
+		invaderSoundTimer+=players[currentPlayer].newDelta;
 		//do_sound(2000,200,200,5,1,0,0,0);
 	}
 
@@ -464,14 +479,14 @@ int handleInvaders()
 	{
                 for(i=0;i<SPRITES;i++)
 		{
-			sprites[i].draw=0;
-			bgSpritePlot(&sprites[i]);
-			sprites[i].draw=1;
+			players[currentPlayer].sprites[i].draw=0;
+			bgSpritePlot(&players[currentPlayer].sprites[i]);
+			players[currentPlayer].sprites[i].draw=1;
 		}
 
                 for(i=0;i<SPRITES;i++)
                 {
-                        sprite *s=&sprites[i];
+                        sprite *s=&players[currentPlayer].sprites[i];
 
 			if(s->y>-1)	// Is sprite alive?
 			{
@@ -482,7 +497,7 @@ int handleInvaders()
                         	if(s->y>=player.y)  return 1;
 			}
 			
-			bgSpritePlot(&sprites[i]);
+			bgSpritePlot(s);
                 }
 	}
 
@@ -589,28 +604,33 @@ void setupInvaders(unsigned int frames)
 
 	for(i=0;i<SPRITES;i++)
         {
-		int x=(i%11),y=i/11,s=y==0?2:(y<3?4:0);
+		sprite *s=&players[currentPlayer].sprites[i];
 
-                sprites[i].image[0]=&lib.images[s];
-                sprites[i].image[1]=&lib.images[s+1];
-                sprites[i].currentImage=0;
+		int x=(i%11),y=i/11,ss=y==0?2:(y<3?4:0);
 
-                sprites[i].x=45+x*16+(y==0?1:0)+1;
-                sprites[i].y=y*16+48;
+                s->image[0]=&lib.images[ss];
+                s->image[1]=&lib.images[ss+1];
+                s->currentImage=0;
 
-                sprites[i].dx=1;
-                sprites[i].dy=0;
+                s->x=45+x*16+(y==0?1:0)+1;
+                s->y=y*16+48;
 
-                sprites[i].timer.value=frames+(SPRITES-i)/3;
-                sprites[i].timer.delta=50;
+                s->dx=1;
+                s->dy=0;
 
-		sprites[i].mask=0;
-		sprites[i].draw=1;
+                s->timer.value=frames+(SPRITES-i)/3;
+                s->timer.delta=50;
 
-		bgSpritePlot(&sprites[i]);
+		s->mask=0;
+		s->draw=1;
+
+		bgSpritePlot(s);
         }
 
 	invaderSoundTimer=0;
+
+	players[currentPlayer].invaderCount=SPRITES;
+	players[currentPlayer].newDelta=50;
 }
 
 //////////////////
@@ -647,9 +667,9 @@ void introScreens()
 		ufo.image[0]=&lib.images[29];
 		spritePlot(&ufo); ufo.image[0]=&lib.images[7]; ufo.y=-1;
 
-		sprites[0].x=104; sprites[0].y=170; spritePlot(&sprites[0]);
-		sprites[SPRITES/2].x=103; sprites[SPRITES/2].y=190; spritePlot(&sprites[SPRITES/2]);
-		sprites[SPRITES-1].x=103; sprites[SPRITES-1].y=210; sprites[SPRITES-1].image[0]=&lib.images[30]; spritePlot(&sprites[SPRITES-1]); sprites[SPRITES-1].image[0]=&lib.images[0];
+		players[0].sprites[0].x=104; players[0].sprites[0].y=170; spritePlot(&players[0].sprites[0]);
+		players[0].sprites[SPRITES/2].x=103; players[0].sprites[SPRITES/2].y=190; spritePlot(&players[0].sprites[SPRITES/2]);
+		players[0].sprites[SPRITES-1].x=103; players[0].sprites[SPRITES-1].y=210; players[0].sprites[SPRITES-1].image[0]=&lib.images[30]; spritePlot(&players[0].sprites[SPRITES-1]); players[0].sprites[SPRITES-1].image[0]=&lib.images[0];
 
 		showScratch(0,256);
 
