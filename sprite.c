@@ -18,7 +18,7 @@ char *drive="";
 struct player
 {
 	sprite sprites[SPRITES];
-	unsigned int newDelta,invaderCount;
+	unsigned int newDelta,invaderCount,shotCount,score,lives;
 };
 
 struct player players[2];
@@ -27,18 +27,15 @@ int currentPlayer=0;
 
 sprite bullets[3];
 unsigned char bulletTypes[3];	// Invader sprites
-unsigned maxBulletCount=1,bulletCount=0,shotCount,credits=0;
+unsigned maxBulletCount=1,bulletCount=0,credits=0,shotCount=0;
 
 sprite player,ufo,player_bullet;	// Other sprites
 unsigned int playerVisible;
 
-int scores[3]={0,0,0};			// Player scores
+unsigned int highScore=0;			// Player scores
 int invaderScores[5]={30,20,20,10,10};
 unsigned char ufoScores[]={10,05,05,10,15,10,10,05,30,10,10,10,05,15,10,05};
 unsigned char ufoScorePointer=0;
-
-
-unsigned int invaders=SPRITES;		// Number of sprites alive
 
 unsigned int invaderSoundTimer;
 
@@ -132,6 +129,9 @@ void handleKeys(unsigned int frames)
 
 		playerVisible=1;
 		player.timer.value=frames;
+		keyTimer.value=frames;
+
+		return;
 	}
 
 	while(frames>=keyTimer.value)
@@ -180,7 +180,7 @@ int handleInvaderBullets(unsigned int frames)
 	        if((bullets[i].y>-1)&&(bullets[i].timer.value<=frames))	// Fired?
 	        {
 			bullets[i].timer.value=*FRAMES+bullets[i].timer.delta;
-	       	        bullets[i].y+=(invaders<=8?5:4);	// Move down
+	       	        bullets[i].y+=(players[currentPlayer].invaderCount<=8?5:4);	// Move down
 			bullets[i].currentImage=(bullets[i].currentImage+1)&3;
 
 			if(bullets[i].y>=player.y)	// Reached the bottom
@@ -188,10 +188,10 @@ int handleInvaderBullets(unsigned int frames)
 				bullets[i].y=-1;
 				bulletCount--;
 
-				if(scores[0]<200) reload=frames+0x30;
-				else if(scores[0]<1000) reload=frames+0x10;
-				else if(scores[0]<2000) reload=frames+0x0B;
-				else if(scores[0]<3000) reload=frames+0x08;
+				if(players[currentPlayer].score<200) reload=frames+0x30;
+				else if(players[currentPlayer].score<1000) reload=frames+0x10;
+				else if(players[currentPlayer].score<2000) reload=frames+0x0B;
+				else if(players[currentPlayer].score<3000) reload=frames+0x08;
 				else reload=*FRAMES+0x07;
 				 
 				if((bullets[i].x>=player.x)&&(bullets[i].x<player.x+16))
@@ -279,9 +279,9 @@ int handlePlayerBullet(unsigned int frames)
 				&&(s->y<=player_bullet.y)
 				&&(s->y+8>=player_bullet.y))
 				{
-					players[currentPlayer].newDelta=(50*--invaders)/SPRITES;
+					players[currentPlayer].newDelta=(50*--players[currentPlayer].invaderCount)/SPRITES;
 
-					if(invaders==0) return 1;	// Wave over!
+					if(players[currentPlayer].invaderCount==0) return 1;	// Wave over!
 
 					if(players[currentPlayer].newDelta<s->timer.delta)
 					{
@@ -308,7 +308,7 @@ int handlePlayerBullet(unsigned int frames)
 
 					player_bullet.y=-1;
 
-					scores[0]+=invaderScores[i/SPRITESX];
+					players[currentPlayer].score+=invaderScores[i/SPRITESX];
 			
 					return --players[currentPlayer].invaderCount==0;	// Can only hit one thing!
 				}
@@ -329,7 +329,7 @@ int handlePlayerBullet(unsigned int frames)
 				player_bullet.y=-1;
 				ufo.x=-1;
 
-					scores[0]+=ufoScores[ufoScorePointer]*10;
+				players[currentPlayer].score+=ufoScores[ufoScorePointer]*10;
 				ufoScorePointer=(ufoScorePointer+1)&15;
 			}
 		}
@@ -546,7 +546,7 @@ void handleUFO(unsigned int frames)
        }
 }
 
-void setupBG(unsigned int lives,unsigned int bases)
+void setupBG(unsigned int bases)
 {
         unsigned int i;
         char buffer[80];
@@ -554,10 +554,11 @@ void setupBG(unsigned int lives,unsigned int bases)
 
         clsAll();
 
-        sprintf(buffer,"%d",lives); printAt(8,256-7,buffer);
+        sprintf(buffer,"%d",players[currentPlayer].lives); printAt(8,256-7,buffer);
         printAt(50,0,"SCORE<1> HI-SCORE SCORE<2>");
 	sprintf(buffer,"CREDIT %02d",credits);
         printAt(150,256-7,buffer);
+
 
         if(bases) for(i=0;i<4;i++)
         {
@@ -575,7 +576,7 @@ void setupBG(unsigned int lives,unsigned int bases)
         base.y=256-8;
         base.x=24;
 
-        for(i=0;i<lives-1;i++)
+        for(i=0;i<players[currentPlayer].lives-1;i++)
         {
                 spritePlot(&base);
                 base.x+=16;
@@ -642,7 +643,7 @@ void introScreens()
 	char s[80];
 
 	clsAll();
-	setupBG(6,0);
+	setupBG(0);
 	//setupInvaders(*FRAMES);
 
 	while(1)
@@ -701,19 +702,19 @@ void initiate()
  		puts("Error: Cannot find 'sprites_lib'");
  		exit(1);
  	}
-
-	scores[2]=0; // Hi-score
 }
 
 //////////
 // game //
 //////////
 
-int play()
+int gameLoop()
 {
 	#ifdef DEBUG
 	puts("Main loop start");
 	#endif
+
+	player.x=0;
 
 	while(1)
 	{
@@ -736,7 +737,7 @@ int play()
 		puts("Scores");
 		#endif
 
-		sprintf(s,"%04d     %04d     %04d",scores[0],scores[2],scores[1]);
+		sprintf(s,"%04d     %04d     %04d",players[0].score,highScore,players[1].score);
 		printAt(64,16,s);	
 
 		#ifdef DEBUG
@@ -759,10 +760,12 @@ int play()
 		showScratch(0,256);
 	}
 
-	if(scores[0]>scores[2]) scores[2]=scores[0];
-	if(scores[1]>scores[2]) scores[2]=scores[1];
+	if(players[currentPlayer].score>highScore) highScore=players[currentPlayer].score;
 }
 
+///////////////
+// setupGame //
+///////////////
 
 void setupGame(unsigned int frames)
 {
@@ -786,7 +789,9 @@ void setupGame(unsigned int frames)
 		bullets[i].draw=1;
 	}
 
-	scores[0]=scores[1]=0;
+	players[0].score=players[1].score=0;
+	players[0].lives=players[1].lives=6;
+
 	reload=0x30+*FRAMES;
 
 	player.image[0]=&lib.images[8];
@@ -834,7 +839,7 @@ void mainLoop()
 
 	while(1)
 	{
-		unsigned int lives=6;
+		setupGame(*FRAMES);
 
 		introScreens();
 
@@ -842,13 +847,13 @@ void mainLoop()
 
 		setupGame(*FRAMES);
 
-		while(lives>0)
+		while(players[currentPlayer].lives>0)
 		{
 			char s[80];
 			unsigned int frames;
 
 		        clsAll();
-		        setupBG(lives,0);   
+		        setupBG(0);   
                 
 		        printAt(100,100,currentPlayer==0?"PLAYER <1>":"PLAYER <2>");
 
@@ -861,22 +866,22 @@ void mainLoop()
 			while(*FRAMES<frames)
 			{
 				if((*FRAMES)&1)
-		                	sprintf(s,"%04d     %04d     %04d",scores[0],scores[2],scores[1]);
+		                	sprintf(s,"%04d     %04d     %04d",players[0].score,highScore,players[1].score);
 		                else if(currentPlayer==0) 
-					sprintf(s,"%c%c%c%c     %04d     %04d",'Z'+1,'Z'+1,'Z'+1,'Z'+1,scores[2],scores[1]);
+					sprintf(s,"%c%c%c%c     %04d     %04d",'Z'+1,'Z'+1,'Z'+1,'Z'+1,highScore,players[1].score);
 		                else 
-					sprintf(s,"%04d     %04d     %c%c%c%c",scores[0],scores[2],'Z'+1,'Z'+1,'Z'+1,'Z'+1);
+					sprintf(s,"%04d     %04d     %c%c%c%c",players[0].score,highScore,'Z'+1,'Z'+1,'Z'+1,'Z'+1);
 
        				printAt(64,16,s);
 
 				showScratch(0,256);
 			}
 
-			setupBG(lives,1); 
+			setupBG(1); 
 
 			setupInvaders(frames);
 
-		        scores[0]=scores[1]=0;	// Reset the scores
+		        players[0].score=players[0].score=0;	// Reset the scores
 
 			// Start the player a few seconds into the game
 			player.timer.value=frames+100;
@@ -884,11 +889,11 @@ void mainLoop()
 
 			// Play until death, then...
 
-			switch(play())
+			switch(gameLoop())
 			{
 				case 0: break;		// Wave completed
-				case 1: lives--; break;	// Base hit
-				case 2: lives=0; break;	// Invaders hit the bottom
+				case 1: players[currentPlayer].lives--; break;	// Base hit
+				case 2: players[currentPlayer].lives=0; break;	// Invaders hit the bottom
 			}
 		}
 	}
