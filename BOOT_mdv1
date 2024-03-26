@@ -1,1 +1,4 @@
-EXEC_W sprite,#1;'-d mdv1_'
+OPEN #8,con_512x256a0x0_0
+CLS #8
+EXEC_W sprite,#8;'-d mdv1_'
+CLOSE #8

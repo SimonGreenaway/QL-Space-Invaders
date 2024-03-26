@@ -13,7 +13,7 @@ image.o:	image.c image.h
 		#qcc -O -S image.c
 
 clean:
-	rm -f image.o screen.o libimage.a interrupt.o sprite.o invaders_floppy.img invaders.zip image.s invaders.mdv
+	rm -f image.o screen.o libimage.a interrupt.o sprite.o invaders.img invaders.zip image.s invaders.mdv inv
 
 cleaner:	clean
 	rm -f sprite
@@ -22,13 +22,13 @@ run:   	sprite
 	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1.0 --SOUND 8 -b "LRESPR flp1_sigext_rext:EW flp1_sprite,#1;'-d flp1_'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1.0 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
 
 runfast:   	sprite
 	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=10 --SOUND 8 -b "LRESPR flp1_sigext_rext:EW flp1_sprite,#1;'-d flp1_'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=10 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
 
 bm:   	sprite
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
@@ -40,13 +40,14 @@ dist:	sprite
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 -b "LRESPR flp1_sigext_rext:EW flp1_zip,#1;'flp1_invaders_zip sprite invaders_lib font_lib'"
+	cp LICENSE /home/simon/emulators/ql/emulators/sQLux/flp1/LICENSE
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 -b "LRESPR flp1_sigext_rext:EW flp1_zip,#1;'flp1_invaders_zip sprite invaders_lib font_lib LICENSE'"
 	mv /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_zip invaders.zip
-	qltools invaders_floppy.img -fdd invaders -W
+	qltools invaders.img -fdd invaders -W
 	cp BOOT_flp1 BOOT
-	qltools invaders_floppy.img -W BOOT sprite invaders.lib font.lib
+	qltools invaders.img -W BOOT sprite invaders.lib font.lib LICENSE
 	cp BOOT_mdv1 BOOT
-	mdvtool create name invaders zip_import invaders.zip import BOOT write invaders.mdv
+	mdvtool create name invaders zip_import invaders.zip import BOOT LICENSE write invaders.mdv
 	rm -f BOOT
 
 git:	cleaner
