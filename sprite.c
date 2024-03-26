@@ -15,6 +15,7 @@ library lib,font;	// Image libraries
 
 char *drive="";
 
+
 struct player
 {
 	sprite sprites[SPRITES];
@@ -23,11 +24,11 @@ struct player
 
 struct player players[2];
 
-int currentPlayer=0;
+unsigned int credits=0,currentPlayer=0,gameMode=0;
 
 sprite bullets[3];
 unsigned char bulletTypes[3];	// Invader sprites
-unsigned maxBulletCount=1,bulletCount=0,credits=0,shotCount=0;
+unsigned maxBulletCount=1,bulletCount=0,shotCount=0;
 
 sprite player,ufo,player_bullet;	// Other sprites
 unsigned int playerVisible;
@@ -80,9 +81,27 @@ int keysleep(unsigned int frames)
 
 	while(*FRAMES<target)
 	{
-		int key=keyrow(1);
+		// Coin key 'C' ?
 
-		if(key) return key;
+		if(keyrow(2)&8)
+		{
+			credits++; 
+			while(keyrow(2)&8) ;
+
+			return 0;
+		}
+
+		if((keyrow(4)&8)&&(credits>0))
+		{
+			gameMode=1;	
+			return 1; // Player 1 start?
+		}
+
+		if((keyrow(6)&2)&&(credits>1))
+		{
+			gameMode=2;
+			return 2;  // Player 2 start?
+		}
 	}
 
 	return 0;
@@ -94,10 +113,29 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 
 	while(*s!=0)
 	{
-
 		unsigned int frames=*FRAMES;
 
-		if(keyrow(1)) return 1;
+		// Coin key 'C' ?
+
+		if(keyrow(2)&8)
+		{
+			credits++; 
+			while(keyrow(2)&8) ;
+
+			return 1;
+		}
+
+		if((keyrow(4)&8)&&(credits>0))
+		{
+			gameMode=1;	
+			return 1; // Player 1 start?
+		}
+
+		if((keyrow(6)&2)&&(credits>1))
+		{
+			gameMode=2;
+			return 2;  // Player 2 start?
+		}
 
 		if(*s!=32) printCharAt(x,y,*s);
 
@@ -107,7 +145,6 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 		x+=6;
 
 		while(frames+5>*FRAMES);
-
 	}
 
 	return 0;
@@ -198,20 +235,24 @@ int handleInvaderBullets(unsigned int frames)
 				{
 					unsigned int j;
 
-					for(j=0;j<2;j++)
+					for(j=0;j<10;j++)
 					{			
 						player.currentImage=3;
 						spritePlot(&player);
-						player.currentImage=1;
-						spritePlot(&player);
 						showScratch(0,256);
-						msleep(25);
-						player.currentImage=3;
+						msleep(10);
+
+						player.draw=0;
 						spritePlot(&player);
+						player.draw=1;
+
 						player.currentImage=2;
 						spritePlot(&player);
 						showScratch(0,256);
-						msleep(25);
+						msleep(10);
+						player.draw=0;
+						spritePlot(&player);
+						player.draw=1;
 					}
 
 					player.currentImage=0;
@@ -634,21 +675,50 @@ void setupInvaders(unsigned int frames)
 	players[currentPlayer].newDelta=50;
 }
 
+void printScores()
+{
+	char s[80];
+
+	sprintf(s,"%04d     %04d     %04d",players[0].score,highScore,players[1].score);
+	printAt(64,16,s);	
+}
+
 //////////////////
 // IntroScreens //
 //////////////////
 
+void startGameScreen()
+{
+	while(gameMode==0)
+	{
+		setupBG(0);
+		BGtoScratch();
+		printScores();
+
+		printAt(80,140,"<1 OR 2 PLAYERS>");
+
+		printAt(80,140+24,"*1 PLAYER  1 COIN");
+		if(credits>1) printAt(80,140+48,"*2 PLAYERS 2 COINS");
+
+		showScratch(0,256);
+
+		keysleep(INT_MAX);
+	}
+
+	// gameMode will be 1 or 2 here
+}
+
 void introScreens()
 {
-	char s[80];
-
 	clsAll();
 	setupBG(0);
-	//setupInvaders(*FRAMES);
 
 	while(1)
 	{
 		BGtoScratch();
+
+		printScores();
+
 		printAt(92,100,"INSERT  COIN"); showScratch(0,256);
 		if(slowPrintAt(80,140,"<1 OR 2 PLAYERS>")) return;
 		if(slowPrintAt(80,140+24,"*1 PLAYER  1 COIN")) return;
@@ -656,7 +726,7 @@ void introScreens()
 
 		if(keysleep(100)) return;
 
-		BGtoScratch(); showScratch(0,256);
+		BGtoScratch(); printScores(); showScratch(0,256);
 
 		if(slowPrintAt(120,70,"PLAY")) return;
 		if(slowPrintAt(90,100,"SPACE INVADERS")) return;
@@ -737,8 +807,7 @@ int gameLoop()
 		puts("Scores");
 		#endif
 
-		sprintf(s,"%04d     %04d     %04d",players[0].score,highScore,players[1].score);
-		printAt(64,16,s);	
+		printScores();
 
 		#ifdef DEBUG
 		puts("Keys");
@@ -760,7 +829,6 @@ int gameLoop()
 		showScratch(0,256);
 	}
 
-	if(players[currentPlayer].score>highScore) highScore=players[currentPlayer].score;
 }
 
 ///////////////
@@ -790,7 +858,7 @@ void setupGame(unsigned int frames)
 	}
 
 	players[0].score=players[1].score=0;
-	players[0].lives=players[1].lives=6;
+	players[0].lives=players[1].lives=1;
 
 	reload=0x30+*FRAMES;
 
@@ -841,11 +909,17 @@ void mainLoop()
 	{
 		setupGame(*FRAMES);
 
-		introScreens();
+		if(credits==0) introScreens();
 
-		while(keyrow(1)); // Wait for key up
+		startGameScreen();
+
+		// Play!
+
+		credits-=gameMode;
 
 		setupGame(*FRAMES);
+
+		players[0].score=players[1].score=0;	// Reset the scores
 
 		while(players[currentPlayer].lives>0)
 		{
@@ -853,6 +927,7 @@ void mainLoop()
 			unsigned int frames;
 
 		        clsAll();
+
 		        setupBG(0);   
                 
 		        printAt(100,100,currentPlayer==0?"PLAYER <1>":"PLAYER <2>");
@@ -881,8 +956,6 @@ void mainLoop()
 
 			setupInvaders(frames);
 
-		        players[0].score=players[0].score=0;	// Reset the scores
-
 			// Start the player a few seconds into the game
 			player.timer.value=frames+100;
 			playerVisible=0;
@@ -895,7 +968,11 @@ void mainLoop()
 				case 1: players[currentPlayer].lives--; break;	// Base hit
 				case 2: players[currentPlayer].lives=0; break;	// Invaders hit the bottom
 			}
+
+			if(gameMode==2) currentPlayer=1-currentPlayer;
 		}
+
+		if(players[currentPlayer].score>highScore) highScore=players[currentPlayer].score;
 	}
 }
 
