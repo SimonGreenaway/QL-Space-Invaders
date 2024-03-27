@@ -8,8 +8,19 @@ Space Invaders for the Sinclair QL - Work in Progress!
 
 Written in C68/xtc and uses triple buffered (!) sprites. Sprites are fully masked with the background and can be any size that is a multiple of 4 pixels for x, or anything for height. Data is pre-shifted into pixel locations for speed. 8 colour mode only is supported. Tested under sQLux, all running under Linux.
 
-Currently a WIP demo - invaders move across and down, ship moves (cursor keys) and flying saucers randomly appear and move across the screen. Space fires a bullet. Invaders can be hit, slowly speeding the remaining up. 'P' pauses the key.
+Currently a WIP demo - invaders move across and down, ship moves and flying saucers randomly appear and move across the screen. Space fires a bullet. Invaders can be hit, slowly speeding the remaining up.
 
-Probably needs more RAM than the stock 128k as it uses 2x32k screen buffers.
+Probably needs more RAM than the stock 128k as it uses 3x32k screen buffers.
 
 Executable and sprite library is in 'invaders.zip'. Copy to a floppy and unzip under QDOS, as per usual for the QL. Execute with: EW flp1_sprite,#1
+Floppy and microdrive images supplied, currently not tested!
+
+Keys:
+
+	'c'	Insert a coin
+	'1'	1 player game (if coin added)
+	'2'	2 player game (if enough coins)
+
+	cursor left	move left
+	cursor right	move right
+	space		fire!

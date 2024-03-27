@@ -81,9 +81,7 @@ int keysleep(unsigned int frames)
 
 	while(*FRAMES<target)
 	{
-		// Coin key 'C' ?
-
-		if(keyrow(2)&8)
+		if(keyrow(2)&8) // Coin key 'C' ?
 		{
 			credits++; 
 			while(keyrow(2)&8) ;
@@ -91,17 +89,31 @@ int keysleep(unsigned int frames)
 			return 0;
 		}
 
-		if((keyrow(4)&8)&&(credits>0))
+		if((keyrow(4)&8)&&(credits>0)) // Player 1 start '1' ?
 		{
 			gameMode=1;	
 			return 1; // Player 1 start?
 		}
 
-		if((keyrow(6)&2)&&(credits>1))
+		if((keyrow(6)&2)&&(credits>1)) // Player 2 start '2' ?
 		{
 			gameMode=2;
 			return 2;  // Player 2 start?
 		}
+
+		/*
+		{
+			unsigned int i;
+
+			for(i=0;i<10;i++)
+			{
+				if(keyrow(i))
+				{
+					printf("%d\t%d\n",i,keyrow(i));
+				}
+			}
+		}
+		*/
 	}
 
 	return 0;
@@ -138,6 +150,20 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 		}
 
 		if(*s!=32) printCharAt(x,y,*s);
+
+		/*
+                {
+                     	unsigned int i;
+
+                        for(i=0;i<10;i++)
+                        {
+                                if(keyrow(i))
+                                {
+                                        printf("%d\t%d\n",i,keyrow(i));
+                                }
+                        }
+                }
+		*/
 
                 showScratch(0,256);
 
@@ -695,10 +721,10 @@ void startGameScreen()
 		BGtoScratch();
 		printScores();
 
-		printAt(80,140,"<1 OR 2 PLAYERS>");
+		printAt(120,90,"PUSH");
 
-		printAt(80,140+24,"*1 PLAYER  1 COIN");
-		if(credits>1) printAt(80,140+48,"*2 PLAYERS 2 COINS");
+		if(credits>1) printAt(80,130,"1 OR 2PLAYERS BUTTON");
+		else printAt(80,130,"ONLY 1PLAYER BUTTON");
 
 		showScratch(0,256);
 
@@ -929,7 +955,8 @@ void mainLoop()
 		        clsAll();
 
 		        setupBG(0);   
-                
+               
+			// TODO: Following not seen on screen 
 		        printAt(100,100,currentPlayer==0?"PLAYER <1>":"PLAYER <2>");
 
 			showScratch(0,256);
