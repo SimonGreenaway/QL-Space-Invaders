@@ -29,7 +29,7 @@ typedef struct
 
 	int x,y,dx,dy,currentImage;
 	unsigned int mask,draw;
-	timer timer;
+	timer timer,timer2;
 } sprite;
 
 typedef struct

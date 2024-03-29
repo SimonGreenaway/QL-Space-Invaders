@@ -317,9 +317,16 @@ int handlePlayerBullet(unsigned int frames)
 {
 	unsigned int i;
 
-	while((player_bullet.y>-1)&&player_bullet.timer.value<frames);
+	while((player_bullet.y>-1)&&(player_bullet.timer.value<frames))
 	{
+		if(player_bullet.y<0)
+		{
+			printf("%d\n",player_bullet.y);
+			exit(0);
+		}
+
        	        player_bullet.y--;
+
 		player_bullet.timer.value=frames+player_bullet.timer.delta;
 
 		if(player_bullet.y<=32)	// Reached the top
@@ -331,9 +338,10 @@ int handlePlayerBullet(unsigned int frames)
        	              	player_bullet.currentImage--;
 
 			player_bullet.y=-1;
+			return 0;
 		}
 
-		//if(peek(player_bullet.y,player_bullet.x))
+		if(peek(player_bullet.y,player_bullet.x))
 		{
 			// Invader hit?
 
@@ -631,11 +639,14 @@ void setupBG(unsigned int bases)
         {
                 sprite s;
 
+		s.mask=0; s.draw=1;
                 s.image[0]=&lib.images[26];
                 s.currentImage=0;
                 s.x=i*48+32; s.y=256-16-13-32;
 
                 spritePlot(&s);
+
+		showScratch(0,256);
         }
 
         base.image[0]=&lib.images[8];

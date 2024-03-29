@@ -31,6 +31,19 @@ void binPrint(unsigned int i,unsigned char d)
 	}
 }
 
+void* myMalloc(unsigned int i)
+{
+	void *p=malloc(i);
+
+	if(p==NULL)
+	{
+		printf("Memory allocation error of %d bytes\n",i);
+		exit(3);
+	}
+
+	return p;
+}
+
 // Initialise the sprite system
 
 long _stack = 4L*1024L; /* size of stack */
@@ -82,6 +95,8 @@ void plot(unsigned short x,unsigned short y,unsigned char c)
 	(*address)=((*address)&masks[x&3])|(bits[c]*shifts[x&3]);
 }
 
+// Plot a sprite on the scratch workspace
+
 void spritePlot(sprite *sprite)
 {
 	spritePlot0((unsigned char *)scratch,sprite);
@@ -104,9 +119,16 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 	unsigned short *shifter=image->datashifter[sprite->x&3];
 	unsigned short *maskshifter=image->maskshifter[sprite->x&3];
 
+
 	unsigned int a,xlim=image->x/2;
 
 	address+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
+
+	if(sprite->y<0)
+	{
+		printf("ERROR: Sprite plot '%s' with y<0",sprite->image[sprite->currentImage]->name);
+		exit(4);
+	}
 
 	if(sprite->mask&&sprite->draw)
 	{
@@ -428,6 +450,12 @@ void preShift(image *image)
 {
         int a,b,x,i,n=image->y*image->x/2*8;
 
+	if(n==0)
+	{
+		printf("Image size odd: %d x %d\n",image->y,image->x);
+		exit(3);
+	}
+
         for(x=0;x<4;x++)
         {
                 struct shifter shifter1,shifter2,mask,tmp;
@@ -435,10 +463,11 @@ void preShift(image *image)
                 unsigned short *pmask=(unsigned short *)image->mask,*data=(unsigned short *)image->data;
                 const unsigned int shifts=2*x;
 
-                unsigned short *ss=image->datashifter[x]=(unsigned short *)malloc(n);
-                unsigned short *mm=image->maskshifter[x]=(unsigned short *)malloc(n);
+                unsigned short *ss=image->datashifter[x]=(unsigned short *)myMalloc(n);
+                unsigned short *mm=image->maskshifter[x]=(unsigned short *)myMalloc(n);
 		
 		unsigned short *ss0=ss,*mm0=mm;
+
 
                 for(a=0;a<image->y;a++)
                 {
@@ -477,6 +506,7 @@ void preShift(image *image)
 		}
         }
 }
+
 void loadLibrary(library *library,char *filename,char *cachefilename,int shift)
 {
 	int i,a,b;
@@ -499,25 +529,31 @@ void loadLibrary(library *library,char *filename,char *cachefilename,int shift)
 
 	printf(" images: %d\n",library->n);
 	
-	library->images=(image *)(malloc(sizeof(image)*library->n));
+	library->images=(image *)(myMalloc(sizeof(image)*library->n));
 
 	for(i=0;i<library->n;i++)
 	{
 		int n;
 
 		readLine(in,buffer); printf("  %d %s",i,buffer);
+		buffer[strcspn(buffer, "\r\n")] = 0;
 
-		library->images[i].name=(char *)malloc(strlen(buffer)+1);
+		library->images[i].name=(char *)myMalloc(strlen(buffer)+1);
 		strcpy(library->images[i].name,buffer);
 
 		readLine(in,buffer); library->images[i].x=atoi(buffer); 
 		readLine(in,buffer); library->images[i].y=atoi(buffer); 
 
 		n=2*sizeof(unsigned short)*library->images[i].x*library->images[i].y;
-		//printf("\t%dx%d\n",library->images[i].x,library->images[i].y);
 
-		d=library->images[i].data=(unsigned short *)(malloc(n));
-		m=library->images[i].mask=(unsigned short *)(malloc(n));
+		if(n==0)
+		{
+			printf("N is zero! %d x %d - skipping!\n",library->images[i].x,library->images[i].y);
+			continue;
+		}
+
+		d=library->images[i].data=(unsigned short *)(myMalloc(n));
+		m=library->images[i].mask=(unsigned short *)(myMalloc(n));
 
 		for(b=0;b<library->images[i].y;b++)
 		{
