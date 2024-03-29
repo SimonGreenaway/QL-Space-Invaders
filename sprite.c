@@ -343,7 +343,7 @@ int handlePlayerBullet(unsigned int frames)
 				return 0;
 			}
 	
-			if(peek(player_bullet.y,player_bullet.x))
+			if(peek(player_bullet.y,player_bullet.x+2))
 			{
 				// Invader hit?
 	
@@ -391,6 +391,8 @@ int handlePlayerBullet(unsigned int frames)
 					}
 				}
 
+				// UFO hit?
+
 				if((ufo.y>-1)&&(ufo.x<player_bullet.x)
 					     &&(ufo.x+9>player_bullet.x)
 				             &&(ufo.y<=player_bullet.y)
@@ -408,7 +410,19 @@ int handlePlayerBullet(unsigned int frames)
 	
 					players[currentPlayer].score+=ufoScores[ufoScorePointer]*10;
 					ufoScorePointer=(ufoScorePointer+1)&15;
+
+					return 0;
 				}
+
+				// Base?
+
+				player_bullet.currentImage=4;
+				player_bullet.y-=5;
+                                bgSpritePlot(&player_bullet);
+				player_bullet.currentImage=0;
+
+				player_bullet.y=-1;
+				return 0;
 			}
 		}
 	}
@@ -909,6 +923,7 @@ void setupGame(unsigned int frames)
 	player_bullet.image[1]=&lib.images[15];
 	player_bullet.image[2]=&lib.images[11];
 	player_bullet.image[3]=&lib.images[27];
+	player_bullet.image[4]=&lib.images[18];
 	player_bullet.currentImage=0;
 	player_bullet.x=0;
 	player_bullet.y=-1;
