@@ -75,6 +75,12 @@ void msleep(unsigned int frames)
 	while(*FRAMES<end);
 }
 
+//////////////
+// keysleep //
+///////////////////////////////////////////////////////////////////////
+// Sleep for a number of frames, returning early if a key is pressed //
+///////////////////////////////////////////////////////////////////////
+
 int keysleep(unsigned int frames)
 {
 	unsigned int target=*FRAMES+frames;
@@ -212,7 +218,7 @@ void handleKeys(unsigned int frames)
 
 			if((key&64)&&(player_bullet.y<0))	// Fire (if not already fired)
                 	{
-	                        player_bullet.y=player.y;		// Set player bullets start location
+	                        player_bullet.y=player.y-8;		// Set player bullets start location
         	                player_bullet.x=player.x+3;
 				player_bullet.timer.value=frames;
 				shotCount++;
@@ -315,97 +321,94 @@ int handleInvaderBullets(unsigned int frames)
 
 int handlePlayerBullet(unsigned int frames)
 {
-	unsigned int i;
+	unsigned int i,skipped;
 
 	while((player_bullet.y>-1)&&(player_bullet.timer.value<frames))
 	{
-		if(player_bullet.y<0)
+		for(skipped=frames-player_bullet.timer.value+1;skipped--;skipped>=0)
 		{
-			printf("%d\n",player_bullet.y);
-			exit(0);
-		}
+	       	        player_bullet.y-=2;
 
-       	        player_bullet.y--;
+			player_bullet.timer.value=frames+player_bullet.timer.delta;
 
-		player_bullet.timer.value=frames+player_bullet.timer.delta;
+			if(player_bullet.y<=32)	// Reached the top
+	       	       	{
+				// Explosion!!!
 
-		if(player_bullet.y<=32)	// Reached the top
-              	{
-			// Explosion!!!
-
-			player_bullet.currentImage++;
-			spritePlot(&player_bullet);
-       	              	player_bullet.currentImage--;
-
-			player_bullet.y=-1;
-			return 0;
-		}
-
-		if(peek(player_bullet.y,player_bullet.x))
-		{
-			// Invader hit?
-
-			for(i=0;i<SPRITES;i++)
-			{
-				sprite *s=&players[currentPlayer].sprites[i];
-
-				if((s->y>-1)&&(s->x-3<player_bullet.x)
-				&&(s->x+9>player_bullet.x)
-				&&(s->y<=player_bullet.y)
-				&&(s->y+8>=player_bullet.y))
-				{
-					players[currentPlayer].newDelta=(50*--players[currentPlayer].invaderCount)/SPRITES;
-
-					if(players[currentPlayer].invaderCount==0) return 1;	// Wave over!
-
-					if(players[currentPlayer].newDelta<s->timer.delta)
-					{
-						unsigned int j;
-
-						for(j=0;j<SPRITES;j++) players[currentPlayer].sprites[j].timer.delta=players[currentPlayer].newDelta;
-					}
-
-					// Set up explosion at the invader's locations
-
-					player_bullet.currentImage=2;
-					player_bullet.x=players[currentPlayer].sprites[i].x;
-					player_bullet.y=players[currentPlayer].sprites[i].y;
-
-					spritePlot(&player_bullet);
-
-	              			player_bullet.currentImage=0;
-
-	                                s->draw=0;
-        	                        bgSpritePlot(s);
-                	                s->draw=1;
-
-					s->y=-1;	
-
-					player_bullet.y=-1;
-
-					players[currentPlayer].score+=invaderScores[i/SPRITESX];
-			
-					return --players[currentPlayer].invaderCount==0;	// Can only hit one thing!
-				}
-			}
-
-			if((ufo.y>-1)&&(ufo.x<player_bullet.x)
-				     &&(ufo.x+9>player_bullet.x)
-			             &&(ufo.y<=player_bullet.y)
-			             &&(ufo.y+8>=player_bullet.y))
-			{
-
-				player_bullet.currentImage=3;
-				player_bullet.x=ufo.x;
-				player_bullet.y=ufo.y;
+				player_bullet.currentImage++;
 				spritePlot(&player_bullet);
-				player_bullet.currentImage=0;
-
+       	       	       	player_bullet.currentImage--;
+	
 				player_bullet.y=-1;
-				ufo.x=-1;
+				return 0;
+			}
+	
+			if(peek(player_bullet.y,player_bullet.x))
+			{
+				// Invader hit?
+	
+				for(i=0;i<SPRITES;i++)
+				{
+					sprite *s=&players[currentPlayer].sprites[i];
+	
+					if((s->y>-1)&&(s->x-3<player_bullet.x)
+					&&(s->x+9>player_bullet.x)
+					&&(s->y<=player_bullet.y)
+					&&(s->y+8>=player_bullet.y))
+					{
+						players[currentPlayer].newDelta=(50*--players[currentPlayer].invaderCount)/SPRITES;
+	
+						if(players[currentPlayer].invaderCount==0) return 1;	// Wave over!
+	
+						if(players[currentPlayer].newDelta<s->timer.delta)
+						{
+							unsigned int j;
+	
+							for(j=0;j<SPRITES;j++) players[currentPlayer].sprites[j].timer.delta=players[currentPlayer].newDelta;
+						}
+	
+						// Set up explosion at the invader's locations
+	
+						player_bullet.currentImage=2;
+						player_bullet.x=players[currentPlayer].sprites[i].x;
+						player_bullet.y=players[currentPlayer].sprites[i].y;
+	
+						spritePlot(&player_bullet);
+	
+		              			player_bullet.currentImage=0;
+	
+		                                s->draw=0;
+       	 		                        bgSpritePlot(s);
+       		         	                s->draw=1;
+	
+						s->y=-1;	
 
-				players[currentPlayer].score+=ufoScores[ufoScorePointer]*10;
-				ufoScorePointer=(ufoScorePointer+1)&15;
+						player_bullet.y=-1;
+
+						players[currentPlayer].score+=invaderScores[i/SPRITESX];
+			
+						return --players[currentPlayer].invaderCount==0;	// Can only hit one thing!
+					}
+				}
+
+				if((ufo.y>-1)&&(ufo.x<player_bullet.x)
+					     &&(ufo.x+9>player_bullet.x)
+				             &&(ufo.y<=player_bullet.y)
+				             &&(ufo.y+8>=player_bullet.y))
+				{
+	
+					player_bullet.currentImage=3;
+					player_bullet.x=ufo.x;
+					player_bullet.y=ufo.y;
+					spritePlot(&player_bullet);
+					player_bullet.currentImage=0;
+	
+					player_bullet.y=-1;
+					ufo.x=-1;
+	
+					players[currentPlayer].score+=ufoScores[ufoScorePointer]*10;
+					ufoScorePointer=(ufoScorePointer+1)&15;
+				}
 			}
 		}
 	}
@@ -554,9 +557,12 @@ int handleInvaders()
 	{
                 for(i=0;i<SPRITES;i++)
 		{
-			players[currentPlayer].sprites[i].draw=0;
-			bgSpritePlot(&players[currentPlayer].sprites[i]);
-			players[currentPlayer].sprites[i].draw=1;
+			if(players[currentPlayer].sprites[i].y>-1)
+			{
+				players[currentPlayer].sprites[i].draw=0;
+				bgSpritePlot(&players[currentPlayer].sprites[i]);
+				players[currentPlayer].sprites[i].draw=1;
+			}
 		}
 
                 for(i=0;i<SPRITES;i++)
@@ -570,9 +576,9 @@ int handleInvaders()
 
                 	        // Game over?
                         	if(s->y>=player.y)  return 1;
+
+				bgSpritePlot(s);
 			}
-			
-			bgSpritePlot(s);
                 }
 	}
 
@@ -649,8 +655,19 @@ void setupBG(unsigned int bases)
 		showScratch(0,256);
         }
 
-        base.image[0]=&lib.images[8];
+	// Bottom green line
+
+	base.image[0]=&lib.images[28];
         base.currentImage=0;
+	base.mask=0;
+	base.draw=1;
+	base.y=246;
+
+	for(base.x=0;base.x<256;base.x+=32) spritePlot(&base);
+
+	// Set up player base
+
+        base.image[0]=&lib.images[8];
         base.y=256-8;
         base.x=24;
 
@@ -720,97 +737,6 @@ void printScores()
 	printAt(64,16,s);	
 }
 
-//////////////////
-// IntroScreens //
-//////////////////
-
-void startGameScreen()
-{
-	while(gameMode==0)
-	{
-		setupBG(0);
-		BGtoScratch();
-		printScores();
-
-		printAt(120,90,"PUSH");
-
-		if(credits>1) printAt(80,130,"1 OR 2PLAYERS BUTTON");
-		else printAt(80,130,"ONLY 1PLAYER BUTTON");
-
-		showScratch(0,256);
-
-		keysleep(INT_MAX);
-	}
-
-	// gameMode will be 1 or 2 here
-}
-
-void introScreens()
-{
-	clsAll();
-	setupBG(0);
-
-	while(1)
-	{
-		BGtoScratch();
-
-		printScores();
-
-		printAt(92,100,"INSERT  COIN"); showScratch(0,256);
-		if(slowPrintAt(80,140,"<1 OR 2 PLAYERS>")) return;
-		if(slowPrintAt(80,140+24,"*1 PLAYER  1 COIN")) return;
-		if(slowPrintAt(80,140+48,"*2 PLAYERS 2 COINS")) return;
-
-		if(keysleep(100)) return;
-
-		BGtoScratch(); printScores(); showScratch(0,256);
-
-		if(slowPrintAt(120,70,"PLAY")) return;
-		if(slowPrintAt(90,100,"SPACE INVADERS")) return;
-
-		if(keysleep(50)) return;
-
-		printAt(80,130,"*SCORE ADVANCE TABLE*");
-		ufo.x=100; ufo.y=150;
-		ufo.image[0]=&lib.images[29];
-		spritePlot(&ufo); ufo.image[0]=&lib.images[7]; ufo.y=-1;
-
-		players[0].sprites[0].x=104; players[0].sprites[0].y=170; spritePlot(&players[0].sprites[0]);
-		players[0].sprites[SPRITES/2].x=103; players[0].sprites[SPRITES/2].y=190; spritePlot(&players[0].sprites[SPRITES/2]);
-		players[0].sprites[SPRITES-1].x=103; players[0].sprites[SPRITES-1].y=210; players[0].sprites[SPRITES-1].image[0]=&lib.images[30]; spritePlot(&players[0].sprites[SPRITES-1]); players[0].sprites[SPRITES-1].image[0]=&lib.images[0];
-
-		showScratch(0,256);
-
-		if(slowPrintAt(120,150,"=? MYSTERY")) return; 
-		if(slowPrintAt(120,170,"=30 POINTS")) return; 
-		if(slowPrintAt(120,190,"=20 POINTS")) return; 
-		if(slowPrintAt(120,210,"=10 POINTS")) return; 
-
-		if(keysleep(50)) return;
-	}
-}
-
-void initiate()
-{
-	char buffer[80],buffer2[80];
-
-	init();
-
-	sprintf(buffer,"%sinvaders_lib",drive);
-	sprintf(buffer2,"%sinvaders_csh",drive);
-	loadLibrary(&lib,buffer,buffer2,1);
-
-	sprintf(buffer,"%sfont_lib",drive);
-	sprintf(buffer2,"%sfont_csh",drive);
-	loadLibrary(&font,buffer,buffer2,1); 
-
- 	if(lib.n==0)
- 	{
- 		puts("Error: Cannot find 'sprites_lib'");
- 		exit(1);
- 	}
-}
-
 //////////
 // game //
 //////////
@@ -868,9 +794,79 @@ int gameLoop()
 
 }
 
-///////////////
-// setupGame //
-///////////////
+//////////////////
+// IntroScreens //
+//////////////////
+
+void introScreens()
+{
+        clsAll();
+        setupBG(0);
+
+        while(1)
+        {
+                BGtoScratch();
+
+                printScores();
+
+                printAt(92,100,"INSERT  COIN"); showScratch(0,256);
+                if(slowPrintAt(80,140,"<1 OR 2 PLAYERS>")) return;
+                if(slowPrintAt(80,140+24,"*1 PLAYER  1 COIN")) return;
+                if(slowPrintAt(80,140+48,"*2 PLAYERS 2 COINS")) return;
+
+                if(keysleep(100)) return;
+
+                BGtoScratch(); printScores(); showScratch(0,256);
+
+                if(slowPrintAt(120,70,"PLAY")) return;
+                if(slowPrintAt(90,100,"SPACE INVADERS")) return;
+
+                if(keysleep(50)) return;
+
+                printAt(80,130,"*SCORE ADVANCE TABLE*");
+                ufo.x=100; ufo.y=150;
+                ufo.image[0]=&lib.images[29];
+                spritePlot(&ufo); ufo.image[0]=&lib.images[7]; ufo.y=-1;
+
+                players[0].sprites[0].x=104; players[0].sprites[0].y=170; spritePlot(&players[0].sprites[0]);
+                players[0].sprites[SPRITES/2].x=103; players[0].sprites[SPRITES/2].y=190; spritePlot(&players[0].sprites[SPRITES/2]);
+                players[0].sprites[SPRITES-1].x=103; players[0].sprites[SPRITES-1].y=210; players[0].sprites[SPRITES-1].image[0]=&lib.images[30]; spritePlot(&players[0].sprites[SPRITES-1]); players[0].sprites[SPRITES-1].image[0]=&lib.images[0];
+
+                showScratch(0,256);
+
+                if(slowPrintAt(120,150,"=? MYSTERY")) return;
+                if(slowPrintAt(120,170,"=30 POINTS")) return;
+                if(slowPrintAt(120,190,"=20 POINTS")) return;
+                if(slowPrintAt(120,210,"=10 POINTS")) return;
+
+                if(keysleep(50)) return;
+        }
+}
+
+/////////////////////
+// startGameScreen //
+/////////////////////
+
+void startGameScreen()
+{
+        while(gameMode==0)
+        {
+                setupBG(0);
+                BGtoScratch();
+                printScores();
+
+                printAt(120,90,"PUSH");
+
+                if(credits>1) printAt(80,130,"1 OR 2PLAYERS BUTTON");
+                else printAt(80,130,"ONLY 1PLAYER BUTTON");
+
+                showScratch(0,256);
+
+                keysleep(INT_MAX);
+        }
+
+        // gameMode will be 1 or 2 here
+}
 
 void setupGame(unsigned int frames)
 {
@@ -895,7 +891,7 @@ void setupGame(unsigned int frames)
 	}
 
 	players[0].score=players[1].score=0;
-	players[0].lives=players[1].lives=1;
+	players[0].lives=players[1].lives=6;
 
 	reload=0x30+*FRAMES;
 
@@ -933,6 +929,33 @@ void setupGame(unsigned int frames)
 	keyTimer.delta=1;
 }
 
+//////////////
+// initiate //
+////////////////////////////////////////////////////////
+// Set up the sprite system and load the game sprites //
+////////////////////////////////////////////////////////
+
+void initiate()
+{
+        char buffer[80],buffer2[80];
+        
+        init(); 
+
+        sprintf(buffer,"%sinvaders_lib",drive);
+        sprintf(buffer2,"%sinvaders_csh",drive);
+        loadLibrary(&lib,buffer,buffer2,1);
+
+        sprintf(buffer,"%sfont_lib",drive);
+        sprintf(buffer2,"%sfont_csh",drive);
+        loadLibrary(&font,buffer,buffer2,1);
+
+        if(lib.n==0)
+        {
+                puts("Error: Cannot find 'sprites_lib'");
+                exit(1);
+        }
+}
+
 
 //////////////
 // mainloop //
@@ -957,6 +980,7 @@ void mainLoop()
 		setupGame(*FRAMES);
 
 		players[0].score=players[1].score=0;	// Reset the scores
+		setupGame(*FRAMES);
 
 		while(players[currentPlayer].lives>0)
 		{
@@ -992,7 +1016,7 @@ void mainLoop()
 
 			setupBG(1); 
 
-			setupInvaders(frames);
+			//setupInvaders(frames);
 
 			// Start the player a few seconds into the game
 			player.timer.value=frames+100;
@@ -1014,73 +1038,11 @@ void mainLoop()
 	}
 }
 
-void benchmark()
-{
-	unsigned int s;
-
-	init();
-	loadLibrary(&lib,"/home/simon/test5.lib","/home/simon/test5.csh",1);
-	initBG();
-
-	for(s=0;s<3;s++)
-	{
-		const int n=10;
-
-		unsigned long t,c=0,pass;
-		sprite sprite[8];
-
-		for(c=0;c<8;c++)
-		{
-			sprite[c].image[0]=&lib.images[s];
-			sprite[c].currentImage=0;
-			sprite[c].x=c;
-			sprite[c].y=c*sprite[c].image[0]->y;
-			sprite[c].draw=1;
-		}
-
-		for(pass=0;pass<2;pass++)
-		{
-			for(c=0;c<8;c++) sprite[c].mask=pass;
-
-			t=*FRAMES+n*50;
-	
-			while(t>*FRAMES)
-			{
-				unsigned int i,y=0,x=0;
-
-				BGtoScratch();
-
-				for(i=0;i<8;i++)
-				{
-					if(y+lib.images[s].y>=256)
-					{
-						y=0;
-						x+=lib.images[s].x*2+16;
-					}
-	
-					x++;
-	
-					spritePlot(&sprite[i]);
-	
-					y+=lib.images[s].y;
-
-					c++;
-				}
-
-				showScratch(0,256);
-			}
-
-			showScratch(0,256);
-
-			printf("%c %d x %d -> %d\n",pass==1?'M':' ',lib.images[s].x*4,lib.images[s].y,c);
-			initBG();
-		}
-	}
-}
-
 //////////
 // main //
 //////////
+
+int benchmark();
 
 int main(int argc, char *argv[])
 {
