@@ -65,5 +65,7 @@ void benchmark()
                         initBG();
                 }
         }
+
+	exit(0);
 }
 

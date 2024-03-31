@@ -1,5 +1,5 @@
-sprite:	sprite.o image.o  benchmark.o
-	qld -lm -o sprite sprite.o image.o benchmark.o
+sprite:	sprite.o image.o 
+	qld -lm -o sprite sprite.o image.o 
 
 sprite.o:	sprite.c image.h 
 		@echo $(PATH)
@@ -12,10 +12,8 @@ image.o:	image.c image.h
 		qcc -O -o image.o -c image.c
 		#qcc -O -S image.c
 
-benchmark.o:	benchmark.c image.h
-		qcc -O -o benchmark.o -c benchmark.c
 clean:
-	rm -f benchmark.o image.o screen.o libimage.a interrupt.o sprite.o invaders.img invaders.zip image.s invaders.mdv inv
+	rm -f image.o screen.o libimage.a interrupt.o sprite.o invaders.img invaders.zip image.s invaders.mdv inv
 
 cleaner:	clean
 	rm -f sprite
@@ -24,7 +22,7 @@ run:   	sprite
 	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.75 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1.0 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
 
 runfast:   	sprite
 	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
@@ -38,7 +36,7 @@ bm:   	sprite
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1.0 -b "LRESPR flp1_sigext_rext:EW flp1_sprite,#1;'-bm'"
 
 dist:	sprite
-	rm -f image.o screen.o libimage.a interrupt.o benchmark.o
+	rm -f image.o screen.o libimage.a interrupt.o
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
