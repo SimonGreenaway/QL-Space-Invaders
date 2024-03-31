@@ -6,6 +6,9 @@
 
 #include "image.h"
 
+#undef DEBUG
+#define FPS
+
 library lib,font;	// Image libraries
 
 #define SPRITESX 11			// Number of invaders in a row
@@ -43,6 +46,10 @@ unsigned char ufoScorePointer=0;
 
 unsigned int invaderSoundTimer;
 
+#ifdef FPS
+unsigned int frameCounter,frameTimer;
+#endif
+
 unsigned int xPrint(unsigned int chars)
 {
 	return XMIN+((XMAX-XMIN)-6*chars)/2;
@@ -61,8 +68,11 @@ void printCharAt(unsigned int x,unsigned int y,char c)
 	s.x=x; s.y=y;
 	s.image[0]=&font.images[c-33];
 	s.currentImage=0;
+	s.draw=1;
+	s.mask=0;
 
 	spritePlot(&s);
+
 }
 
 void printAt(unsigned int x,unsigned y,char *s)
@@ -757,7 +767,7 @@ void printScores()
 	char s[80];
 
 	sprintf(s,"%04d     %04d     %04d",players[0].score,highScore,players[1].score);
-	printAt(xprint(strlen(s)),16+32,s);	
+	printAt(xPrint(strlen(s)),16+32,s);	
 }
 
 //////////////////
@@ -861,11 +871,18 @@ void initiate()
 
 int gameLoop()
 {
+	#ifdef FPS
+	char s[80];
+	frameCounter=0;
+	frameTimer=*FRAMES+50;
+	#endif
+	
 	#ifdef DEBUG
 	puts("Main loop start");
 	#endif
 
 	player.x=XMIN;
+
 
 	while(1)
 	{
@@ -907,7 +924,20 @@ int gameLoop()
 
 	        if(player.timer.value<frames) spritePlot(&player);
 
+		#ifdef FPS
+		frameCounter++;
+		if(frameTimer<*FRAMES)
+		{
+			sprintf(s,"%d",frameCounter);
+
+			frameTimer=*FRAMES+50;
+			frameCounter=0;
+		}
+		printAt(0,0,s);
+		#endif
+
 		showScratch(0,256);
+
 	}
 
 }

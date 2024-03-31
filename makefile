@@ -47,7 +47,7 @@ dist:	sprite
 	cp BOOT_flp1 BOOT
 	qltools invaders.img -W BOOT sprite invaders.lib font.lib LICENSE
 	cp BOOT_mdv1 BOOT
-	mdvtool create name invaders zip_import invaders.zip import BOOT LICENSE write invaders.mdv
+	mdvtool create name invaders zip_import invaders.zip import BOOT write invaders.mdv
 	rm -f BOOT
 
 git:	cleaner
