@@ -4,8 +4,15 @@ void init();
 void fill(unsigned short colour);
 void plot(unsigned short x,unsigned short y,unsigned char c);
 
+// undef MAGIC to disable image checking
+#define MAGIC 0xdeadbeef
+
 typedef struct
 {
+	#ifdef MAGIC
+	unsigned int magic;
+	#endif
+
 	short y;
 	short x;
 
@@ -34,7 +41,7 @@ typedef struct
 
 typedef struct
 {
-	int n;
+	unsigned n;
 	image *images;
 } library;
 
@@ -58,11 +65,14 @@ void bgSpritePlot(sprite *sprite);
 
 void tilePlot(unsigned short x,unsigned short y,image *image);
 void imagePlot(unsigned int x,unsigned int y,image *image);
-void loadLibrary(library *library,char *filename,char *cachefilename,int shift);
+void loadLibrary(library *library,char *filename,int shift);
+void bLoadLibrary(library *library,char *filename,int shift);
+void bSaveLibrary(library *library,char *filename);
 
-void showScratch(int from,int to);
+void showScratch();
 void cls();
 void clsAll();
+void bgFill(unsigned int rowStart,unsigned int rowEnd,unsigned char c);
 
 void initBG();
 void restoreBG();

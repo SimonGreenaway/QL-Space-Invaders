@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <qdos.h>
 
 #include "image.h"
@@ -78,6 +79,12 @@ void cls()
 	memset((unsigned char *)0x20000,0,32768);
 }
 
+void bgFill(unsigned int rowStart,unsigned int rowEnd,unsigned char c)
+{
+	printf("%d %d %d\n",rowStart,rowEnd,c); sleep(5);
+	memset(background+rowStart*128,c,128*(rowEnd-rowStart));
+}
+
 void clsAll()
 {
 	cls();
@@ -123,6 +130,26 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 	unsigned int a,xlim=image->x/2;
 
 	address+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
+
+	#ifdef MAGIC
+	if(image->magic!=MAGIC)
+	{
+		puts("Invalid sprite being drawn!");
+		exit(1);
+	}
+
+	if(sprite->y<0)
+	{
+		printf("image %s <y\n",image->name);
+		exit(1);
+	}
+	else if(sprite->y+image->y>255)
+	{
+		printf("image %s %d>y\n",image->name,sprite->y+image->y);
+		exit(1);
+	}
+	
+	#endif
 
 	if(sprite->y<0)
 	{
@@ -507,7 +534,108 @@ void preShift(image *image)
         }
 }
 
-void loadLibrary(library *library,char *filename,char *cachefilename,int shift)
+void bLoadLibrary(library *library,char *filename,int shift)
+{
+	unsigned int i,n,b,a;
+	char buffer[80];
+	unsigned short *d,*m;
+	FILE *in;
+
+	in=fopen(filename,"rb");
+
+	if(in==NULL)
+	{
+		printf("Error: Cannot open '%s' to read\n",filename);
+		exit(2);
+	}
+
+	fread(&library->n,sizeof(unsigned int),1,in);
+
+        library->images=(image *)(myMalloc(sizeof(image)*library->n));
+
+	for(i=0;i<library->n;i++)
+	{
+		library->images[i].magic=MAGIC;
+	
+        	readLine(in,buffer);
+                buffer[strcspn(buffer, "\r\n")] = 0;
+
+                library->images[i].name=(char *)myMalloc(strlen(buffer)+1);
+                strcpy(library->images[i].name,buffer);
+
+		fread(&library->images[i].x,sizeof(unsigned int),1,in);
+		fread(&library->images[i].y,sizeof(unsigned int),1,in);
+
+                n=2*sizeof(unsigned short)*library->images[i].x*library->images[i].y;
+
+                if(n==0)
+                {
+                        printf("N is zero! %d x %d - skipping!\n",library->images[i].x,library->images[i].y);
+                        continue;
+                }
+
+                d=library->images[i].data=(unsigned short *)(myMalloc(n));
+                m=library->images[i].mask=(unsigned short *)(myMalloc(n));
+
+                for(b=0;b<library->images[i].y;b++)
+                {
+			fread(d,sizeof(unsigned short),library->images[i].x,in);
+			fread(m,sizeof(unsigned short),library->images[i].x,in);
+
+			d+=library->images[i].x;
+			m+=library->images[i].x;
+                }
+
+                if(shift)
+                {
+                        preShift(&library->images[i]);
+
+                        free(library->images[i].data);
+                        free(library->images[i].mask);
+                }
+	}
+}
+
+void bSaveLibrary(library *library,char *filename)
+{
+	FILE *out;
+	unsigned int i,b;
+        unsigned short *d,*m;
+
+	out=fopen(filename,"wb");
+
+	if(out==NULL)
+	{
+		printf("Error: Cannot open '%s' to write\n",filename);
+		exit(2);
+	}
+
+	fwrite(&library->n,sizeof(unsigned int),1,out); // n
+
+	for(i=0;i<library->n;i++)
+	{
+		fprintf(out,"%s\n",library->images[i].name);
+
+                fwrite(&library->images[i].x,sizeof(unsigned int),1,out);
+                fwrite(&library->images[i].y,sizeof(unsigned int),1,out);
+
+                d=library->images[i].data;
+                m=library->images[i].mask;
+
+                for(b=0;b<library->images[i].y;b++)
+                {
+                        fwrite(d,sizeof(unsigned short),library->images[i].x,out);
+                        fwrite(m,sizeof(unsigned short),library->images[i].x,out);
+
+                        d+=library->images[i].x;
+                        m+=library->images[i].x;
+                }
+	}
+
+	fclose(out);
+}
+
+void loadLibrary(library *library,char *filename,int shift)
 {
 	int i,a,b;
 	unsigned short *d,*m;
@@ -535,6 +663,7 @@ void loadLibrary(library *library,char *filename,char *cachefilename,int shift)
 	{
 		int n;
 
+		library->images[i].magic=MAGIC;
 		readLine(in,buffer); printf("  %d %s",i,buffer);
 		buffer[strcspn(buffer, "\r\n")] = 0;
 
@@ -591,8 +720,8 @@ void loadLibrary(library *library,char *filename,char *cachefilename,int shift)
 		{
 			preShift(&library->images[i]);
 
-			free(library->images[i].data);
-			free(library->images[i].mask);
+			//free(library->images[i].data);
+			//free(library->images[i].mask);
 		}
 	}
 
@@ -640,7 +769,7 @@ void BGtoScratch()
 	bufferCopy((unsigned char *)scratch,(unsigned char *)background,0,256);
 }
 
-void showScratch(int from,int to)
+void showScratch()
 {
 	bufferCopy((unsigned char *)0x20000,scratch,0,256);
 }
