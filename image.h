@@ -73,6 +73,7 @@ void showScratch();
 void cls();
 void clsAll();
 void bgFill(unsigned int rowStart,unsigned int rowEnd,unsigned char c);
+void Fill(unsigned int rowStart,unsigned int rowEnd,unsigned char c);
 
 void initBG();
 void restoreBG();

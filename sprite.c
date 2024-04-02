@@ -1,13 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <math.h>
 #include <qdos.h>
 
 #include "image.h"
 
-#undef DEBUG
+#define DEBUG(x) { Fill(0,8,0); printAt(0,0,x); showScratch(); }
+//#undef DEBUG
 #define FPS
+#define IMMORTAL
 
 library lib,font;	// Image libraries
 
@@ -47,7 +50,7 @@ unsigned char ufoScorePointer=0;
 unsigned int invaderSoundTimer;
 
 #ifdef FPS
-unsigned int frameCounter,frameTimer;
+unsigned int fpsCounter,fpsTimer;
 #endif
 
 unsigned int xPrint(unsigned int chars)
@@ -86,18 +89,34 @@ void printAt(unsigned int x,unsigned y,char *s)
 	}
 }
 
+/////////////////////   
+// TIME AND FRAMES //
+/////////////////////                   
+
+unsigned int frameCounter=0,lastFrame;  
+
+unsigned int getFrames()
+{
+        unsigned int frames=*FRAMES;
+
+        if(frames<lastFrame) frameCounter+=0x10000;
+        lastFrame=frames;               
+
+        return  frameCounter+frames;
+}
+
 void msleep(unsigned int frames)
 {
-	unsigned int end=*FRAMES+frames;
+	unsigned int end=getFrames()+frames;
 
-	while(*FRAMES<end);
+	while(getFrames()<end);
 }
 
 int keysleep(unsigned int frames)
 {
-	unsigned int target=*FRAMES+frames;
+	unsigned int target=getFrames()+frames;
 
-	while(*FRAMES<target)
+	while(getFrames()<target)
 	{
 		if(keyrow(2)&8) // Coin key 'C' ?
 		{
@@ -129,7 +148,7 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 
 	while(*s!=0)
 	{
-		unsigned int frames=*FRAMES;
+		unsigned int frames=getFrames();
 
 		// Coin key 'C' ?
 
@@ -155,26 +174,12 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 
 		if(*s!=32) printCharAt(x,y,*s);
 
-		/*
-                {
-                     	unsigned int i;
-
-                        for(i=0;i<10;i++)
-                        {
-                                if(keyrow(i))
-                                {
-                                        printf("%d\t%d\n",i,keyrow(i));
-                                }
-                        }
-                }
-		*/
-
                 showScratch();
 
 		s++;
 		x+=6;
 
-		while(frames+5>*FRAMES);
+		while(frames+5>getFrames());
 	}
 
 	return 0;
@@ -246,8 +251,8 @@ int handleInvaderBullets(unsigned int frames)
 	{
 	        if((bullets[i].y>-1)&&(bullets[i].timer.value<=frames))	// Fired?
 	        {
-			bullets[i].timer.value=*FRAMES+bullets[i].timer.delta;
-	       	        bullets[i].y+=(players[currentPlayer].invaderCount<=8?5:4);	// Move down
+			bullets[i].timer.value=frames+bullets[i].timer.delta;
+	       	        bullets[i].y+=(players[currentPlayer].invaderCount<=8?5:4);
 			bullets[i].currentImage=(bullets[i].currentImage+1)&3;
 
 			if(bullets[i].y>=player.y)	// Reached the bottom
@@ -259,8 +264,9 @@ int handleInvaderBullets(unsigned int frames)
 				else if(players[currentPlayer].score<1000) reload=frames+0x10;
 				else if(players[currentPlayer].score<2000) reload=frames+0x0B;
 				else if(players[currentPlayer].score<3000) reload=frames+0x08;
-				else reload=*FRAMES+0x07;
-				 
+				else reload=getFrames()+0x07;
+			
+				#ifndef IMMORTAL	 
 				if((bullets[i].x>=player.x)&&(bullets[i].x<player.x+16))
 				{
 					unsigned int j;
@@ -288,6 +294,7 @@ int handleInvaderBullets(unsigned int frames)
 					player.currentImage=0;
 					return 1;
 				}
+				#endif
 	       		}
 			else
 			{
@@ -297,8 +304,12 @@ int handleInvaderBullets(unsigned int frames)
 					// Hit something!
 
 					bullets[i].currentImage=4;
+					bullets[i].mask=1;
+					bullets[i].x-=2;
 					bgSpritePlot(&bullets[i]);
+	
 					bullets[i].currentImage=0;
+					bullets[i].mask=0;
 					bullets[i].y=-1;
 					bulletCount--;
 				}
@@ -414,7 +425,9 @@ int handlePlayerBullet(unsigned int frames)
 
                                 player_bullet.currentImage=4;
                                 player_bullet.y-=5;
+				player_bullet.mask=1;
                                 bgSpritePlot(&player_bullet);
+				player_bullet.mask=0;
                                 player_bullet.currentImage=0;
 
                                 player_bullet.y=-1;
@@ -444,7 +457,7 @@ void invaderFire(unsigned int frames)
 	//;
 	//; 1CB8: 02 10 20 30
 
-	if((bulletCount<maxBulletCount)&&(reload<*FRAMES))
+	if((bulletCount<maxBulletCount)&&(reload<getFrames()))
 	{
 		unsigned int i,j;
 
@@ -479,18 +492,19 @@ void invaderFire(unsigned int frames)
 
 				bulletCount++;
 
+				// Bullet type 0 fires either at the player, or the closest to the player
 				if(bulletTypes[j]==0)
 				{
 					int nearest=INT_MAX;
 
-					for(k=0;k<SPRITES;k++)
+					for(k=SPRITES-1;k>=0;k--)
 					{
 						if(players[currentPlayer].sprites[k].y>-1)
 						{
 							int d=players[currentPlayer].sprites[k].x>player.x?players[currentPlayer].sprites[k].x-player.x
 										   :player.x-players[currentPlayer].sprites[k].x;
 
-							if(d<=nearest)
+							if(d<nearest)
 							{
 								i=k; nearest=d;
 							}
@@ -532,45 +546,40 @@ void invaderFire(unsigned int frames)
 //          0 - still going! // 
 ///////////////////////////////
 
-int handleInvaders()
+int handleInvaders(unsigned int frames)
 {
-	unsigned short frames=*FRAMES;
 	unsigned int i,bounce=0;
 
         for(i=0;i<SPRITES;i++)
         {
 		sprite *s=&players[currentPlayer].sprites[i];
 
-		if(s->y>-1)	// Sprite alive?
+		if((s->y>-1)&&(s->timer.value<=frames))	// Sprite alive? time to move?
 		{
-			if(s->timer.value<=frames)	// Time to move?
-			{
-				s->draw=0;
-				bgSpritePlot(s);
-				s->draw=1;
+			// Clear old invader from BG
+			s->draw=0; bgSpritePlot(s); s->draw=1;
 
-				s->x+=s->dx;	// Move invader
-	
-		                s->currentImage=1-s->currentImage; 	// Change image for animation
-	
-				s->timer.value+=s->timer.delta;	// Set up timer for next movement 
-	
-				if((s->x<=XMIN)||(s->x+16>=XMAX-1)) bounce=1;	// Check for edge hit
-				bgSpritePlot(s);	// Draw invader
-			}
-	
+			s->x+=s->dx;	// Move invader
+		        s->currentImage=1-s->currentImage; 	// Animate
+			s->timer.value+=s->timer.delta;		// Set up timer for next movement 
+			bgSpritePlot(s);	// Draw invader on BG
+
+			if(!bounce&&((s->x<=XMIN)||(s->x>=XMAX-17))) bounce=1;	// Check for edge hit
 		}
         }
 
+/*
 	if(frames>=invaderSoundTimer)
 	{
 		invaderSoundTimer+=players[currentPlayer].newDelta;
 		//do_sound(2000,200,200,5,1,0,0,0);
 	}
+*/
 
 	if(bounce)	// Move the invaders down and reverse direction
 	{
 		unsigned int lowest=0;
+
 
                 for(i=0;i<SPRITES;i++)
 		{
@@ -584,7 +593,7 @@ int handleInvaders()
 			}
 		}
 
-		bgFill(lowest,lowest+8,255);
+		if(lowest+16>=195) bgFill(lowest+8,lowest+16,0);
 
                 for(i=0;i<SPRITES;i++)
                 {
@@ -673,7 +682,7 @@ void setupBG(unsigned int bases,unsigned int line)
 		s.mask=0; s.draw=1;
                 s.image[0]=&lib.images[26];
                 s.currentImage=0;
-                s.x=XMIN+i*48+32; s.y=256-16-13-32;
+                s.x=XMIN+i*48+32; s.y=195;
 
                 spritePlot(&s);
         }
@@ -740,7 +749,7 @@ void setupInvaders(unsigned int frames)
                 s->dx=1;
                 s->dy=0;
 
-                s->timer.value=frames+(SPRITES-i)/3;
+                s->timer.value=frames+(SPRITES-i);
                 s->timer.delta=50;
 
 		s->mask=0;
@@ -891,45 +900,40 @@ void initiate(unsigned int convert)
 
 int gameLoop()
 {
+	unsigned int frames,lf=0;
+
 	#ifdef FPS
 	char s[80];
-	frameCounter=0;
-	frameTimer=*FRAMES+50;
+	fpsCounter=0;
+	fpsTimer=getFrames()+50;
 	#endif
 	
-	#ifdef DEBUG
-	puts("Main loop start");
-	#endif
+	//DEBUG("MAIN LOOP START");
 
 	player.x=XMIN;
 
-
 	while(1)
 	{
-		char s[80];
+		// Wait for next frame
 
-		unsigned short frames=*FRAMES;
+		do
+		{
+			frames=getFrames();
+		}
+		while(frames==lf);
 
-		#ifdef DEBUG
-		puts("Loop");
-		#endif
+		lf=frames;
 
-		#ifdef DEBUG
-		puts("Invaders");
-		#endif
+		//DEBUG("INVADERS");
 
-		if(handleInvaders()) return 2; // GAME OVER!
+		if(handleInvaders(frames)) return 2; // GAME OVER!
 		BGtoScratch();
 
-		#ifdef DEBUG
-		puts("Scores");
-		#endif
+		//DEBUG("SCORES");
 
 		printScores();
 
-		#ifdef DEBUG
-		puts("Keys");
-		#endif
+		//DEBUG("KEYS");
 
 		handleKeys(frames);
 		if(handlePlayerBullet(frames)) return 0; // LEVEL CLEARED!
@@ -945,13 +949,13 @@ int gameLoop()
 	        if(player.timer.value<frames) spritePlot(&player);
 
 		#ifdef FPS
-		frameCounter++;
-		if(frameTimer<*FRAMES)
+		fpsCounter++;
+		if(fpsTimer<getFrames())
 		{
-			sprintf(s,"%d",frameCounter);
+			sprintf(s,"%d",fpsCounter);
 
-			frameTimer=*FRAMES+50;
-			frameCounter=0;
+			fpsTimer=getFrames()+50;
+			fpsCounter=0;
 		}
 		printAt(0,0,s);
 		#endif
@@ -990,7 +994,7 @@ void setupGame(unsigned int frames)
 	players[0].lives=players[1].lives=6;
 	players[0].wave=players[1].wave=0;
 
-	reload=0x30+*FRAMES;
+	reload=0x30+getFrames();
 
 	player.image[0]=&lib.images[8];
 	player.image[1]=&lib.images[10];
@@ -1023,7 +1027,7 @@ void setupGame(unsigned int frames)
 	ufo.x=-1;
 	ufo.y=64;
 
-	keyTimer.value=*FRAMES;
+	keyTimer.value=0;
 	keyTimer.delta=1;
 }
 
@@ -1040,7 +1044,7 @@ void mainLoop(int convert)
 
 	while(1)
 	{
-		setupGame(*FRAMES);
+		setupGame(getFrames());
 
 		if(credits==0) introScreens();
 
@@ -1050,7 +1054,7 @@ void mainLoop(int convert)
 
 		credits-=gameMode;
 
-		setupGame(*FRAMES);
+		setupGame(getFrames());
 
 		players[0].score=players[1].score=0;	// Reset the scores
 
@@ -1070,11 +1074,11 @@ void mainLoop(int convert)
 
 			// Blink the score of the next player
 
-			frames=*FRAMES+150;
+			frames=getFrames()+150;
 
-			while(*FRAMES<frames)
+			while(getFrames()<frames)
 			{
-				if((*FRAMES)&1)
+				if((getFrames())&1)
 		                	sprintf(s,"%04d     %04d     %04d",players[0].score,highScore,players[1].score);
 		                else if(currentPlayer==0) 
 					sprintf(s,"%c%c%c%c     %04d     %04d",'Z'+1,'Z'+1,'Z'+1,'Z'+1,highScore,players[1].score);
@@ -1088,8 +1092,6 @@ void mainLoop(int convert)
 
 			setupBG(1,1); 
 
-			//setupInvaders(frames);
-
 			// Start the player a few seconds into the game
 			player.timer.value=frames+100;
 			playerVisible=0;
@@ -1100,7 +1102,7 @@ void mainLoop(int convert)
 			{
 			        sprite *s=&players[currentPlayer].sprites[i];
 
-				if(s->y>-1) s->timer.value=frames;
+				if(s->y>-1) s->timer.value=frames+(SPRITES-i);
 			}
 
 			// Play until death, then...
@@ -1147,9 +1149,9 @@ void benchmark()
 		{
 			for(c=0;c<8;c++) sprite[c].mask=pass;
 
-			t=*FRAMES+n*50;
+			t=getFrames()+n*50;
 	
-			while(t>*FRAMES)
+			while(t>getFrames())
 			{
 				unsigned int i,y=0,x=0;
 

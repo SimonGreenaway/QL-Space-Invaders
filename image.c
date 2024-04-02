@@ -15,7 +15,7 @@ unsigned char *addresses[256];
 unsigned int secondAddress;
 unsigned short bits[8];
 
-unsigned short *background;
+unsigned char *background;
 unsigned char *scratch;
 
 // Print a number in binary to a set number of places...
@@ -81,8 +81,12 @@ void cls()
 
 void bgFill(unsigned int rowStart,unsigned int rowEnd,unsigned char c)
 {
-	printf("%d %d %d\n",rowStart,rowEnd,c); sleep(5);
 	memset(background+rowStart*128,c,128*(rowEnd-rowStart));
+}
+
+void Fill(unsigned int rowStart,unsigned int rowEnd,unsigned char c)
+{
+	memset(scratch+rowStart*128,c,128*(rowEnd-rowStart));
 }
 
 void clsAll()
@@ -568,11 +572,7 @@ void bLoadLibrary(library *library,char *filename,int shift)
 
                 n=2*sizeof(unsigned short)*library->images[i].x*library->images[i].y;
 
-                if(n==0)
-                {
-                        printf("N is zero! %d x %d - skipping!\n",library->images[i].x,library->images[i].y);
-                        continue;
-                }
+                if(n==0) continue;
 
                 d=library->images[i].data=(unsigned short *)(myMalloc(n));
                 m=library->images[i].mask=(unsigned short *)(myMalloc(n));
