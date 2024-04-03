@@ -80,3 +80,8 @@ void restoreBG();
 void BGtoScratch();
 
 unsigned short peek(unsigned int y,unsigned int x);
+
+void printCharAt(library *font,unsigned int x,unsigned int y,char c);
+void printAt(library *font,unsigned int x,unsigned y,char *s);
+void printCharAtBG(library *font,unsigned int x,unsigned int y,char c);
+void printAtBG(library *font,unsigned int x,unsigned y,char *s);

@@ -7,9 +7,16 @@
 
 #include "image.h"
 
-#define DEBUG(x) { Fill(0,8,0); printAt(0,0,x); showScratch(); }
+#define DEBUG(x) { Fill(0,8,0); printAt(&font,0,0,x); showScratch(); }
 //#undef DEBUG
+
+#undef PROFILE
 #define FPS
+
+#ifdef PROFILE
+#undef FPS
+#endif
+
 #define IMMORTAL
 
 library lib,font;	// Image libraries
@@ -29,6 +36,7 @@ struct player
 {
 	sprite sprites[SPRITES];
 	unsigned int newDelta,invaderCount,shotCount,score,lives,wave;
+	int direction;
 };
 
 struct player players[2];
@@ -58,35 +66,52 @@ unsigned int xPrint(unsigned int chars)
 	return XMIN+((XMAX-XMIN)-6*chars)/2;
 }
 
-void printCharAt(unsigned int x,unsigned int y,char c)
+unsigned int divu10(unsigned int n)
 {
-	sprite s;
+    unsigned q, r;
 
-	if(c-33>=font.n)
-	{
-		printf("Font error: %d>=%d\n",c-33,font.n);
-		exit(1);
-	}
+    q = (n >> 1) + (n >> 2);
+    q = q + (q >> 4);
+    q = q + (q >> 8);
+    q = q + (q >> 16);
+    q = q >> 3;
+    r = n - (((q << 2) + q) << 1);
 
-	s.x=x; s.y=y;
-	s.image[0]=&font.images[c-33];
-	s.currentImage=0;
-	s.draw=1;
-	s.mask=0;
-
-	spritePlot(&s);
-
+    return q + (r > 9);
 }
 
-void printAt(unsigned int x,unsigned y,char *s)
+unsigned int mul10(unsigned int z)
 {
-	while(*s!=0)
-	{
-		if(*s!=32) printCharAt(x,y,*s);
+        return (z<<3)+(z<<1);
+}
 
-		s++;
-		x+=6;
-	}
+void scorePrint(char *c,unsigned int z)
+{
+        int a;
+        unsigned int zz;
+        
+        for(a=3;a>=0;a--)
+        {
+                zz=divu10(z);
+                c[a]='0'+(z-mul10(zz));
+                z=zz;
+        }
+}
+
+void printScores()
+{
+	char s[80],*sp=s;
+	char p1[5],hs[5],p2[5];
+
+	p1[4]=hs[4]=p2[4]='\0';
+
+	scorePrint(p1,players[0].score);
+	scorePrint(hs,highScore);
+	scorePrint(p2,players[1].score);
+
+	bgFill(48,48+8,0);
+	sprintf(s,"%4s     %4s     %4s",p1,hs,p2);
+	printAtBG(&font,xPrint(strlen(s)),16+32,s);	
 }
 
 /////////////////////   
@@ -172,7 +197,7 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 			return 2;  // Player 2 start?
 		}
 
-		if(*s!=32) printCharAt(x,y,*s);
+		if(*s!=32) printCharAt(&font,x,y,*s);
 
                 showScratch();
 
@@ -365,9 +390,7 @@ int handlePlayerBullet(unsigned int frames)
 					&&(s->y<=player_bullet.y)
 					&&(s->y+8>=player_bullet.y))
 					{
-						players[currentPlayer].newDelta=(50*--players[currentPlayer].invaderCount)/SPRITES;
-
-						if(players[currentPlayer].invaderCount==0) return 1;	// Wave over!
+						players[currentPlayer].newDelta=(50*players[currentPlayer].invaderCount)/SPRITES;
 
 						if(players[currentPlayer].newDelta<s->timer.delta)
 						{
@@ -395,6 +418,7 @@ int handlePlayerBullet(unsigned int frames)
 						player_bullet.y=-1;
 
 						players[currentPlayer].score+=invaderScores[i/SPRITESX];
+						printScores();
 			
 						return --players[currentPlayer].invaderCount==0;	// Can only hit one thing!
 					}
@@ -416,6 +440,8 @@ int handlePlayerBullet(unsigned int frames)
 					ufo.x=-1;
 
 					players[currentPlayer].score+=ufoScores[ufoScorePointer]*10;
+					printScores();
+
 					ufoScorePointer=(ufoScorePointer+1)&15;
 
 					return 0;
@@ -546,6 +572,8 @@ void invaderFire(unsigned int frames)
 //          0 - still going! // 
 ///////////////////////////////
 
+int bounce=0;
+
 int handleInvaders(unsigned int frames)
 {
 	unsigned int i,bounce=0;
@@ -554,17 +582,31 @@ int handleInvaders(unsigned int frames)
         {
 		sprite *s=&players[currentPlayer].sprites[i];
 
-		if((s->y>-1)&&(s->timer.value<=frames))	// Sprite alive? time to move?
+		if((s->y>-1)&&(s->timer.value<=frames))	// Time to move?
 		{
+			unsigned int newX=s->x
+				+((players[currentPlayer].direction==1)?s->dx:-s->dx);
+
+			if(!bounce)
+			{
+				if(((players[currentPlayer].direction==-1)&&(newX<=XMIN))
+				 ||((players[currentPlayer].direction==1)&&(newX>=XMAX-17)))
+				{
+					bounce=1;
+
+					break;
+				}
+			}
+
+
 			// Clear old invader from BG
 			s->draw=0; bgSpritePlot(s); s->draw=1;
 
-			s->x+=s->dx;	// Move invader
+			s->x=newX;				// Move invader
 		        s->currentImage=1-s->currentImage; 	// Animate
 			s->timer.value+=s->timer.delta;		// Set up timer for next movement 
 			bgSpritePlot(s);	// Draw invader on BG
 
-			if(!bounce&&((s->x<=XMIN)||(s->x>=XMAX-17))) bounce=1;	// Check for edge hit
 		}
         }
 
@@ -580,18 +622,21 @@ int handleInvaders(unsigned int frames)
 	{
 		unsigned int lowest=0;
 
+		bounce=0;
+
+		players[currentPlayer].direction=-players[currentPlayer].direction;
 
                 for(i=0;i<SPRITES;i++)
-		{
-			if(players[currentPlayer].sprites[i].y>-1)
-			{
-				players[currentPlayer].sprites[i].draw=0;
-				bgSpritePlot(&players[currentPlayer].sprites[i]);
-				players[currentPlayer].sprites[i].draw=1;
+                {
+                        if(players[currentPlayer].sprites[i].y>-1)
+                        {
+                                players[currentPlayer].sprites[i].draw=0;
+                                bgSpritePlot(&players[currentPlayer].sprites[i]);
+                                players[currentPlayer].sprites[i].draw=1;
 
-				lowest=max(lowest,players[currentPlayer].sprites[i].y);
-			}
-		}
+                                lowest=max(lowest,players[currentPlayer].sprites[i].y);
+                        }
+                }
 
 		if(lowest+16>=195) bgFill(lowest+8,lowest+16,0);
 
@@ -599,16 +644,15 @@ int handleInvaders(unsigned int frames)
                 {
                         sprite *s=&players[currentPlayer].sprites[i];
 
-			if(s->y>-1)	// Is sprite alive?
-			{
-	                        s->dx=-s->dx;	// Reverse direction
-        	                s->y+=8;	// Move invader down
+                        if(s->y>-1)     // Is sprite alive?
+                        {
+                                s->y+=8;        // Move invader down
 
-                	        // Game over?
-                        	if(s->y>=player.y)  return 1;
+                                // Game over?
+                                if(s->y>=player.y)  return 1;
 
-				bgSpritePlot(s);
-			}
+                                bgSpritePlot(s);
+                        }
                 }
 	}
 
@@ -669,11 +713,11 @@ void setupBG(unsigned int bases,unsigned int line)
         clsAll();
 
 	sprintf(buffer,"%d",players[currentPlayer].lives);
-	printAt(xPrint(strlen(buffer)),255-8,buffer);
+	printAt(&font,xPrint(strlen(buffer)),255-8,buffer);
 
-        printAt(xPrint(26),32,"SCORE<1> HI-SCORE SCORE<2>");
+        printAt(&font,xPrint(26),32,"SCORE<1> HI-SCORE SCORE<2>");
 	sprintf(buffer,"CREDIT %02d",credits);
-        printAt(XMAX-6*strlen(buffer),255-8,buffer);
+        printAt(&font,XMAX-6*strlen(buffer),255-8,buffer);
 
         if(bases) for(i=0;i<4;i++)
         {
@@ -743,7 +787,7 @@ void setupInvaders(unsigned int frames)
                 s->image[1]=&lib.images[ss+1];
                 s->currentImage=0;
 
-                s->x=45+x*16+(y==0?1:0)+1;
+                s->x=45+x*16+(y==0?2:0)+1;
                 s->y=y*16+80;
 
                 s->dx=1;
@@ -764,14 +808,6 @@ void setupInvaders(unsigned int frames)
 	players[currentPlayer].newDelta=50;
 }
 
-void printScores()
-{
-	char s[80];
-
-	sprintf(s,"%04d     %04d     %04d",players[0].score,highScore,players[1].score);
-	printAt(xPrint(strlen(s)),16+32,s);	
-}
-
 //////////////////
 // IntroScreens //
 //////////////////
@@ -784,10 +820,10 @@ void startGameScreen()
 		BGtoScratch();
 		printScores();
 
-		printAt(xPrint(4),90,"PUSH");
+		printAt(&font,xPrint(4),90,"PUSH");
 
-		if(credits>1) printAt(xPrint(20),130,"1 OR 2PLAYERS BUTTON");
-		else printAt(xPrint(19),130,"ONLY 1PLAYER BUTTON");
+		if(credits>1) printAt(&font,xPrint(20),130,"1 OR 2PLAYERS BUTTON");
+		else printAt(&font,xPrint(19),130,"ONLY 1PLAYER BUTTON");
 
 		showScratch();
 
@@ -813,7 +849,7 @@ void introScreens()
 
 		if(keysleep(50)) return;
 
-		printAt(xPrint(21),130,"*SCORE ADVANCE TABLE*");
+		printAt(&font,xPrint(21),130,"*SCORE ADVANCE TABLE*");
 		ufo.x=x-3; ufo.y=150;
 		ufo.image[0]=&lib.images[29];
 		spritePlot(&ufo); ufo.image[0]=&lib.images[7]; ufo.y=-1;
@@ -837,7 +873,7 @@ void introScreens()
 
 		printScores();
 
-		printAt(xPrint(12),100,"INSERT  COIN"); showScratch();
+		printAt(&font,xPrint(12),100,"INSERT  COIN"); showScratch();
 		if(slowPrintAt(xPrint(16),140,"<1 OR 2 PLAYERS>")) return;
 		if(slowPrintAt(xPrint(17),140+24,"*1 PLAYER  1 COIN")) return;
 		if(slowPrintAt(xPrint(18),140+48,"*2 PLAYERS 2 COINS")) return;
@@ -900,7 +936,11 @@ void initiate(unsigned int convert)
 
 int gameLoop()
 {
-	unsigned int frames,lf=0;
+	unsigned int frames,lastFrames=0;
+
+	#ifdef PROFILE
+	unsigned int profileCounts[10],profileCounter=0,profileN;
+	#endif
 
 	#ifdef FPS
 	char s[80];
@@ -908,37 +948,84 @@ int gameLoop()
 	fpsTimer=getFrames()+50;
 	#endif
 	
-	//DEBUG("MAIN LOOP START");
-
 	player.x=XMIN;
+
+	#ifdef PROFILE
+	for(frames=0;frames<10;frames++) profileCounts[frames]=0;
+	#endif
+
+	printScores();
 
 	while(1)
 	{
 		// Wait for next frame
 
+		#ifdef PROFILE
+		profileN=0;
+
+		if(profileCounter==0) profileCounter=getFrames();
+
+		// 0
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
+		
+		#endif
+
 		do
 		{
 			frames=getFrames();
 		}
-		while(frames==lf);
+		while(frames==lastFrames);
 
-		lf=frames;
+		lastFrames=frames;
 
-		//DEBUG("INVADERS");
+		#ifdef PROFILE
+		// 1
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
+		#endif
+
+		// Move the invaders on the BG screen
 
 		if(handleInvaders(frames)) return 2; // GAME OVER!
-		BGtoScratch();
 
-		//DEBUG("SCORES");
+		#ifdef PROFILE
+		// 2
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
+		#endif
 
-		printScores();
+		BGtoScratch();	// Copy the BG to scratch...
 
-		//DEBUG("KEYS");
+		#ifdef PROFILE
+		// 3
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
+		#endif
 
-		handleKeys(frames);
+		handleKeys(frames);	// Fire/move the player
+
+		// 4
+		#ifdef PROFILE
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
+		#endif
+
 		if(handlePlayerBullet(frames)) return 0; // LEVEL CLEARED!
 
+		// 5
+		#ifdef PROFILE
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
+		#endif
+
 		handleUFO(frames);
+
+		// 6
+		#ifdef PROFILE
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
+		#endif
 
 		if(handleInvaderBullets(frames))
 		{
@@ -946,7 +1033,13 @@ int gameLoop()
 			return 1; // LOSE A LIFE!
 		}
 
-	        if(player.timer.value<frames) spritePlot(&player);
+	        spritePlot(&player);
+
+		// 7
+		#ifdef PROFILE
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
+		#endif
 
 		#ifdef FPS
 		fpsCounter++;
@@ -957,11 +1050,32 @@ int gameLoop()
 			fpsTimer=getFrames()+50;
 			fpsCounter=0;
 		}
-		printAt(0,0,s);
+		printAt(&font,0,0,s);
+		#endif
+
+		// 8
+		#ifdef PROFILE
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
 		#endif
 
 		showScratch();
+
+		// 9
+		#ifdef PROFILE
+		profileCounts[profileN++]+=(getFrames()-profileCounter);
+		profileCounter=getFrames();
+		#endif
+
+		#ifdef PROFILE
+		if(keyrow(3))
+		{
+			for(frames=0;frames<10;frames++) printf("%d\t%d\n",frames,profileCounts[frames]);
+			exit(0);
+		}
+		#endif
 	}
+
 }
 
 ///////////////
@@ -993,6 +1107,7 @@ void setupGame(unsigned int frames)
 	players[0].score=players[1].score=0;
 	players[0].lives=players[1].lives=6;
 	players[0].wave=players[1].wave=0;
+	players[0].direction=players[1].direction=1;
 
 	reload=0x30+getFrames();
 
@@ -1068,7 +1183,7 @@ void mainLoop(int convert)
 		        setupBG(0,0);   
                
 			// TODO: Following not seen on screen 
-		        printAt(xPrint(10),100,currentPlayer==0?"PLAYER <1>":"PLAYER <2>");
+		        printAt(&font,xPrint(10),100,currentPlayer==0?"PLAYER <1>":"PLAYER <2>");
 
 			showScratch();
 
@@ -1085,7 +1200,7 @@ void mainLoop(int convert)
 		                else 
 					sprintf(s,"%04d     %04d     %c%c%c%c",players[0].score,highScore,'Z'+1,'Z'+1,'Z'+1,'Z'+1);
 
-       				printAt(xPrint(strlen(s)),16+32,s);
+       				printAt(&font,xPrint(strlen(s)),16+32,s);
 
 				showScratch();
 			}
@@ -1134,15 +1249,20 @@ void benchmark()
 		const int n=10;
 
 		unsigned long t,c=0,pass;
+		unsigned int x=0,y=0;
 		sprite sprite[8];
 
 		for(c=0;c<8;c++)
 		{
 			sprite[c].image[0]=&lib.images[s];
 			sprite[c].currentImage=0;
-			sprite[c].x=c;
-			sprite[c].y=c*sprite[c].image[0]->y;
+			sprite[c].x=x++;
+
+			sprite[c].y=y;
 			sprite[c].draw=1;
+
+			y+=sprite[c].image[0]->y;
+			if(y+sprite[c].image[0]->y>255) y=0;
 		}
 
 		for(pass=0;pass<2;pass++)
@@ -1183,6 +1303,8 @@ void benchmark()
 			initBG();
 		}
 	}
+
+	exit(0);
 }
 
 //////////

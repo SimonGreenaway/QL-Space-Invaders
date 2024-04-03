@@ -32,6 +32,66 @@ void binPrint(unsigned int i,unsigned char d)
 	}
 }
 
+void printCharAt(library *font,unsigned int x,unsigned int y,char c)
+{
+        sprite s;
+
+        if(c-33>=font->n)
+        {
+                printf("Font error: %d>=%d\n",c-33,font->n);
+                exit(1);
+        }
+
+        s.x=x; s.y=y;
+        s.image[0]=&font->images[c-33];
+        s.currentImage=0;
+        s.draw=1;
+        s.mask=0;
+
+        spritePlot(&s);
+}
+
+void printCharAtBG(library *font,unsigned int x,unsigned int y,char c)
+{
+        sprite s;
+
+        if(c-33>=font->n)
+        {
+                printf("Font error: %d>=%d\n",c-33,font->n);
+                exit(1);
+        }
+
+        s.x=x; s.y=y;
+        s.image[0]=&font->images[c-33];
+        s.currentImage=0;
+        s.draw=1;
+        s.mask=0;
+
+        bgSpritePlot(&s);
+}
+
+void printAt(library *font,unsigned int x,unsigned y,char *s)
+{
+        while(*s!=0)
+        {
+                if(*s!=32) printCharAt(font,x,y,*s);
+
+                s++;
+                x+=6;
+        }
+}
+
+void printAtBG(library *font,unsigned int x,unsigned y,char *s)
+{
+        while(*s!=0)
+        {
+                if(*s!=32) printCharAtBG(font,x,y,*s);
+
+                s++;
+                x+=6;
+        }
+}
+
 void* myMalloc(unsigned int i)
 {
 	void *p=malloc(i);
@@ -130,8 +190,7 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 	unsigned short *shifter=image->datashifter[sprite->x&3];
 	unsigned short *maskshifter=image->maskshifter[sprite->x&3];
 
-
-	unsigned int a,xlim=image->x/2;
+	unsigned xlim=image->x/2;
 
 	address+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
 
@@ -163,6 +222,8 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 
 	if(sprite->mask&&sprite->draw)
 	{
+		register unsigned int a;
+
 		switch(xlim) // Welcome to loop unroll City....
 		{
 			case 4:	for(a=0;a<image->y;a++)
@@ -244,19 +305,21 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 	}
 	else if(sprite->draw)
 	{
+		register unsigned int a;
+
 		switch(xlim) // Welcome to loop unroll City....
 		{
 			case 4:	for(a=0;a<image->y;a++)
 				{
-					*address++=*address|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address=  *address|*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++|*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++|*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++|*shifter++; 
+					*address++|=*shifter++; 
+					*address  |=*shifter++; 
 		
 					address+=addressDelta;
 				}
@@ -265,13 +328,13 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 	
 			case 3:	for(a=0;a<image->y;a++)
 				{
-					*address++=*address|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address=  *address|*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++|*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++|*shifter++; 
+					*address++|=*shifter++; 
+					*address  |=*shifter++; 
 		
 					address+=addressDelta;
 				}
@@ -280,11 +343,11 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 		
 			case 2:	for(a=0;a<image->y;a++)
 				{
-					*address++=*address|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address++=(*address|*shifter++)|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address=  *address|*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++|*shifter++; 
+					*address++|=*shifter++; 
+					*address  |=*shifter++; 
 		
 					address+=addressDelta;
 				}
@@ -293,9 +356,9 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 	
 			case 1:	for(a=0;a<image->y;a++)
 				{
-					*address++=*address|*shifter++; 
-					*address++=*address|*shifter++; 
-					*address=  *address|*shifter++; 
+					*address++|=*shifter++; 
+					*address++|=*shifter++; 
+					*address  |=*shifter++; 
 		
 					address+=addressDelta;
 				}
@@ -308,9 +371,9 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 		
 						for(b=0;b<xlim;b++)
 						{
-							*address++=*address|*shifter++; 
-							*address++=*address|*shifter++; 
-							*address=*address|*shifter++; 
+							*address++|=*shifter++; 
+							*address++|=*shifter++; 
+							*address  |=*shifter++; 
 						}
 		
 						address+=addressDelta;
@@ -319,6 +382,8 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 	}
 	else //if(sprite->mask)
 	{
+		register unsigned int a;
+
 		switch(xlim) // Welcome to loop unroll City....
 		{
 			case 4:	for(a=0;a<image->y;a++)
