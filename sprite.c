@@ -11,13 +11,13 @@
 //#undef DEBUG
 
 #undef PROFILE
-#define FPS
+#undef FPS
 
 #ifdef PROFILE
 #undef FPS
 #endif
 
-#define IMMORTAL
+#undef IMMORTAL
 
 library lib,font;	// Image libraries
 
@@ -298,7 +298,7 @@ int handleInvaderBullets(unsigned int frames)
 
 					for(j=0;j<10;j++)
 					{			
-						player.currentImage=3;
+						player.currentImage=1;
 						spritePlot(&player);
 						showScratch();
 						msleep(10);
@@ -399,50 +399,51 @@ int handlePlayerBullet(unsigned int frames)
 				return 0;
 			}
 
-			if(peek(player_bullet.y,player_bullet.x+2))
+			if(peek(player_bullet.y,player_bullet.x+2)) // Hit something?
 			{
 				// Invader hit?
 
 				for(i=0;i<SPRITES;i++)
 				{
-					sprite *s=&players[currentPlayer].sprites[i];
-
-					if((s->y>-1)&&(s->x-3<player_bullet.x)
-					&&(s->x+9>player_bullet.x)
-					&&(s->y<=player_bullet.y)
-					&&(s->y+8>=player_bullet.y))
+					if(players[currentPlayer].sprites[i].y>-1)
 					{
-						players[currentPlayer].newDelta=(50*players[currentPlayer].invaderCount)/SPRITES;
+						sprite *s=&players[currentPlayer].sprites[i];
 
-						if(players[currentPlayer].newDelta<s->timer.delta)
+						if((abs(s->x-player_bullet.x)<11)
+					  	 &&(abs(s->y-player_bullet.y)<11))
 						{
-							unsigned int j;
+							players[currentPlayer].newDelta=(50*players[currentPlayer].invaderCount)/SPRITES;
+
+							if(players[currentPlayer].newDelta<s->timer.delta)
+							{
+								unsigned int j;
 	
-							for(j=0;j<SPRITES;j++) players[currentPlayer].sprites[j].timer.delta=players[currentPlayer].newDelta;
+								for(j=0;j<SPRITES;j++) players[currentPlayer].sprites[j].timer.delta=players[currentPlayer].newDelta;
+							}
+
+							// Set up explosion at the invader's locations
+
+							player_bullet.currentImage=2;
+							player_bullet.x=players[currentPlayer].sprites[i].x;
+							player_bullet.y=players[currentPlayer].sprites[i].y;
+
+							spritePlot(&player_bullet);
+
+		              				player_bullet.currentImage=0;
+
+							s->draw=0;
+        	        	        	        bgSpritePlot(s);
+     		           		                s->draw=1;
+		
+							s->y=-1;	
+	
+							player_bullet.y=-1;
+	
+							players[currentPlayer].score+=invaderScores[i/SPRITESX];
+							printScores();
+				
+							return --players[currentPlayer].invaderCount==0;	// Can only hit one thing!
 						}
-
-						// Set up explosion at the invader's locations
-
-						player_bullet.currentImage=2;
-						player_bullet.x=players[currentPlayer].sprites[i].x;
-						player_bullet.y=players[currentPlayer].sprites[i].y;
-
-						spritePlot(&player_bullet);
-
-	              				player_bullet.currentImage=0;
-
-						s->draw=0;
-        	                	        bgSpritePlot(s);
-     		           	                s->draw=1;
-	
-						s->y=-1;	
-
-						player_bullet.y=-1;
-
-						players[currentPlayer].score+=invaderScores[i/SPRITESX];
-						printScores();
-			
-						return --players[currentPlayer].invaderCount==0;	// Can only hit one thing!
 					}
 				}
 
@@ -623,11 +624,13 @@ int handleInvaders(unsigned int frames)
 		}
         }
 
+	/*
 	if(frames>=invaderSoundTimer)
 	{
 		invaderSoundTimer+=players[currentPlayer].newDelta;
 		do_sound(20000,200,200,5,1,0,0,0);
 	}
+	*/
 
 	if(bounce)	// Move the invaders down and reverse direction
 	{
@@ -792,14 +795,14 @@ void setupInvaders(unsigned int frames)
         {
 		sprite *s=&players[currentPlayer].sprites[i];
 
-		int x=(i%11),y=i/11+players[currentPlayer].wave*16,ss=y==0?2:(y<3?4:0);
+		int x=(i%11),y=i/11,ss=y==0?2:(y<3?4:0);
 
                 s->image[0]=&lib.images[ss];
                 s->image[1]=&lib.images[ss+1];
                 s->currentImage=0;
 
                 s->x=45+x*16+(y==0?2:0)+1;
-                s->y=y*16+80;
+                s->y=y*16+80+players[currentPlayer].wave*16;
 
                 s->dx=1;
                 s->dy=0;
@@ -899,7 +902,7 @@ void initiate(unsigned int convert)
 	unsigned int timeout=getFrames()+150;
 
 	FILE *in=fopen("logo_scr","rb");
-	unsigned char *scr=0x20000;
+	unsigned char *scr=(unsigned char *)0x20000;
 
 	init();
 
@@ -1252,13 +1255,18 @@ void mainLoop(int convert)
 
 			switch(gameLoop())
 			{
-				case 0: break;		// Wave completed
+				case 0: players[currentPlayer].wave++ ;
+					setupInvaders(getFrames()); break;		// Wave completed
 				case 1: players[currentPlayer].lives--; break;	// Base hit
 				case 2: players[currentPlayer].lives=0; break;	// Invaders hit the bottom
 			}
 
 			if(gameMode==2) currentPlayer=1-currentPlayer;
 		}
+
+		printAt(&font,xPrint(9),70,"GAME OVER");
+		showScratch();
+		sleep(5);
 
 		if(players[currentPlayer].score>highScore) highScore=players[currentPlayer].score;
 	}
