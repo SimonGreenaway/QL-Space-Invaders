@@ -21,6 +21,8 @@ cleaner:	clean
 deploy:	sprite
 	cp invaders_blb /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
 	cp font_blb /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
+	cp ../Space_invaders_logo.scr logo.scr
+	cp logo.scr /home/simon/emulators/ql/emulators/sQLux/flp1/logo_scr
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 
 run:   	deploy
@@ -49,12 +51,13 @@ dist:	convert
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 	cp invaders_blb /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib
 	cp font_blb /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
+	cp logo.scr /home/simon/emulators/ql/emulators/sQLux/flp1/logo_scr
 	cp LICENSE /home/simon/emulators/ql/emulators/sQLux/flp1/LICENSE
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 -b "LRESPR flp1_sigext_rext:EW flp1_zip,#1;'flp1_invaders_zip sprite invaders_blb font_blb LICENSE'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 -b "LRESPR flp1_sigext_rext:EW flp1_zip,#1;'flp1_invaders_zip sprite invaders_blb font_blb logo_scr LICENSE'"
 	mv /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_zip invaders.zip
 	qltools invaders.img -fdd invaders -W
 	cp BOOT_flp1 BOOT
-	qltools invaders.img -W BOOT sprite invaders_blb font_blb LICENSE
+	qltools invaders.img -W BOOT sprite invaders_blb font_blb logo_scr LICENSE
 	cp BOOT_mdv1 BOOT
 	mdvtool create name invaders zip_import invaders.zip import BOOT font_blb invaders_blb write invaders.mdv
 	rm -f BOOT

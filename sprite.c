@@ -471,6 +471,15 @@ int handlePlayerBullet(unsigned int frames)
 // invaderFire //
 /////////////////
 
+void setInvaderReload()
+{
+	if(players[currentPlayer].score<=200) reload=getFrames()+30;
+	else if(players[currentPlayer].score<=1000) reload=getFrames()+10;
+	else if(players[currentPlayer].score<=2000) reload=getFrames()+9;
+	else if(players[currentPlayer].score<=3000) reload=getFrames()+8;
+	else reload=getFrames()+7;
+}
+
 void invaderFire(unsigned int frames)
 {
 	//ShotReloadRate:
@@ -482,47 +491,48 @@ void invaderFire(unsigned int frames)
 	//;
 	//; 1CB8: 02 10 20 30
 
-	if((bulletCount<maxBulletCount)&&(reload<getFrames()))
+	if((reload<getFrames())&&(bulletCount<maxBulletCount))
 	{
-		unsigned int i,j;
+		unsigned int firingInvader,bullet;
 
-		for(j=0;j<maxBulletCount;j++)
+		for(bullet=0;bullet<maxBulletCount;bullet++) // Find first free bullet
 		{
-			if(bullets[j].y==-1)
+			if(bullets[bullet].y==-1)
 			{
 				int k;
 
 				// Pick type
 
-				bulletTypes[j]=rand()/(RAND_MAX/3);
+				bulletTypes[bullet]=rand()/(RAND_MAX/3);
 
-				switch(bulletTypes[j])
+				switch(bulletTypes[bullet])
 				{
-					case 0:  bullets[j].image[0]=&lib.images[19];
-						 bullets[j].image[1]=&lib.images[20];
-						 bullets[j].image[2]=&lib.images[21];
-						 bullets[j].image[3]=&lib.images[22];
+					case 0:  bullets[bullet].image[0]=&lib.images[19];
+						 bullets[bullet].image[1]=&lib.images[20];
+						 bullets[bullet].image[2]=&lib.images[21];
+						 bullets[bullet].image[3]=&lib.images[22];
 						 break;
-					case 1:  bullets[j].image[0]=&lib.images[23];
-						 bullets[j].image[1]=&lib.images[24];
-						 bullets[j].image[2]=&lib.images[23];
-						 bullets[j].image[3]=&lib.images[25];
+					case 1:  bullets[bullet].image[0]=&lib.images[23];
+						 bullets[bullet].image[1]=&lib.images[24];
+						 bullets[bullet].image[2]=&lib.images[23];
+						 bullets[bullet].image[3]=&lib.images[25];
 						 break;
-					default: bullets[j].image[0]=&lib.images[16];
-						 bullets[j].image[1]=&lib.images[9];
-						 bullets[j].image[2]=&lib.images[17];
-						 bullets[j].image[3]=&lib.images[13];
+					default: bullets[bullet].image[0]=&lib.images[16];
+						 bullets[bullet].image[1]=&lib.images[9];
+						 bullets[bullet].image[2]=&lib.images[17];
+						 bullets[bullet].image[3]=&lib.images[13];
 						 break;
 				}
 
 				bulletCount++;
 
-				// Bullet type 0 fires either at the player, or the closest to the player
-				if(bulletTypes[j]==0)
+				if(bulletTypes[bullet]==0)
 				{
+					// Bullet type 0 fires either at the player, or the closest to the player
+
 					int nearest=INT_MAX;
 
-					for(k=SPRITES-1;k>=0;k--)
+					for(k=0;k<SPRITES;k++)
 					{
 						if(players[currentPlayer].sprites[k].y>-1)
 						{
@@ -531,32 +541,36 @@ void invaderFire(unsigned int frames)
 
 							if(d<nearest)
 							{
-								i=k; nearest=d;
+								firingInvader=k; nearest=d;
 							}
 						}
 					}
 				}
 				else 
 				{
-					unsigned int k;
-
-					// Make bullet come from random bottom invader
+					// Make bullet come from random invader
 
 					do
 					{
-						i=rand()/(RAND_MAX/SPRITES);
+						firingInvader=rand()/(RAND_MAX/SPRITES);
 					}
-					while(players[currentPlayer].sprites[i].y==-1);
-
-					for(k=i+11;k<SPRITES;k+=11) if(players[currentPlayer].sprites[k].y>-1) i=k;
-
+					while(players[currentPlayer].sprites[firingInvader].y==-1);
 				}
 
-				bullets[j].y=players[currentPlayer].sprites[i].y+8;
-				bullets[j].x=players[currentPlayer].sprites[i].x+4;
-				bullets[j].timer.value=frames;
-				bullets[j].timer.delta=3;
-				bullets[j].currentImage=0;
+
+				// Now move fire to invader below, if they exist
+
+				for(k=firingInvader+11;k<SPRITES;k+=11) if(players[currentPlayer].sprites[k].y>-1) firingInvader=k;
+
+				// Initiate the bullet
+
+				bullets[bullet].y=players[currentPlayer].sprites[firingInvader].y+8;
+				bullets[bullet].x=players[currentPlayer].sprites[firingInvader].x+4;
+				bullets[bullet].timer.value=frames;
+				bullets[bullet].timer.delta=3;
+				bullets[bullet].currentImage=0;
+
+				setInvaderReload();
 
 				break;
 			}
@@ -609,13 +623,11 @@ int handleInvaders(unsigned int frames)
 		}
         }
 
-/*
 	if(frames>=invaderSoundTimer)
 	{
 		invaderSoundTimer+=players[currentPlayer].newDelta;
-		//do_sound(2000,200,200,5,1,0,0,0);
+		do_sound(20000,200,200,5,1,0,0,0);
 	}
-*/
 
 	if(bounce)	// Move the invaders down and reverse direction
 	{
@@ -884,8 +896,19 @@ void introScreens()
 void initiate(unsigned int convert)
 {
 	char name[80];
+	unsigned int timeout=getFrames()+150;
+
+	FILE *in=fopen("logo_scr","rb");
+	unsigned char *scr=0x20000;
 
 	init();
+
+	if(in!=NULL)
+	{
+		fread(scr,1,32768,in);
+
+		fclose(in);
+	}
 
 	// sprites
 
@@ -927,6 +950,8 @@ void initiate(unsigned int convert)
  		puts("Error: Loaded 0 images from font library!\n");
  		exit(1);
  	}
+
+	while(getFrames()<timeout);
 }
 
 //////////
@@ -1110,8 +1135,6 @@ void setupGame(unsigned int frames)
 	players[0].wave=players[1].wave=0;
 	players[0].direction=players[1].direction=1;
 
-	reload=0x30+getFrames();
-
 	player.image[0]=&lib.images[8];
 	player.image[1]=&lib.images[10];
 	player.image[2]=&lib.images[14];
@@ -1222,6 +1245,8 @@ void mainLoop(int convert)
 
 				if(s->y>-1) s->timer.value=frames+(SPRITES-i);
 			}
+
+			setInvaderReload();
 
 			// Play until death, then...
 
