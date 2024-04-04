@@ -57,10 +57,13 @@ dist:	convert
 	mv /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_zip invaders.zip
 	qltools invaders.img -fdd invaders -W
 	cp BOOT_flp1 BOOT
+	cp logo.scr logo_scr
 	qltools invaders.img -W BOOT sprite invaders_blb font_blb logo_scr LICENSE
 	cp BOOT_mdv1 BOOT
-	mdvtool create name invaders zip_import invaders.zip import BOOT font_blb invaders_blb write invaders.mdv
-	rm -f BOOT
+	cp invaders.zip i.zip
+	zip i.zip -d logo.scr
+	mdvtool create name invaders zip_import i.zip import BOOT write invaders.mdv
+	rm -f BOOT i.zip logo_scr
 
 git:	cleaner
 	git add .
