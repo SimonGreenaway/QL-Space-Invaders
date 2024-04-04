@@ -728,6 +728,8 @@ void loadLibrary(library *library,char *filename,int shift)
 	{
 		int n;
 
+		printf("%d\n",n);
+
 		library->images[i].magic=MAGIC;
 		readLine(in,buffer); printf("  %d %s",i,buffer);
 		buffer[strcspn(buffer, "\r\n")] = 0;
@@ -792,7 +794,7 @@ void loadLibrary(library *library,char *filename,int shift)
 
 	fclose(in);
 
-	puts("Sprites loaded.\n");
+	exit(0);
 }
 
 ////////////////////////////////

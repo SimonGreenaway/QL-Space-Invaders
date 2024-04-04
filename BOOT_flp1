@@ -1,4 +1,5 @@
 OPEN #8,con_512x256a0x0_0
 CLS #8
+INK #8,4
 EXEC_W sprite,#8;'-d flp1_'
 CLOSE #8

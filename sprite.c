@@ -347,11 +347,12 @@ int handleInvaderBullets(unsigned int frames)
 	return 0;
 }
 
-////////////////////////////////
-// HandlePlayerBullet         //
-//                            //
-// returns: 1 - wave complete //
-////////////////////////////////
+//////////////////////////////////
+// HandlePlayerBullet           //
+//                              //
+// returns: 1 - wave complete   //
+//          0 - wave continues! //
+//////////////////////////////////
 
 int handlePlayerBullet(unsigned int frames)
 {
@@ -365,8 +366,29 @@ int handlePlayerBullet(unsigned int frames)
 
 			player_bullet.timer.value=frames+player_bullet.timer.delta;
 
-			if(player_bullet.y<=32)	// Reached the top
+			if(player_bullet.y<=64)	// Reached the top
        		       	{
+                                if((ufo.y>-1)&&(ufo.x<=player_bullet.x)
+                                            &&(ufo.x+16>=player_bullet.x))
+                                {
+
+                                        player_bullet.currentImage=3;
+                                        player_bullet.x=ufo.x;
+                                        player_bullet.y=ufo.y;
+                                        spritePlot(&player_bullet);
+                                        player_bullet.currentImage=0;
+
+                                        player_bullet.y=-1;
+                                        ufo.x=-1;
+
+                                        players[currentPlayer].score+=ufoScores[ufoScorePointer]*10;
+                                        printScores();
+
+                                        ufoScorePointer=(ufoScorePointer+1)&15;
+
+                                        return 0;
+                                }
+
 				// Explosion!!!
 		
 				player_bullet.currentImage++;
@@ -422,29 +444,6 @@ int handlePlayerBullet(unsigned int frames)
 			
 						return --players[currentPlayer].invaderCount==0;	// Can only hit one thing!
 					}
-				}
-
-				if((ufo.y>-1)&&(ufo.x<player_bullet.x)
-					     &&(ufo.x+9>player_bullet.x)
-				             &&(ufo.y<=player_bullet.y)
-				             &&(ufo.y+8>=player_bullet.y))
-				{
-
-					player_bullet.currentImage=3;
-					player_bullet.x=ufo.x;
-					player_bullet.y=ufo.y;
-					spritePlot(&player_bullet);
-					player_bullet.currentImage=0;
-
-					player_bullet.y=-1;
-					ufo.x=-1;
-
-					players[currentPlayer].score+=ufoScores[ufoScorePointer]*10;
-					printScores();
-
-					ufoScorePointer=(ufoScorePointer+1)&15;
-
-					return 0;
 				}
 
                                 // Base?
@@ -1049,8 +1048,10 @@ int gameLoop()
 
 			fpsTimer=getFrames()+50;
 			fpsCounter=0;
+
+			bgFill(0,8,0);
+			printAtBG(&font,0,0,s);
 		}
-		printAt(&font,0,0,s);
 		#endif
 
 		// 8
@@ -1193,14 +1194,16 @@ void mainLoop(int convert)
 
 			while(getFrames()<frames)
 			{
-				if((getFrames())&1)
+				unsigned flashFrames;
+
+				if(getFrames()&1)
 		                	sprintf(s,"%04d     %04d     %04d",players[0].score,highScore,players[1].score);
 		                else if(currentPlayer==0) 
 					sprintf(s,"%c%c%c%c     %04d     %04d",'Z'+1,'Z'+1,'Z'+1,'Z'+1,highScore,players[1].score);
 		                else 
 					sprintf(s,"%04d     %04d     %c%c%c%c",players[0].score,highScore,'Z'+1,'Z'+1,'Z'+1,'Z'+1);
 
-       				printAt(&font,xPrint(strlen(s)),16+32,s);
+       				printAt(&font,xPrint(strlen(s)),48,s);
 
 				showScratch();
 			}

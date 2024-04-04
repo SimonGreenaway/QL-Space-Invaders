@@ -24,19 +24,19 @@ deploy:	sprite
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 
 run:   	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.75 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.75 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
 
 runjm:	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JM.ROM --SPEED=0.75 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JM.ROM --SPEED=0.75 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
 
 runjs:	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JS.ROM --SPEED=0.75 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JS.ROM --SPEED=0.75 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
 
 runfast:	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --RAMSIZE 131072 --SPEED=10 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --RAMSIZE 131072 --SPEED=10 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
 
 convert:   	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_ -c'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_ -c'"
 	cp ~/emulators/ql/emulators/sQLux/flp1_c86/*_blb .
 
 bm:   	sprite
