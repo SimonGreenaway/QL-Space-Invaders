@@ -624,13 +624,11 @@ int handleInvaders(unsigned int frames)
 		}
         }
 
-	/*
 	if(frames>=invaderSoundTimer)
 	{
-		invaderSoundTimer+=players[currentPlayer].newDelta;
-		do_sound(20000,200,200,5,1,0,0,0);
+		invaderSoundTimer+=max(5,players[currentPlayer].newDelta);
+		do_sound(490,1280,0,0,0,0,0,0);
 	}
-	*/
 
 	if(bounce)	// Move the invaders down and reverse direction
 	{
@@ -1250,6 +1248,7 @@ void mainLoop(int convert)
 			}
 
 			setInvaderReload();
+			invaderSoundTimer=getFrames()+50;
 
 			// Play until death, then...
 

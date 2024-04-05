@@ -121,7 +121,7 @@ void init()
 	int i;
 	short colours=8,mode=0;
 
-	background=(unsigned short *)createBuffer(256);
+	background=(unsigned char *)createBuffer(256);
 	scratch=createBuffer(256);
 	secondAddress=(int)(background)-0x20000;
 
