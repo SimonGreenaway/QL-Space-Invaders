@@ -831,16 +831,30 @@ void restoreBG()
 
 // Background -> scratch
 
-void BGtoScratch()
+void allBGtoScratch()
 {
 	bufferCopy((unsigned char *)scratch,(unsigned char *)background,0,256);
 }
 
-void showScratch()
+void BGtoScratch(unsigned int from,unsigned int to)
+{
+	bufferCopy((unsigned char *)scratch,(unsigned char *)background,from,to);
+}
+
+void showAllScratch()
 {
 	bufferCopy((unsigned char *)0x20000,scratch,0,256);
 }
 
+void showScratch(unsigned int from,unsigned int to)
+{
+	bufferCopy((unsigned char *)0x20000,scratch,from,to);
+}
+
+void showBG(unsigned int from,unsigned int to)
+{
+	bufferCopy((unsigned char *)0x20000,background,from,to);
+}
 unsigned short peek(unsigned int y,unsigned int x)
 {
 	unsigned short *address=(unsigned short *)scratch;

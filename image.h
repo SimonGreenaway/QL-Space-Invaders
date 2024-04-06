@@ -57,7 +57,6 @@ struct shifter
 
 void spritePlot0(unsigned char *buffer,sprite *sprite);
 
-void bufferCopy(unsigned char *from,unsigned char *to,unsigned int rowStart,unsigned int rowEnd);
 unsigned char* createBuffer(unsigned int rows);
 
 void spritePlot(sprite *sprite);
@@ -69,15 +68,12 @@ void loadLibrary(library *library,char *filename,int shift);
 void bLoadLibrary(library *library,char *filename,int shift);
 void bSaveLibrary(library *library,char *filename);
 
-void showScratch();
 void cls();
 void clsAll();
 void bgFill(unsigned int rowStart,unsigned int rowEnd,unsigned char c);
 void Fill(unsigned int rowStart,unsigned int rowEnd,unsigned char c);
 
 void initBG();
-void restoreBG();
-void BGtoScratch();
 
 unsigned short peek(unsigned int y,unsigned int x);
 
@@ -85,3 +81,12 @@ void printCharAt(library *font,unsigned int x,unsigned int y,char c);
 void printAt(library *font,unsigned int x,unsigned y,char *s);
 void printCharAtBG(library *font,unsigned int x,unsigned int y,char c);
 void printAtBG(library *font,unsigned int x,unsigned y,char *s);
+
+// Buffer moving
+
+void bufferCopy(unsigned char *from,unsigned char *to,unsigned int rowStart,unsigned int rowEnd);
+void restoreBG();
+void allBGtoScratch();
+void showAllScratch();
+void showScratch(unsigned int from,unsigned int to);
+void showBG(unsigned int from,unsigned int to);

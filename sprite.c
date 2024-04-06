@@ -7,11 +7,11 @@
 
 #include "image.h"
 
-#define DEBUG(x) { Fill(0,8,0); printAt(&font,0,0,x); showScratch(); }
+#define DEBUG(x) { Fill(0,8,0); printAt(&font,0,0,x); showAllScratch(); }
 //#undef DEBUG
 
 #undef PROFILE
-#undef FPS
+#define FPS
 
 #ifdef PROFILE
 #undef FPS
@@ -112,6 +112,8 @@ void printScores()
 	bgFill(48,48+8,0);
 	sprintf(s,"%4s     %4s     %4s",p1,hs,p2);
 	printAtBG(&font,xPrint(strlen(s)),16+32,s);	
+
+	showBG(48,48+8);
 }
 
 /////////////////////   
@@ -199,7 +201,7 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 
 		if(*s!=32) printCharAt(&font,x,y,*s);
 
-                showScratch();
+                showAllScratch();
 
 		s++;
 		x+=6;
@@ -300,7 +302,7 @@ int handleInvaderBullets(unsigned int frames)
 					{			
 						player.currentImage=1;
 						spritePlot(&player);
-						showScratch();
+						showAllScratch();
 						msleep(10);
 
 						player.draw=0;
@@ -309,7 +311,7 @@ int handleInvaderBullets(unsigned int frames)
 
 						player.currentImage=2;
 						spritePlot(&player);
-						showScratch();
+						showAllScratch();
 						msleep(10);
 						player.draw=0;
 						spritePlot(&player);
@@ -573,6 +575,8 @@ void invaderFire(unsigned int frames)
 
 				setInvaderReload();
 
+				//do_sound(3000,255,1,200,0,5,0,9);
+
 				break;
 			}
 		}
@@ -601,17 +605,12 @@ int handleInvaders(unsigned int frames)
 			unsigned int newX=s->x
 				+((players[currentPlayer].direction==1)?s->dx:-s->dx);
 
-			if(!bounce)
-			{
-				if(((players[currentPlayer].direction==-1)&&(newX<=XMIN))
-				 ||((players[currentPlayer].direction==1)&&(newX>=XMAX-17)))
-				{
-					bounce=1;
+			if((!bounce)&&((newX<=XMIN)||(players[currentPlayer].direction==1)&&(newX>=XMAX-17)))
+			{	
+				bounce=1;
 
-					break;
-				}
+				break;
 			}
-
 
 			// Clear old invader from BG
 			s->draw=0; bgSpritePlot(s); s->draw=1;
@@ -627,7 +626,7 @@ int handleInvaders(unsigned int frames)
 	if(frames>=invaderSoundTimer)
 	{
 		invaderSoundTimer+=max(5,players[currentPlayer].newDelta);
-		do_sound(490,1280,0,0,0,0,0,0);
+		do_sound(490,176,0,0,0,0,8,0);
 	}
 
 	if(bounce)	// Move the invaders down and reverse direction
@@ -777,7 +776,7 @@ void setupBG(unsigned int bases,unsigned int line)
                 //spritePlot(&base);
         }
 
-        showScratch();
+        showAllScratch();
         initBG();
 }
 
@@ -829,7 +828,7 @@ void startGameScreen()
 	while(gameMode==0)
 	{
 		setupBG(0,0);
-		BGtoScratch();
+		allBGtoScratch();
 		printScores();
 
 		printAt(&font,xPrint(4),90,"PUSH");
@@ -837,7 +836,7 @@ void startGameScreen()
 		if(credits>1) printAt(&font,xPrint(20),130,"1 OR 2PLAYERS BUTTON");
 		else printAt(&font,xPrint(19),130,"ONLY 1PLAYER BUTTON");
 
-		showScratch();
+		showAllScratch();
 
 		keysleep(INT_MAX);
 	}
@@ -854,7 +853,7 @@ void introScreens()
 
 	while(1)
 	{
-		BGtoScratch(); printScores(); showScratch();
+		allBGtoScratch(); printScores(); showAllScratch();
 
 		if(slowPrintAt(xPrint(4),70,"PLAY")) return;
 		if(slowPrintAt(xPrint(14),100,"SPACE INVADERS")) return;
@@ -870,7 +869,7 @@ void introScreens()
 		players[0].sprites[SPRITES/2].x=x-1; players[0].sprites[SPRITES/2].y=190; spritePlot(&players[0].sprites[SPRITES/2]);
 		players[0].sprites[SPRITES-1].x=x-1; players[0].sprites[SPRITES-1].y=210; players[0].sprites[SPRITES-1].image[0]=&lib.images[30]; spritePlot(&players[0].sprites[SPRITES-1]); players[0].sprites[SPRITES-1].image[0]=&lib.images[0];
 
-		showScratch();
+		showAllScratch();
 
 		if(slowPrintAt(x+16,150,"=? MYSTERY")) return; 
 		if(slowPrintAt(x+16,170,"=30 POINTS")) return; 
@@ -881,11 +880,11 @@ void introScreens()
 
 		// Score table
 
-		BGtoScratch();
+		allBGtoScratch();
 
 		printScores();
 
-		printAt(&font,xPrint(12),100,"INSERT  COIN"); showScratch();
+		printAt(&font,xPrint(12),100,"INSERT  COIN"); showAllScratch();
 		if(slowPrintAt(xPrint(16),140,"<1 OR 2 PLAYERS>")) return;
 		if(slowPrintAt(xPrint(17),140+24,"*1 PLAYER  1 COIN")) return;
 		if(slowPrintAt(xPrint(18),140+48,"*2 PLAYERS 2 COINS")) return;
@@ -1020,7 +1019,7 @@ int gameLoop()
 		profileCounter=getFrames();
 		#endif
 
-		BGtoScratch();	// Copy the BG to scratch...
+		BGtoScratch(64,256-player.image[0]->y-24+8);	// Copy the BG to scratch...
 
 		#ifdef PROFILE
 		// 3
@@ -1054,7 +1053,7 @@ int gameLoop()
 
 		if(handleInvaderBullets(frames))
 		{
-	        	showScratch();
+	        	showAllScratch();
 			return 1; // LOSE A LIFE!
 		}
 
@@ -1077,6 +1076,8 @@ int gameLoop()
 
 			bgFill(0,8,0);
 			printAtBG(&font,0,0,s);
+
+			showBG(0,8);
 		}
 		#endif
 
@@ -1086,7 +1087,7 @@ int gameLoop()
 		profileCounter=getFrames();
 		#endif
 
-		showScratch();
+		showScratch(64,256-player.image[0]->y-24+8);
 
 		// 9
 		#ifdef PROFILE
@@ -1097,12 +1098,15 @@ int gameLoop()
 		#ifdef PROFILE
 		if(keyrow(3))
 		{
-			for(frames=0;frames<10;frames++) printf("%d\t%d\n",frames,profileCounts[frames]);
-			exit(0);
+			unsigned int sum=0;
+
+			for(frames=0;frames<10;frames++) sum+=profileCounts[frames];
+			for(frames=0;frames<10;frames++) printf("%d\t%d\t%d\n",frames,profileCounts[frames],(100*profileCounts[frames])/sum);
+			while(keyrow(3));
+			profileCounter=getFrames();
 		}
 		#endif
 	}
-
 }
 
 ///////////////
@@ -1210,7 +1214,7 @@ void mainLoop(int convert)
 			// TODO: Following not seen on screen 
 		        printAt(&font,xPrint(10),100,currentPlayer==0?"PLAYER <1>":"PLAYER <2>");
 
-			showScratch();
+			showAllScratch();
 
 			// Blink the score of the next player
 
@@ -1229,7 +1233,7 @@ void mainLoop(int convert)
 
        				printAt(&font,xPrint(strlen(s)),48,s);
 
-				showScratch();
+				showAllScratch();
 			}
 
 			setupBG(1,1); 
@@ -1264,7 +1268,7 @@ void mainLoop(int convert)
 		}
 
 		printAt(&font,xPrint(9),70,"GAME OVER");
-		showScratch();
+		showAllScratch();
 		sleep(5);
 
 		if(players[currentPlayer].score>highScore) highScore=players[currentPlayer].score;
@@ -1310,7 +1314,7 @@ void benchmark()
 			{
 				unsigned int i,y=0,x=0;
 
-				BGtoScratch();
+				allBGtoScratch();
 
 				for(i=0;i<8;i++)
 				{
@@ -1329,10 +1333,10 @@ void benchmark()
 					c++;
 				}
 
-				showScratch();
+				showAllScratch();
 			}
 
-			showScratch();
+			showAllScratch();
 
 			printf("%c %d x %d -> %d\n",pass==1?'M':' ',lib.images[s].x*4,lib.images[s].y,c);
 			initBG();
