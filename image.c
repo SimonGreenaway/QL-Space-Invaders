@@ -32,7 +32,7 @@ void binPrint(unsigned int i,unsigned char d)
 	}
 }
 
-void printCharAt(library *font,unsigned int x,unsigned int y,char c)
+void bufferPrintCharAt(unsigned char *buffer,library *font,unsigned int x,unsigned int y,char c)
 {
         sprite s;
 
@@ -48,48 +48,38 @@ void printCharAt(library *font,unsigned int x,unsigned int y,char c)
         s.draw=1;
         s.mask=0;
 
-        spritePlot(&s);
+        spritePlot0(buffer,&s);
+}
+
+void printCharAt(library *font,unsigned int x,unsigned int y,char c)
+{
+	bufferPrintCharAt(scratch,font,x,y,c);
 }
 
 void printCharAtBG(library *font,unsigned int x,unsigned int y,char c)
 {
-        sprite s;
+	bufferPrintCharAt(background,font,x,y,c);
+}
 
-        if(c-33>=font->n)
+void bufferPrintAt(unsigned char *buffer,library *font,unsigned int x,unsigned y,char *s)
+{
+        while(*s!=0)
         {
-                printf("Font error: %d>=%d\n",c-33,font->n);
-                exit(1);
+                if(*s!=32) bufferPrintCharAt(buffer,font,x,y,*s);
+
+                s++;
+                x+=6;
         }
-
-        s.x=x; s.y=y;
-        s.image[0]=&font->images[c-33];
-        s.currentImage=0;
-        s.draw=1;
-        s.mask=0;
-
-        bgSpritePlot(&s);
 }
 
 void printAt(library *font,unsigned int x,unsigned y,char *s)
 {
-        while(*s!=0)
-        {
-                if(*s!=32) printCharAt(font,x,y,*s);
-
-                s++;
-                x+=6;
-        }
+	bufferPrintAt(scratch,font,x,y,s);
 }
 
 void printAtBG(library *font,unsigned int x,unsigned y,char *s)
 {
-        while(*s!=0)
-        {
-                if(*s!=32) printCharAtBG(font,x,y,*s);
-
-                s++;
-                x+=6;
-        }
+	bufferPrintAt(background,font,x,y,s);
 }
 
 void* myMalloc(unsigned int i)

@@ -910,21 +910,6 @@ void initiate(unsigned int convert)
 		fclose(in);
 	}
 
-	// sprites
-
-	if(convert)
-	{
-		sprintf(name,"%sinvaders_lib",drive);
-		loadLibrary(&lib,name,1);
-		sprintf(name,"%sinvaders_blb",drive);
-		bSaveLibrary(&lib,name);
-	}
-	else
-	{
-		sprintf(name,"%sinvaders_blb",drive);
-		bLoadLibrary(&lib,name,1);
-	}
-
 	// font
 
 	if(convert)
@@ -945,9 +930,32 @@ void initiate(unsigned int convert)
 		bLoadLibrary(&font,name,1); 
 	}
 
- 	if(lib.n==0)
+ 	if(font.n==0)
  	{
  		puts("Error: Loaded 0 images from font library!\n");
+ 		exit(1);
+ 	}
+
+	bufferPrintAt((unsigned char *)0x20000,&font,xPrint(18),150,"BY SIMON GREENAWAY");
+
+	// sprites
+
+	if(convert)
+	{
+		sprintf(name,"%sinvaders_lib",drive);
+		loadLibrary(&lib,name,1);
+		sprintf(name,"%sinvaders_blb",drive);
+		bSaveLibrary(&lib,name);
+	}
+	else
+	{
+		sprintf(name,"%sinvaders_blb",drive);
+		bLoadLibrary(&lib,name,1);
+	}
+
+ 	if(lib.n==0)
+ 	{
+ 		puts("Error: Loaded 0 images from sprite library!\n");
  		exit(1);
  	}
 
@@ -982,8 +990,6 @@ int gameLoop()
 
 	while(1)
 	{
-		// Wait for next frame
-
 		#ifdef PROFILE
 		profileN=0;
 
@@ -995,12 +1001,9 @@ int gameLoop()
 		
 		#endif
 
-		do
-		{
-			frames=getFrames();
-		}
-		while(frames==lastFrames);
+		// Wait for next frame
 
+		while((frames=getFrames())==lastFrames);
 		lastFrames=frames;
 
 		#ifdef PROFILE
