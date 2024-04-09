@@ -42,6 +42,13 @@ void binPrint(unsigned int i,unsigned char d)
 	}
 }
 
+unsigned int fontMasking=0;
+
+void setFontMasking(unsigned int m)
+{
+	fontMasking=m;
+}
+
 void bufferPrintCharAt(unsigned char *buffer,library *font,unsigned int x,unsigned int y,char c)
 {
         sprite s;
@@ -56,7 +63,7 @@ void bufferPrintCharAt(unsigned char *buffer,library *font,unsigned int x,unsign
         s.image[0]=&font->images[c-33];
         s.currentImage=0;
         s.draw=1;
-        s.mask=0;
+        s.mask=fontMasking;
 
         spritePlot0(buffer,&s);
 }

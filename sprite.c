@@ -358,14 +358,14 @@ int handleInvaderBullets(unsigned int frames)
 
 int handlePlayerBullet(unsigned int frames)
 {
-	unsigned int i,skipped;
+	unsigned int i,skipped,hit;
 	unsigned short pk;
 
         while((player_bullet.y>-1)&&(player_bullet.timer.value<frames))
         {
                 for(skipped=frames-player_bullet.timer.value+1;skipped--;skipped>=0)
                 {
-	       	        player_bullet.y-=2;
+	       	        player_bullet.y-=4;
 
 			player_bullet.timer.value=frames+player_bullet.timer.delta;
 
@@ -404,13 +404,27 @@ int handlePlayerBullet(unsigned int frames)
 
 			// Due to the moonscape, we need to do this:
 
+			hit=0;
+
 			pk=peek(player_bullet.y,player_bullet.x+2);
 
 			if(((pk&0x80C0)==0x80C0) // White bit 3
                          ||((pk&0x2030)==0x2030) // White bit 2
 			 ||((pk&0x080C)==0x080C)   // White bit 1
 			 ||((pk&0x0203)==0x0203)   // White bit 0
-			 ||(pk&0xAA00)) 		 // Anything green?
+			 ||(pk&0xAA00)) 	 // Anything green?
+				hit++;
+
+			pk=peek(player_bullet.y-2,player_bullet.x+2);
+
+			if(((pk&0x80C0)==0x80C0) // White bit 3
+                         ||((pk&0x2030)==0x2030) // White bit 2
+			 ||((pk&0x080C)==0x080C)   // White bit 1
+			 ||((pk&0x0203)==0x0203)   // White bit 0
+			 ||(pk&0xAA00)) 	 // Anything green?
+				hit++;
+
+			if(hit)
 			{
 				// Invader hit?
 
@@ -1237,7 +1251,11 @@ void mainLoop(int convert)
 
 			// Blink the score of the next player
 
+			setFontMasking(1);
+
 			frames=getFrames()+150;
+
+			// Font character 'Z'+1 is a special blanking character
 
 			while(getFrames()<frames)
 			{
@@ -1254,6 +1272,8 @@ void mainLoop(int convert)
 
 				showAllScratch();
 			}
+
+			setFontMasking(0);
 
 			setupBG(1,1); 
 

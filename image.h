@@ -90,6 +90,7 @@ void initBG();
 
 unsigned short peek(unsigned int y,unsigned int x);
 
+void setFontMasking(unsigned int m);
 void printCharAt(library *font,unsigned int x,unsigned int y,char c);
 void bufferPrintCharAt(unsigned char *buffer,library *font,unsigned int x,unsigned int y,char c);
 void bufferPrintAt(unsigned char *buffer,library *font,unsigned int x,unsigned y,char *s);
