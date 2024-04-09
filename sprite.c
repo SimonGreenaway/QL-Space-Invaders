@@ -150,7 +150,7 @@ int keysleep(unsigned int frames)
 			credits++; 
 			while(keyrow(2)&8) ;
 
-			return 0;
+			return 3;
 		}
 
 		if((keyrow(4)&8)&&(credits>0)) // Player 1 start '1' ?
@@ -325,8 +325,8 @@ int handleInvaderBullets(unsigned int frames)
 	       		}
 			else
 			{
-				if(peek(bullets[i].y+4,bullets[i].x)
-				 ||peek(bullets[i].y+6,bullets[i].x))
+				if(peek(bullets[i].y+4,bullets[i].x)&0xAA00
+				 ||peek(bullets[i].y+6,bullets[i].x)&0xAA00)
 				{
 					// Hit something!
 
@@ -359,6 +359,7 @@ int handleInvaderBullets(unsigned int frames)
 int handlePlayerBullet(unsigned int frames)
 {
 	unsigned int i,skipped;
+	unsigned short pk;
 
         while((player_bullet.y>-1)&&(player_bullet.timer.value<frames))
         {
@@ -401,7 +402,15 @@ int handlePlayerBullet(unsigned int frames)
 				return 0;
 			}
 
-			if(peek(player_bullet.y,player_bullet.x+2)) // Hit something?
+			// Due to the moonscape, we need to do this:
+
+			pk=peek(player_bullet.y,player_bullet.x+2);
+
+			if(((pk&0x80C0)==0x80C0) // White bit 3
+                         ||((pk&0x2030)==0x2030) // White bit 2
+			 ||((pk&0x080C)==0x080C)   // White bit 1
+			 ||((pk&0x0203)==0x0203)   // White bit 0
+			 ||(pk&0xAA00)) 		 // Anything green?
 			{
 				// Invader hit?
 
@@ -711,6 +720,18 @@ void handleUFO(unsigned int frames)
        }
 }
 
+void loadScreen(unsigned char *scr,char *file)
+{
+	FILE *in=fopen(file,"rb");
+
+	if(in!=NULL)
+	{
+		fread(scr,1,32768,in);
+
+		fclose(in);
+	}
+}
+
 /////////////
 // setupBG //
 /////////////
@@ -723,6 +744,9 @@ void setupBG(unsigned int bases,unsigned int line)
 
         clsAll();
 
+	//loadScreen(getBackground(),"moon_scr");
+	if(bases) loadScreen(getScratch(),"moon_scr");
+
 	sprintf(buffer,"%d",players[currentPlayer].lives);
 	printAt(&font,xPrint(strlen(buffer)),255-8,buffer);
 
@@ -734,7 +758,7 @@ void setupBG(unsigned int bases,unsigned int line)
         {
                 sprite s;
 
-		s.mask=0; s.draw=1;
+		s.mask=1; s.draw=1;
                 s.image[0]=&lib.images[26];
                 s.currentImage=0;
                 s.x=XMIN+i*48+32; s.y=195;
@@ -748,7 +772,7 @@ void setupBG(unsigned int bases,unsigned int line)
 
                 base.image[0]=&lib.images[28];
                 base.currentImage=0;
-                base.mask=0;
+                base.mask=1;
                 base.draw=1;
                 base.y=245;
 
@@ -898,17 +922,9 @@ void initiate(unsigned int convert)
 	char name[80];
 	unsigned int timeout=getFrames()+150;
 
-	FILE *in=fopen("logo_scr","rb");
-	unsigned char *scr=(unsigned char *)0x20000;
-
 	init();
 
-	if(in!=NULL)
-	{
-		fread(scr,1,32768,in);
-
-		fclose(in);
-	}
+	loadScreen((unsigned char *)0x20000,"logo_scr");
 
 	// font
 
@@ -1148,7 +1164,7 @@ void setupGame(unsigned int frames)
 	player.image[2]=&lib.images[14];
 	player.image[3]=&lib.images[31];
 	player.currentImage=0;
-	player.mask=0;
+	player.mask=1;
 	player.draw=1;
 	player.x=0;
 	player.y=256-player.image[0]->y-24;

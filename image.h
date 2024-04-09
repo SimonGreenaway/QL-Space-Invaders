@@ -1,6 +1,19 @@
 #define FRAMES ((unsigned short *)163886)       // Location of frame counter
 
+// Enable second screen?
+#undef SECONDSCREEN
+
+#ifdef SECONDSCREEN
+#define FRAMES ((unsigned short *)163886+0x8000)       // Location of frame counter
+#define SCREEN2 ((char *)0x28000)
+#endif
+
+#define SCREEN ((char *)0x20000)
+
 void init();
+unsigned char *getBackground();
+unsigned char *getScratch();
+
 void fill(unsigned short colour);
 void plot(unsigned short x,unsigned short y,unsigned char c);
 
@@ -89,6 +102,7 @@ void printAtBG(library *font,unsigned int x,unsigned y,char *s);
 void bufferCopy(unsigned char *from,unsigned char *to,unsigned int rowStart,unsigned int rowEnd);
 void restoreBG();
 void allBGtoScratch();
+void BGtoScratch();
 void showAllScratch();
 void showScratch(unsigned int from,unsigned int to);
 void showBG(unsigned int from,unsigned int to);

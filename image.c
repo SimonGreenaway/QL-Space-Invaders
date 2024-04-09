@@ -18,6 +18,16 @@ unsigned short bits[8];
 unsigned char *background;
 unsigned char *scratch;
 
+unsigned char *getBackground()
+{
+	return background;
+}
+
+unsigned char *getScratch()
+{
+	return scratch;
+}
+
 // Print a number in binary to a set number of places...
 
 void binPrint(unsigned int i,unsigned char d)

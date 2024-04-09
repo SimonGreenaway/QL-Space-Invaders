@@ -18,11 +18,13 @@ clean:
 cleaner:	clean
 	rm -f sprite
 
-deploy:	sprite
+deploy:	sprite logo.scr moon.scr
 	cp invaders_blb /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
 	cp font_blb /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
 	cp ../Space_invaders_logo.scr logo.scr
+	cp ../moon.scr moon.scr
 	cp logo.scr /home/simon/emulators/ql/emulators/sQLux/flp1/logo_scr
+	cp moon.scr /home/simon/emulators/ql/emulators/sQLux/flp1/moon_scr
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 
 run:   	deploy
