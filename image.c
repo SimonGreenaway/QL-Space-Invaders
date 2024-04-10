@@ -146,6 +146,11 @@ void cls()
 	memset((unsigned char *)0x20000,0,32768);
 }
 
+void clsScratch()
+{
+	memset(scratch,0,32768);
+}
+
 void bgFill(unsigned int rowStart,unsigned int rowEnd,unsigned char c)
 {
 	memset(background+rowStart*128,c,128*(rowEnd-rowStart));
@@ -827,6 +832,11 @@ void bufferCopy(unsigned char *to,unsigned char *from,unsigned int rowStart,unsi
 void initBG()
 {
 	bufferCopy((unsigned char *)background,(unsigned char *)0x20000,0,256);
+}
+
+void scratchToBG()
+{
+	bufferCopy((unsigned char *)background,scratch,0,256);
 }
 
 // Background -> Screen

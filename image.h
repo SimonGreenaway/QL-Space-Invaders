@@ -83,6 +83,7 @@ void bSaveLibrary(library *library,char *filename);
 
 void cls();
 void clsAll();
+void clsScratch();
 void bgFill(unsigned int rowStart,unsigned int rowEnd,unsigned char c);
 void Fill(unsigned int rowStart,unsigned int rowEnd,unsigned char c);
 
@@ -103,6 +104,7 @@ void printAtBG(library *font,unsigned int x,unsigned y,char *s);
 void bufferCopy(unsigned char *from,unsigned char *to,unsigned int rowStart,unsigned int rowEnd);
 void restoreBG();
 void allBGtoScratch();
+void scratchToBG();
 void BGtoScratch();
 void showAllScratch();
 void showScratch(unsigned int from,unsigned int to);

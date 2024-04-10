@@ -19,8 +19,8 @@ cleaner:	clean
 	rm -f sprite
 
 deploy:	sprite logo.scr moon.scr
-	cp invaders_blb /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
-	cp font_blb /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
+	cp invaders_blb /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_blb
+	cp font_blb /home/simon/emulators/ql/emulators/sQLux/flp1/font_blb
 	cp ../Space_invaders_logo.scr logo.scr
 	cp ../moon.scr moon.scr
 	cp logo.scr /home/simon/emulators/ql/emulators/sQLux/flp1/logo_scr
@@ -39,7 +39,9 @@ runjs:	deploy
 runfast:	deploy
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --RAMSIZE 131072 --SPEED=10 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
 
-convert:   	deploy
+convert:   	deploy 
+	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
+	cp invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_lib
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_ -c'"
 	cp ~/emulators/ql/emulators/sQLux/flp1_c86/*_blb .
 
