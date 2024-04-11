@@ -150,10 +150,11 @@ void doHelp()
 
 	printAt(&font,xPrint(12),00,"HELP SCREEN");
 	printAt(&font,50,30,"<C> - ADD A COIN");
-	printAt(&font,50,60,"<1> - 1 PLAYER GAME");
-	printAt(&font,50,90,"<2> - 1 PLAYER GAME");
-	printAt(&font,50,120,"<S> - SOUND TOGGLE");
-	printAt(&font,50,150," F1 - HELP");
+	printAt(&font,50,55,"<1> - 1 PLAYER GAME");
+	printAt(&font,50,80,"<2> - 1 PLAYER GAME");
+	printAt(&font,50,105,"<S> - SOUND TOGGLE");
+	printAt(&font,50,130,"<P> - PAUSE GAME TOGGLE");
+	printAt(&font,50,155," F1 - HELP");
 
 	printAt(&font,xPrint(10),190,"THANKS TO:");
 	printAt(&font,30,210,"GEORGIUS KONSTANTOPULOS (TESTING)");
@@ -950,7 +951,7 @@ void introScreens()
 		if(slowPrintAt(xPrint(4),70,"PLAY")) return;
 		if(slowPrintAt(xPrint(14),100,"SPACE INVADERS")) return;
 
-		if(keysleep(50)) return;
+		if(keysleep(150)) return;
 
 		printAt(&font,xPrint(21),130,"*SCORE ADVANCE TABLE*");
 		ufo.x=x-3; ufo.y=150;
@@ -971,7 +972,7 @@ puts("e");
 		if(slowPrintAt(x+16,190,"=20 POINTS")) return; 
 		if(slowPrintAt(x+16,210,"=10 POINTS")) return; 
 
-		if(keysleep(5)) continue;
+		if(keysleep(150)) continue;
 
 		// Score table
 
@@ -988,7 +989,7 @@ puts("e");
 
 		doHelp();
 
-		if(keysleep(100)) return;
+		if(keysleep(350)) return;
 	}
 }
 
@@ -1052,8 +1053,8 @@ void initiate(unsigned int convert)
 
 	// Create areas for storing players bases
 
-	players[0].bases=malloc(128*(211-195+1));
-	players[1].bases=malloc(128*(211-195+1));
+	players[0].bases=myMalloc(128*(211-195+1));
+	players[1].bases=myMalloc(128*(211-195+1));
 
 	while(getFrames()<timeout);
 }

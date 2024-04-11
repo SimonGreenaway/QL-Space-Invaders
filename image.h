@@ -11,6 +11,7 @@
 #define SCREEN ((char *)0x20000)
 
 void init();
+void* myMalloc(unsigned int i);
 unsigned char *getBackground();
 unsigned char *getScratch();
 
