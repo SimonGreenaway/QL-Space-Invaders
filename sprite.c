@@ -801,14 +801,14 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
         clsAll();
 
 	//loadScreen(getBackground(),"moon_scr");
-	if(bases) loadScreen(getScratch(),"moon_scr");
+	if(bases) loadScreen(((unsigned char *)((unsigned int)getScratch())+157*128),"moon_scr");
 
 	sprintf(buffer,"%d",players[currentPlayer].lives);
-	printAt(&font,xPrint(strlen(buffer)),255-8,buffer);
+	printAt(&font,XMIN+4,255-8,buffer);
 
         printAt(&font,xPrint(26),32,"SCORE<1> HI-SCORE SCORE<2>");
 	sprintf(buffer,"CREDIT %02d",credits);
-        printAt(&font,XMAX-6*strlen(buffer),255-8,buffer);
+        printAt(&font,XMAX-6*strlen(buffer)-20,255-8,buffer);
 
         if(bases&&life)
 	{
@@ -844,7 +844,7 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
         base.image[0]=&lib.images[8];
         base.currentImage=0;
         base.y=255-8;
-        base.x=XMIN+24;
+        base.x=XMIN+16;
 
         for(i=0;i<players[currentPlayer].lives-1;i++)
         {
@@ -930,12 +930,17 @@ void startGameScreen()
 	// gameMode will be 1 or 2 here
 }
 
+void setupGame(unsigned int frames);
+
 void introScreens()
 {
 	unsigned int x=xPrint(0)-56; // Middle of screen
 	unsigned int ks;
 
 	clsAll();
+        //setupGame(getFrames());
+	setupInvaders(getFrames());
+
 	setupBG(0,0,0);
 
 	while(1)
@@ -951,11 +956,14 @@ void introScreens()
 		ufo.x=x-3; ufo.y=150;
 		ufo.image[0]=&lib.images[29];
 		spritePlot(&ufo); ufo.image[0]=&lib.images[7]; ufo.y=-1;
+printf("a\n");
 
 		players[0].sprites[0].x=x; players[0].sprites[0].y=170; spritePlot(&players[0].sprites[0]);
+puts("c");
 		players[0].sprites[SPRITES/2].x=x-1; players[0].sprites[SPRITES/2].y=190; spritePlot(&players[0].sprites[SPRITES/2]);
+puts("d");
 		players[0].sprites[SPRITES-1].x=x-1; players[0].sprites[SPRITES-1].y=210; players[0].sprites[SPRITES-1].image[0]=&lib.images[30]; spritePlot(&players[0].sprites[SPRITES-1]); players[0].sprites[SPRITES-1].image[0]=&lib.images[0];
-
+puts("e");
 		showAllScratch();
 
 		if(slowPrintAt(x+16,150,"=? MYSTERY")) return; 
@@ -1207,6 +1215,8 @@ int gameLoop()
 void setupGame(unsigned int frames)
 {
 	unsigned int i;
+
+	puts("SETUP!");
 
 	for(i=0;i<MAXBULLETS;i++)
 	{
