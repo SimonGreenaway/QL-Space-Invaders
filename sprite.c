@@ -1222,8 +1222,6 @@ void setupGame(unsigned int frames)
 {
 	unsigned int i;
 
-	puts("SETUP!");
-
 	for(i=0;i<MAXBULLETS;i++)
 	{
 		bullets[i].x=0; bullets[i].y=-1;
@@ -1289,7 +1287,6 @@ void mainLoop(int convert)
 {
 	unsigned int i;
 	unsigned int goes[2];
-
 
 	initiate(convert);
 
