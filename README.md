@@ -1,7 +1,7 @@
 # QL-Space-Invaders
 Space Invaders for the Sinclair QL - Work in Progress!
 
-![image](https://github.com/SimonGreenaway/QL-Space-Invaders/assets/29223933/019bf0c5-803e-442b-9be7-8db43287e013)
+![image](https://github.com/SimonGreenaway/QL-Space-Invaders/assets/29223933/9fbd6799-4762-4635-8bc2-335d26fb7641)
 
 ![image](https://github.com/SimonGreenaway/QL-Space-Invaders/assets/29223933/16a34f25-7617-48db-83a2-8a0a1f30ee25) ![image](https://github.com/SimonGreenaway/QL-Space-Invaders/assets/29223933/1f7df6c4-9e9a-4578-9536-8a73513f15f6)
 
