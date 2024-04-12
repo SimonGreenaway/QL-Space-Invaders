@@ -405,15 +405,18 @@ int handlePlayerBullet(unsigned int frames)
 			{
 				player_bullet.y--;
 
-				pk=peek(player_bullet.y-2,player_bullet.x+2);
-
-       			        if(((pk&0x80C0)==0x80C0) // White bit 3
-			         ||((pk&0x2030)==0x2030) // White bit 2
-				 ||((pk&0x080C)==0x080C)   // White bit 1
-				 ||((pk&0x0203)==0x0203)   // White bit 0
-       	                	 ||(pk&0xAA00))          // Anything green?
+				if(!hit)
 				{
-					hit=1;
+					pk=peek(player_bullet.y+2,player_bullet.x+3);
+
+       				        if(((pk&0x80C0)==0x80C0) // White bit 3
+				         ||((pk&0x2030)==0x2030) // White bit 2
+					 ||((pk&0x080C)==0x080C)   // White bit 1
+					 ||((pk&0x0203)==0x0203)   // White bit 0
+       	     		           	 ||(pk&0xAA00))          // Anything green?
+					{
+						hit=player_bullet.y;
+					}
 				}
 			}
 
@@ -506,13 +509,15 @@ int handlePlayerBullet(unsigned int frames)
                                 // Base?
 
                                 player_bullet.currentImage=4;
-                                player_bullet.y-=5;
+                                player_bullet.y-=1;
 				player_bullet.mask=1;
                                 bgSpritePlot(&player_bullet);
 				player_bullet.mask=0;
                                 player_bullet.currentImage=0;
 
                                 player_bullet.y=-1;
+
+				//showBG(0,256); while(1);
 
                                 return 0;
 			}
