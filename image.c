@@ -173,7 +173,7 @@ void clsAll()
 
 void plot(unsigned short x,unsigned short y,unsigned char c)
 {
-	unsigned char *address=0x20000+(y*128);
+	unsigned char *address=(unsigned char *)(0x20000+y*128);
 
 	(*address)=((*address)&masks[x&3])|(bits[c]*shifts[x&3]);
 }
