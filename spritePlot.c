@@ -1,81 +1,49 @@
 #include "image.h"
 
-void drawSpriteNoMask(unsigned int xlim,unsigned short *address,unsigned short *shifter,image *image)
+void draw8x8(screen screen,sprite *sprite)
 {
-	register unsigned int a;
-        register unsigned int addressDelta=64-image->x;
+	register unsigned int i;
 
-	switch(xlim) // Welcome to loop unroll City....
+	image *image=sprite->image[sprite->currentImage];
+
+	unsigned short *address=(unsigned short *)screen+sprite->y*128+sprite->x/4;
+	unsigned short *mask=(unsigned short *)(image->maskshifter[sprite->x&3]);
+	unsigned short *data=(unsigned short *)(image->datashifter[sprite->x&3]);
+
+	if(sprite->draw)
 	{
-		case 4: for(a=0;a<image->y;a++)
+		if(sprite->mask)
 		{
-			*address++|=*shifter++;
-			*address++|=*shifter++;
-			*address++|=*shifter++|*shifter++;
-			*address++|=*shifter++;
-			*address++|=*shifter++|*shifter++;
-			*address++|=*shifter++;
-			*address++|=*shifter++|*shifter++;
-			*address++|=*shifter++;
-			*address  |=*shifter++;
-
-			address+=addressDelta;
+			*address=(*address)&*mask++|*data++; address+=128;
+			*address=(*address)&*mask++|*data++; address+=128;
+			*address=(*address)&*mask++|*data++; address+=128;
+			*address=(*address)&*mask++|*data++; address+=128;
+			*address=(*address)&*mask++|*data++; address+=128;
+			*address=(*address)&*mask++|*data++; address+=128;
+			*address=(*address)&*mask++|*data++; address+=128;
+			*address=(*address)&*mask|*data;
 		}
-
-		break;
-
-		case 3: for(a=0;a<image->y;a++)
+		else
 		{
-			*address++|=*shifter++;
-			*address++|=*shifter++;
-			*address++|=*shifter++|*shifter++;
-			*address++|=*shifter++;
-			*address++|=*shifter++|*shifter++;
-			*address++|=*shifter++;
-			*address  |=*shifter++;
-
-			address+=addressDelta;
-		}
-
-		break;
-
-		case 2: for(a=0;a<image->y;a++)
-		{
-			*address++|=*shifter++;
-			*address++|=*shifter++;
-			*address++|=*shifter++|*shifter++;
-			*address++|=*shifter++;
-			*address  |=*shifter++;
-
-			address+=addressDelta;
-		}
-
-		break;
-
-		case 1: for(a=0;a<image->y;a++)
-		{
-			*address++|=*shifter++;
-			*address++|=*shifter++;
-			*address  |=*shifter++;
-
-			address+=addressDelta;
-		}
-
-		break;
-
-		default:        for(a=0;a<image->y;a++)
-		{
-			unsigned int b;
-
-			for(b=0;b<xlim;b++)
-			{
-				*address++|=*shifter++;
-				*address++|=*shifter++;
-				*address  |=*shifter++;
-			}
-
-			address+=addressDelta;
+			*address|=*data++; address+=128;
+			*address|=*data++; address+=128;
+			*address|=*data++; address+=128;
+			*address|=*data++; address+=128;
+			*address|=*data++; address+=128;
+			*address|=*data++; address+=128;
+			*address|=*data++; address+=128;
+			*address|=*data;
 		}
 	}
+	else // if(sprite->mask)
+	{
+		*address&=*mask++; address+=128;
+		*address&=*mask++; address+=128;
+		*address&=*mask++; address+=128;
+		*address&=*mask++; address+=128;
+		*address&=*mask++; address+=128;
+		*address&=*mask++; address+=128;
+		*address&=*mask++; address+=128;
+		*address&=*mask;
+	}
 }
-

@@ -15,18 +15,7 @@ unsigned char *addresses[256];
 unsigned int secondAddress;
 unsigned short bits[8];
 
-unsigned char *background;
-unsigned char *scratch;
-
-unsigned char *getBackground()
-{
-	return background;
-}
-
-unsigned char *getScratch()
-{
-	return scratch;
-}
+screen SCREEN;
 
 // Print a number in binary to a set number of places...
 
@@ -49,7 +38,7 @@ void setFontMasking(unsigned int m)
 	fontMasking=m;
 }
 
-void bufferPrintCharAt(unsigned char *buffer,library *font,unsigned int x,unsigned int y,char c)
+void printCharAt(screen screen,library *font,unsigned int x,unsigned int y,char c)
 {
         sprite s;
 
@@ -65,38 +54,18 @@ void bufferPrintCharAt(unsigned char *buffer,library *font,unsigned int x,unsign
         s.draw=1;
         s.mask=fontMasking;
 
-        spritePlot0(buffer,&s);
+        spritePlot(screen,&s);
 }
 
-void printCharAt(library *font,unsigned int x,unsigned int y,char c)
-{
-	bufferPrintCharAt(scratch,font,x,y,c);
-}
-
-void printCharAtBG(library *font,unsigned int x,unsigned int y,char c)
-{
-	bufferPrintCharAt(background,font,x,y,c);
-}
-
-void bufferPrintAt(unsigned char *buffer,library *font,unsigned int x,unsigned y,char *s)
+void printAt(screen screen,library *font,unsigned int x,unsigned y,char *s)
 {
         while(*s!=0)
         {
-                if(*s!=32) bufferPrintCharAt(buffer,font,x,y,*s);
+                if(*s!=32) printCharAt(screen,font,x,y,*s);
 
                 s++;
                 x+=6;
         }
-}
-
-void printAt(library *font,unsigned int x,unsigned y,char *s)
-{
-	bufferPrintAt(scratch,font,x,y,s);
-}
-
-void printAtBG(library *font,unsigned int x,unsigned y,char *s)
-{
-	bufferPrintAt(background,font,x,y,s);
 }
 
 void* myMalloc(unsigned int i)
@@ -128,75 +97,47 @@ void init()
 	int i;
 	short colours=8,mode=0;
 
-	background=(unsigned char *)createBuffer(256);
-	scratch=createBuffer(256);
-	secondAddress=(int)(background)-0x20000;
+	//background=(unsigned char *)createBuffer(256);
+	//scratch=createBuffer(256);
+	//secondAddress=(int)(background)-0x20000;
 
 	mt_dmode(&colours,&mode);
 
 	for(i=0;i<256;i++) addresses[i]=(unsigned char *)(i*128);
 
 	for(i=0;i<8;i++) bits[i]=(i&3)+(i&4)*128;
+
+	SCREEN=(screen)0x20000;
 }
 
 // Clear the screen to black
 
-void cls()
+void cls(screen screen)
 {
-	memset((unsigned char *)0x20000,0,32768);
+	memset((unsigned char *)screen,0,32768);
 }
 
-void clsScratch()
+void fill(screen screen,unsigned int rowStart,unsigned int rowEnd,unsigned char c)
 {
-	memset(scratch,0,32768);
-}
-
-void bgFill(unsigned int rowStart,unsigned int rowEnd,unsigned char c)
-{
-	memset(background+rowStart*128,c,128*(rowEnd-rowStart));
-}
-
-void Fill(unsigned int rowStart,unsigned int rowEnd,unsigned char c)
-{
-	memset(scratch+rowStart*128,c,128*(rowEnd-rowStart));
-}
-
-void clsAll()
-{
-	cls();
-
-	memset(scratch,0,32768);
-	memset(background,0,32768);
+	memset((char *)screen+rowStart*128,c,128*(rowEnd-rowStart));
 }
 
 // Plot a point in the given colour
 
-void plot(unsigned short x,unsigned short y,unsigned char c)
+void plot(screen screen,unsigned short x,unsigned short y,unsigned char c)
 {
-	unsigned char *address=(unsigned char *)(0x20000+y*128);
+	unsigned char *address=(unsigned char *)screen+y*128;
 
 	(*address)=((*address)&masks[x&3])|(bits[c]*shifts[x&3]);
 }
 
-// Plot a sprite on the scratch workspace
-
-void spritePlot(sprite *sprite)
-{
-	spritePlot0((unsigned char *)scratch,sprite);
-}
-
-void bgSpritePlot(sprite *sprite)
-{
-	spritePlot0((unsigned char *)background,sprite);
-}
-
 // Draw an image, erasing old one if needed
 
-void spritePlot0(unsigned char *buffer,sprite *sprite)
+void spritePlot(screen screen,sprite *sprite)
 {
 	image *image=sprite->image[sprite->currentImage];
 
-	unsigned short *address=(unsigned short *)buffer;
+	unsigned short *address=(unsigned short *)screen;
 	unsigned int addressDelta=64-image->x;
 
 	unsigned short *shifter=image->datashifter[sprite->x&3];
@@ -289,7 +230,7 @@ void spritePlot0(unsigned char *buffer,sprite *sprite)
 	
 				break;
 	
-			case 1:	for(a=0;a<image->y;a++)
+			case 1:	for(a=0;a<image->y;a++) // 8x8
 				{
 					*address++=*address&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
@@ -813,68 +754,9 @@ void loadLibrary(library *library,char *filename,int shift)
 // Buffer creation and moving //
 ////////////////////////////////
 
-// Create a buffer //
-
-unsigned char* createbuffer(unsigned int rows)
+unsigned short peek(screen screen,unsigned int y,unsigned int x)
 {
-	return (unsigned char *)malloc(rows*128);
-}
-
-// Copy from buffer to buffer (or the screen)
-
-void bufferCopy(unsigned char *to,unsigned char *from,unsigned int rowStart,unsigned int rowEnd)
-{
-	memcpy(to+rowStart*128,from+rowStart*128,(rowEnd-rowStart)*128);
-}
-
-// Screen -> background
-
-void initBG()
-{
-	bufferCopy((unsigned char *)background,(unsigned char *)0x20000,0,256);
-}
-
-void scratchToBG()
-{
-	bufferCopy((unsigned char *)background,scratch,0,256);
-}
-
-// Background -> Screen
-
-void restoreBG()
-{
-	bufferCopy((unsigned char *)0x20000,(unsigned char *)background,0,256);
-}
-
-// Background -> scratch
-
-void allBGtoScratch()
-{
-	bufferCopy((unsigned char *)scratch,(unsigned char *)background,0,256);
-}
-
-void BGtoScratch(unsigned int from,unsigned int to)
-{
-	bufferCopy((unsigned char *)scratch,(unsigned char *)background,from,to);
-}
-
-void showAllScratch()
-{
-	bufferCopy((unsigned char *)0x20000,scratch,0,256);
-}
-
-void showScratch(unsigned int from,unsigned int to)
-{
-	bufferCopy((unsigned char *)0x20000,scratch,from,to);
-}
-
-void showBG(unsigned int from,unsigned int to)
-{
-	bufferCopy((unsigned char *)0x20000,background,from,to);
-}
-unsigned short peek(unsigned int y,unsigned int x)
-{
-	unsigned short *address=(unsigned short *)scratch;
+	unsigned short *address=(unsigned short *)screen;
 	unsigned short data;
 	address+=(unsigned short*)addresses[y]+(x/4);
 
@@ -887,4 +769,36 @@ unsigned short peek(unsigned int y,unsigned int x)
 		case 2: return data&0x2030;
 		default: return data&0x80C0;
 	}
+}
+
+// Screen 
+
+screen createScreen()
+{
+	return (screen)myMalloc(32768);
+}
+
+void closeScreen(screen s)
+{
+	free((void *)s);
+}
+
+void copyScreen(screen to,screen from,unsigned int rowStart,unsigned int rowEnd)
+{
+	memcpy((char *)to+rowStart*128,(char *)from+rowStart*128,(rowEnd-rowStart)*128);
+}
+
+void copyAllScreen(screen to,screen from)
+{
+	copyScreen(to,from,0,256);
+}
+
+void showAll(screen screen)
+{
+	copyAllScreen(SCREEN,screen);
+}
+
+void show(screen screen,unsigned int lowy,unsigned int highy)
+{
+	copyScreen(SCREEN,screen,lowy,highy);
 }

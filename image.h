@@ -1,5 +1,8 @@
 #define FRAMES ((unsigned short *)163886)       // Location of frame counter
 
+// undef MAGIC to disable image checking
+#define MAGIC 0xdeadbeef
+
 // Enable second screen?
 #undef SECONDSCREEN
 
@@ -8,18 +11,27 @@
 #define SCREEN2 ((char *)0x28000)
 #endif
 
-#define SCREEN ((char *)0x20000)
+typedef void * screen;
 
+extern screen SCREEN;
 void init();
 void* myMalloc(unsigned int i);
-unsigned char *getBackground();
-unsigned char *getScratch();
 
-void fill(unsigned short colour);
-void plot(unsigned short x,unsigned short y,unsigned char c);
+// Screens
 
-// undef MAGIC to disable image checking
-#define MAGIC 0xdeadbeef
+screen createScreen();
+void closeScreen(screen s);
+void copyScreen(screen from,screen to,unsigned int yLow,unsigned int yHigh);
+void copyAllScreen(screen from,screen to);
+void showAll(screen screen);
+void show(screen screen,unsigned int lowy,unsigned int highy);
+
+//
+
+void fill(screen screen,unsigned int xmin,unsigned int xmax,unsigned char c);
+void plot(screen screen,unsigned short x,unsigned short y,unsigned char c);
+
+//
 
 typedef struct
 {
@@ -69,44 +81,29 @@ struct shifter
 	} z;
 };
 
-void spritePlot0(unsigned char *buffer,sprite *sprite);
+void spritePlot(screen screen,sprite *sprite);
 
-unsigned char* createBuffer(unsigned int rows);
+//void tilePlot(unsigned short x,unsigned short y,image *image);
+//void imagePlot(unsigned int x,unsigned int y,image *image);
 
-void spritePlot(sprite *sprite);
-void bgSpritePlot(sprite *sprite);
+// Image library handling
 
-void tilePlot(unsigned short x,unsigned short y,image *image);
-void imagePlot(unsigned int x,unsigned int y,image *image);
 void loadLibrary(library *library,char *filename,int shift);
 void bLoadLibrary(library *library,char *filename,int shift);
 void bSaveLibrary(library *library,char *filename);
 
-void cls();
-void clsAll();
-void clsScratch();
-void bgFill(unsigned int rowStart,unsigned int rowEnd,unsigned char c);
-void Fill(unsigned int rowStart,unsigned int rowEnd,unsigned char c);
+void cls(screen screen);
 
-void initBG();
+unsigned short peek(screen screen,unsigned int y,unsigned int x);
 
-unsigned short peek(unsigned int y,unsigned int x);
+// Print text
 
 void setFontMasking(unsigned int m);
-void printCharAt(library *font,unsigned int x,unsigned int y,char c);
-void bufferPrintCharAt(unsigned char *buffer,library *font,unsigned int x,unsigned int y,char c);
-void bufferPrintAt(unsigned char *buffer,library *font,unsigned int x,unsigned y,char *s);
-void printAt(library *font,unsigned int x,unsigned y,char *s);
-void printCharAtBG(library *font,unsigned int x,unsigned int y,char c);
-void printAtBG(library *font,unsigned int x,unsigned y,char *s);
+void printCharAt(screen screen,library *font,unsigned int x,unsigned int y,char c);
+void printAt(screen screen,library *font,unsigned int x,unsigned y,char *s);
 
-// Buffer moving
+// Developmental
 
-void bufferCopy(unsigned char *from,unsigned char *to,unsigned int rowStart,unsigned int rowEnd);
-void restoreBG();
-void allBGtoScratch();
-void scratchToBG();
-void BGtoScratch();
-void showAllScratch();
-void showScratch(unsigned int from,unsigned int to);
-void showBG(unsigned int from,unsigned int to);
+void draw8x8(screen screen,sprite *sprite);
+
+

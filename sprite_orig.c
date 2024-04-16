@@ -429,6 +429,8 @@ int handlePlayerBullet(unsigned int frames)
 
 			player_bullet.timer.value=frames+player_bullet.timer.delta;
 
+			lowY=min(lowY,player_bullet.y);
+
 			if(player_bullet.y<=64)	// Reached the top
        		       	{
                                 if((ufo.y>-1)&&(ufo.x<=player_bullet.x)
@@ -535,7 +537,6 @@ int handlePlayerBullet(unsigned int frames)
 	if(player_bullet.y>-1)
 	{
 		spritePlot(&player_bullet);	// Draw bullet if still active
-		lowY=min(lowY,player_bullet.y);
 	}
 
 	return 0;	// Wave still ongoing
@@ -661,37 +662,96 @@ void invaderFire(unsigned int frames)
 //          0 - still going! // 
 ///////////////////////////////
 
-int bounce=0;
+unsigned int bounce=0;
+
+int bounceInvaders()
+{
+	unsigned int i;
+
+	// Move the invaders down and reverse direction
+
+	unsigned int lowest=0;
+
+	bounce=0;
+
+	players[currentPlayer].direction=-players[currentPlayer].direction;
+
+	for(i=0;i<SPRITES;i++)
+	{
+		if(players[currentPlayer].sprites[i].y>-1)
+		{
+			players[currentPlayer].sprites[i].draw=0;
+			bgSpritePlot(&players[currentPlayer].sprites[i]);
+			players[currentPlayer].sprites[i].draw=1;
+
+			lowest=max(lowest,players[currentPlayer].sprites[i].y);
+		}
+	}
+
+	// Destroy the bases if the invaders are low enough
+
+	if(lowest+16>=195) bgFill(lowest+8,lowest+16,0);
+
+	for(i=0;i<SPRITES;i++)
+	{
+		sprite *s=&players[currentPlayer].sprites[i];
+
+		if(s->y>-1)     // Is sprite alive?
+		{
+			s->y+=8;        // Move invader down
+
+			// Game over?
+			if(s->y>=player.y)  return 1;
+
+			bgSpritePlot(s);
+		}
+	}
+
+	return 0;
+}
+
+unsigned int nextInvader=0;
 
 int handleInvaders(unsigned int frames)
 {
-	unsigned int i,bounce=0;
+	unsigned int i;
+
+	if(bounce) return bounceInvaders();
 
         for(i=0;i<SPRITES;i++)
         {
-		sprite *s=&players[currentPlayer].sprites[i];
+		sprite *s=&players[currentPlayer].sprites[nextInvader++];
+
+		if(nextInvader==SPRITES) // All the invaders have been drawn, so check for bounce
+		{
+			nextInvader=0; // Reset the invader counter
+
+			for(i=0;i<SPRITES;i++)
+			{
+				unsigned int x=players[currentPlayer].sprites[i].x;
+
+				if((x==0)||(x+17==XMAX))
+					return bounceInvaders();
+			}
+		}
 
 		if((s->y>-1)&&(s->timer.value<=frames))	// Time to move?
 		{
 			unsigned int newX=s->x
 				+((players[currentPlayer].direction==1)?s->dx:-s->dx);
 
-			if((!bounce)&&((newX<=XMIN)||(players[currentPlayer].direction==1)&&(newX>=XMAX-17)))
-			{	
-				bounce=1;
-
-				break;
-			}
-
 			// Clear old invader from BG
 			s->draw=0; bgSpritePlot(s); s->draw=1;
 
 			s->x=newX;				// Move invader
 		        s->currentImage=1-s->currentImage; 	// Animate
-			s->timer.value=frames+s->timer.delta;		// Set up timer for next movement 
+			s->timer.value+=s->timer.delta;		// Set up timer for next movement 
 			bgSpritePlot(s);	// Draw invader on BG
 
 			lowY=min(lowY,s->y);
+
+			if((newW<=XMIN)||(x>=XMAX-17))
+			if(getFrames()>frames+2) break;
 		}
         }
 
@@ -700,44 +760,6 @@ int handleInvaders(unsigned int frames)
 		invaderSoundTimer+=max(5,players[currentPlayer].newDelta);
 		
 		if(sound) do_sound(490,176,0,0,0,0,8,0);
-	}
-
-	if(bounce)	// Move the invaders down and reverse direction
-	{
-		unsigned int lowest=0;
-
-		bounce=0;
-
-		players[currentPlayer].direction=-players[currentPlayer].direction;
-
-                for(i=0;i<SPRITES;i++)
-                {
-                        if(players[currentPlayer].sprites[i].y>-1)
-                        {
-                                players[currentPlayer].sprites[i].draw=0;
-                                bgSpritePlot(&players[currentPlayer].sprites[i]);
-                                players[currentPlayer].sprites[i].draw=1;
-
-                                lowest=max(lowest,players[currentPlayer].sprites[i].y);
-                        }
-                }
-
-		if(lowest+16>=195) bgFill(lowest+8,lowest+16,0);
-
-                for(i=0;i<SPRITES;i++)
-                {
-                        sprite *s=&players[currentPlayer].sprites[i];
-
-                        if(s->y>-1)     // Is sprite alive?
-                        {
-                                s->y+=8;        // Move invader down
-
-                                // Game over?
-                                if(s->y>=player.y)  return 1;
-
-                                bgSpritePlot(s);
-                        }
-                }
 	}
 
 	return 0;
@@ -765,6 +787,8 @@ void handleUFO(unsigned int frames)
         }
         else
         {
+		lowY=64;
+
 		if(ufo.timer.value<frames) // Is it time to move?
 		{
 			ufo.x+=ufo.dx;		// Move
@@ -780,7 +804,6 @@ void handleUFO(unsigned int frames)
 
                 spritePlot(&ufo);	// Draw the UFO
 
-		lowY=64;
        }
 }
 
@@ -796,8 +819,10 @@ int loadScreen(unsigned char *scr,char *file)
 
 		return 1;
 	}
-	else return 0;
+
+	return 0;
 }
+
 
 void saveBases()
 {
@@ -1044,7 +1069,7 @@ void initiate(unsigned int convert)
  		exit(1);
  	}
 
-	if(!loaded) bufferPrintAt((unsigned char *)0x20000,&font,xPrint(28),75,"S P A C E   I N V A D E R S");
+ 	if(!loaded) bufferPrintAt((unsigned char *)0x20000,&font,xPrint(28),75,"S P A C E   I N V A D E R S");
 
 	bufferPrintAt((unsigned char *)0x20000,&font,xPrint(18),150,"BY SIMON GREENAWAY");
 
@@ -1219,7 +1244,7 @@ int gameLoop()
 		profileCounter=getFrames();
 		#endif
 
-		showScratch(lowY,232);
+		showAllScratch();
 
 		// 10 
 		#ifdef PROFILE
@@ -1428,7 +1453,7 @@ void benchmark()
 	unsigned int s;
 
 	init();
-	loadLibrary(&lib,"flp1_test_lib",1);
+	loadLibrary(&lib,"test_lib",1);
 	initBG();
 
 	for(s=0;s<3;s++)
@@ -1466,20 +1491,11 @@ void benchmark()
 
 				for(i=0;i<8;i++)
 				{
-					if(y+lib.images[s].y>=256)
-					{
-						y=0;
-						x+=lib.images[s].x*2+16;
-					}
-	
-					x++;
-	
-					spritePlot(&sprite[i]);
-	
-					y+=lib.images[s].y;
-
-					c++;
+					if(sprite[i].image[0]->x==2) draw8x8((unsigned int)getScratch(),&sprite[i]);	
+					else spritePlot(&sprite[i]);
 				}
+
+				c+=8;
 
 				showAllScratch();
 			}
@@ -1514,3 +1530,5 @@ int main(int argc, char *argv[])
 	mainLoop(convert);
 }
 
+#include <stdio.h>
+#include <stdlib.h>

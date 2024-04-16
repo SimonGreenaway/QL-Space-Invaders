@@ -1,9 +1,12 @@
-sprite:	sprite.o image.o 
-	qld -lm -o sprite sprite.o image.o 
+sprite:	sprite.o image.o  spritePlot.o
+	qld -lm -o sprite sprite.o image.o  spritePlot.o
 
 sprite.o:	sprite.c image.h 
 		@echo $(PATH)
 		qcc -O -o sprite.o -c sprite.c
+
+spritePlot.o:	spritePlot.c image.h 
+		qcc -O -o spritePlot.o -c spritePlot.c
 
 libimage.a:	image.o
 		qdos-ar -rc libimage.a image.o
@@ -47,7 +50,7 @@ convert:   	deploy
 
 bm:   	sprite
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
-	cp ~/invaders.lib /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib
+	cp test.lib /home/simon/emulators/ql/emulators/sQLux/test_lib
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1.0 -b "LRESPR flp1_sigext_rext:EW flp1_sprite,#1;'-bm'"
 
 dist:	convert
