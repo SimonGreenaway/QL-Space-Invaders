@@ -1,5 +1,6 @@
 sprite:	sprite.o image.o  spritePlot.o
-	qld -lm -o sprite sprite.o image.o  spritePlot.o
+	rm -f sprite
+	qld -o sprite sprite.o image.o  spritePlot.o -lm
 
 sprite.o:	sprite.c image.h 
 		@echo $(PATH)
@@ -16,7 +17,7 @@ image.o:	image.c image.h
 		#qcc -O -S image.c
 
 clean:
-	rm -f image.o screen.o libimage.a interrupt.o sprite.o invaders.img invaders.zip image.s invaders.mdv inv
+	rm -f image.o screen.o libimage.a interrupt.o sprite.o invaders.img invaders.zip image.s invaders.mdv invaders.hfe inv
 
 cleaner:	clean
 	rm -f sprite
@@ -31,7 +32,7 @@ deploy:	sprite logo.scr moon.scr
 	cp sprite /home/simon/emulators/ql/emulators/sQLux/flp1
 
 run:   	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.39 --RAMSIZE=300 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.20 --RAMSIZE=300 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"
 
 runjm:	deploy
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JM.ROM --SPEED=0.75 --SOUND 8 -b "OPEN #8,con_512x256a0x0_0:CLS #8:INK #8,4:LRESPR flp1_sigext_rext:EW flp1_sprite,#8;'-d flp1_'"

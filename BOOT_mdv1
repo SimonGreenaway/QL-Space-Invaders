@@ -1,5 +1,6 @@
 OPEN #8,con_512x256a0x0_0
 CLS #8
 INK #8,4
+PRINT "Loading space invaders..."
 EXEC_W mdv1_sprite,#8;'-d mdv1_'
 CLOSE #8

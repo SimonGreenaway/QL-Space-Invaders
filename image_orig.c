@@ -92,6 +92,8 @@ long _memqdos = 20L * 1024L; /* minimum for QDOS */
 
 //long _stack = 500*1024L; /* size of stack */
 
+screen SCREEN;
+
 void init()
 {
 	int i;
@@ -107,14 +109,16 @@ void init()
 
 	for(i=0;i<8;i++) bits[i]=(i&3)+(i&4)*128;
 
-	SCREEN=(screen)0x20000;
+	SCREEN.data=(char *)0x20000;
+	SCREEN.ymin=256;
+	SCREEN.ymax=0;
 }
 
 // Clear the screen to black
 
 void cls(screen screen)
 {
-	memset((unsigned char *)screen,0,32768);
+	memset((unsigned char *)screen->value,0,32768);
 }
 
 void fill(screen screen,unsigned int rowStart,unsigned int rowEnd,unsigned char c)
@@ -819,7 +823,6 @@ int loadScreen(unsigned char *scr,char *file)
         return 0;
 }
 
-/*
 typedef struct
 {
 	unsigned int active:1;
@@ -835,53 +838,30 @@ typedef struct
 	int (*bounce)(sprite *);
 } sprite2;
 
-typedef struct
-{
-	sprite2 *sprite;
-	sprite_list *previous,*next;
-}
-sprite_list;
-
-void run(screen screen,screen background,sprite_list *list,int n)
+void run(screen screen,sprite2 *sprites[],int n)
 {
 	unsigned int i;
 	unsigned int frames=0; //getFrames();
 
-	while(list!=NULL)
+	for(i=0;i<n;i++)
 	{
-		sprite *sprite=sprite_list->sprite;
-
-		if((sprite!=NULL)&&sprite->active&&(sprite->timer.value<=frames))
+		if(sprites[i]->active&&(sprites[i]->timer.value<=frames))
 		{
-			if((sprite->dx!=0)||(sprite->dy!=0)) // Only move if we have a delta
+			sprites[i]->draw=0;spritePlot(screen,sprites[i]);
+
+			sprites[i]->x+=sprites[i]->dx;
+			sprites[i]->y+=sprites[i]->dy;
+			sprites[i]->draw=1;spritePlot(screen,sprites[i]);
+
+			if((sprites[i]->x<=sprites[i]->xmin)
+			 ||(sprites[i]->y<=sprites[i]->ymin)
+			 ||(sprites[i]->x>=sprites[i]->xmax)
+			 ||(sprites[i]->y>=sprites[i]->ymax))
 			{
-				// Erase the sprite, using the background
-				sprite->draw=0;spritePlot2(screen,background,sprite);
-
-				// Move the sprite
-				sprite->x+=sprite->dx;
-				sprite->y+=sprite->dy;
-
-				// Draw the moved sprite
-				sprite->draw=1;spritePlot2(screen,background,sprite);
-
-				// Check for a bounce
-				if((sprite->x<=sprite->xmin)||(sprite->y<=sprite->ymin)
-				 ||(sprite->x>=sprite->xmax)||(sprite->y>=sprite->ymax))
-				{
-					if(sprite->bounce==NULL)
-					{
-						// If no bounce call-back just stop the sprite
-						sprite->dx=sprite->dy=0;
-					}
-					else sprite->bounce(sprite); // Run the bounce call-back 
-				}
+				sprites[i]->bounce(sprites[i]);
 			}
-	
-			sprite->timer.value+=sprite->timer.delta; // Set the time for the next movement
-		}
 
-		sprite_list=sprite_list->next; // Move to next sprite in the list (or NULL)
+			sprites[i]->timer.value+=sprites[i]->timer.delta;
+		}
 	}
 }
-*/

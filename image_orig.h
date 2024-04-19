@@ -11,9 +11,15 @@
 #define SCREEN2 ((char *)0x28000)
 #endif
 
-typedef void * screen;
+typedef struct 
+{
+	char *data;
+	unsigned int ymin,ymax;
+}
+screen;
 
 extern screen SCREEN;
+
 void init();
 void* myMalloc(unsigned int i);
 
