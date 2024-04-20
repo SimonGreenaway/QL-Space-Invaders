@@ -12,7 +12,7 @@
 #define DEBUG(x) { Fill(0,8,0); printAt(&font,0,0,x); showScratch(scratch); }
 //#undef DEBUG
 
-//#define PROFILE
+#undef PROFILE
 #define FPS
 
 #ifdef PROFILE
@@ -70,7 +70,7 @@ unsigned int invaderSoundTimer;
 unsigned int fpsCounter,fpsTimer;
 #endif
 
-screen background,scratch;
+screen background,scratch,moon;
 
 unsigned int xPrint(unsigned int chars)
 {
@@ -124,7 +124,9 @@ void printScores()
 	sprintf(s,"%4s     %4s     %4s",p1,hs,p2);
 	printAt(background,&font,xPrint(strlen(s)),16+32,s);	
 
+	#ifdef DOUBLEBUFFER
 	copyScreen(SCREEN,background,48,48+8);
+	#endif
 }
 
 /////////////////////   
@@ -286,9 +288,7 @@ void handleKeys(unsigned int frames)
         	        if((key&2)&&(player.x>XMIN))
 			{
 				#ifndef DOUBLEBUFFER
-				player.draw=0;
-				spritePlot(scratch,&player);
-				player.draw=1;
+				spriteClear(scratch,moon,&player);
 				#endif
 
 				player.x--;	// Move left
@@ -298,7 +298,7 @@ void handleKeys(unsigned int frames)
 			{
 				#ifndef DOUBLEBUFFER
 				player.draw=0;
-				spritePlot(scratch,&player);
+				spriteClear(scratch,moon,&player);
 				player.draw=1;
 				#endif
 
@@ -351,7 +351,7 @@ int handleInvaderBullets(unsigned int frames)
 	        {
 			#ifndef DOUBLEBUFFER
 			bullets[i].draw=0;
-			spritePlot(scratch,&bullets[i]);	// Draw bullet if still active
+			spriteClear(scratch,moon,&bullets[i]);	// Draw bullet if still active
 			bullets[i].draw=1;
 			#endif
 
@@ -415,7 +415,7 @@ int handleInvaderBullets(unsigned int frames)
 					bullets[i].currentImage=4;
 					bullets[i].mask=1;
 					bullets[i].x-=2;
-					spritePlot(background,&bullets[i]);
+					spriteClear(background,moon,&bullets[i]);
 	
 					bullets[i].currentImage=0;
 					bullets[i].mask=0;
@@ -738,9 +738,7 @@ int bounceInvaders()
 		{
 			players[currentPlayer].sprites[i].dx=-players[currentPlayer].sprites[i].dx; // Change direction
 
-			players[currentPlayer].sprites[i].draw=0;
-			spritePlot(background,&players[currentPlayer].sprites[i]);
-			players[currentPlayer].sprites[i].draw=1;
+			spriteClear(background,moon,&players[currentPlayer].sprites[i]);
 
 			lowest=max(lowest,players[currentPlayer].sprites[i].y);
 		}
@@ -797,7 +795,7 @@ int handleInvaders(unsigned int frames)
 		if((s->y>-1)&&(s->timer.value<=frames))	// Time to move?
 		{
 			// Clear old invader from BG
-			s->draw=0; spritePlot(background,s); s->draw=1;
+			spriteClear(background,moon,s);
 
 			s->x+=s->dx;				// Move invader
 		        s->currentImage=1-s->currentImage; 	// Animate
@@ -895,7 +893,11 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
         cls(scratch);
         cls(background);
 
-	if(bases) loadScreen((unsigned char *)scratch+157*128,"moon_scr");
+	if(bases)
+	{
+		//loadScreen((unsigned char *)scratch+157*128,"moon_scr");
+		copyScreen(scratch,moon,157,255);
+	}
 
 	sprintf(buffer,"%d",players[currentPlayer].lives);
 	printAt(scratch,&font,XMIN+4,255-8,buffer);
@@ -1110,6 +1112,10 @@ void initiate(unsigned int convert)
 	background=scratch=SCREEN;
 	#endif
 
+	moon=createScreen();
+	cls(moon);
+	loadScreen((unsigned char *)moon+157*128,"moon_scr");
+
 	// font
 
 	if(convert)
@@ -1241,7 +1247,10 @@ int gameLoop()
 		profileCounter=getFrames();
 		#endif
 
-		if(scratch!=SCREEN) copyScreen(scratch,background,64,256-player.image[0]->y-24+8);	// Copy the BG to scratch...
+		#ifdef DOUBLEBUFFER
+		if(scratch!=SCREEN)
+			copyScreen(scratch,background,64,256-player.image[0]->y-24+8);	// Copy the BG to scratch...
+		#endif
 
 		#ifdef PROFILE
 		// 4
@@ -1301,7 +1310,9 @@ int gameLoop()
 			fill(background,0,8,0);
 			printAt(background,&font,0,0,s);
 
+			#ifdef DOUBLEBUFFER
 			if(background!=SCREEN) copyScreen(SCREEN,background,0,8);
+			#endif
 		}
 		#endif
 

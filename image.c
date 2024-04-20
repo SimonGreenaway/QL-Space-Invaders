@@ -412,6 +412,140 @@ void spritePlot(screen screen,sprite *sprite)
 	}
 }
 
+// Erase image, using the background given
+
+void spriteClear(screen scr,screen background,sprite *sprite)
+{
+	register int a;
+
+	image *image=sprite->image[sprite->currentImage];
+
+	unsigned short *address=(unsigned short *)scr;
+	unsigned short *address2=(unsigned short *)background;
+
+	unsigned int addressDelta=64-image->x;
+
+	unsigned short *shifter=image->datashifter[sprite->x&3];
+	unsigned short *maskshifter=image->maskshifter[sprite->x&3];
+
+	unsigned xlim=image->x/2;
+
+	address+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
+	address2+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
+
+	#ifdef MAGIC
+	if(image->magic!=MAGIC)
+	{
+		puts("Invalid sprite being drawn!");
+		exit(1);
+	}
+
+	if(sprite->y<0)
+	{
+		printf("image %s <y\n",image->name);
+		exit(1);
+	}
+	else if(sprite->y+image->y>255)
+	{
+		printf("image %s %d>y\n",image->name,sprite->y+image->y);
+		exit(1);
+	}
+	
+	#endif
+
+	if(sprite->y<0)
+	{
+		printf("ERROR: Sprite plot '%s' with y<0",sprite->image[sprite->currentImage]->name);
+		exit(4);
+	}
+
+	switch(xlim) // Welcome to loop unroll City....
+	{
+		case 4:	for(a=0;a<image->y;a++) // x32
+			{
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+	
+				address+=addressDelta;
+			}
+
+			break;
+
+		case 3:	for(a=0;a<image->y;a++) // x24
+			{
+	
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+				address+=addressDelta;
+			}
+
+			break;
+	
+		case 2:	for(a=0;a<image->y;a++) // x16
+			{
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address=*address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+				*address++=  *address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+
+				address+=addressDelta;
+			}
+
+			break;
+
+		case 1:	for(a=0;a<image->y;a++) // x8
+			{
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter); maskshifter++;
+				*address++=*address&*maskshifter|(*address2++&~*maskshifter);  maskshifter++;
+				*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+
+
+				address+=addressDelta;
+				address2+=addressDelta;
+			}
+
+			break;
+
+		default:	for(a=0;a<image->y;a++)
+				{
+					unsigned int b;
+	
+					for(b=0;b<xlim;b++)
+					{
+						*address++=*address&*maskshifter|(*address2++&~*maskshifter);  maskshifter++;
+						*address=  *address&*maskshifter|(*address2&~*maskshifter); maskshifter++;
+						*address++=*address&*maskshifter|(*address2++&~*maskshifter);  maskshifter++;
+					}
+	
+					address+=addressDelta;
+				}
+	}
+}
+
 // Draw an image, erasing old one if needed
 
 void imagePlot(unsigned int x,unsigned int y,image *image)

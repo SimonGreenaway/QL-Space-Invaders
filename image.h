@@ -83,7 +83,8 @@ struct shifter
 	} z;
 };
 
-void spritePlot(screen screen,sprite *sprite);
+void spritePlot(screen scr,sprite *sprite);
+void spriteClear(screen scr,screen mask,sprite *sprite);
 
 //void tilePlot(unsigned short x,unsigned short y,image *image);
 //void imagePlot(unsigned int x,unsigned int y,image *image);
