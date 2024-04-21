@@ -1,4 +1,4 @@
-#define FRAMES ((unsigned short *)163886)       // Location of frame counter
+//#define FRAMES ((unsigned short *)163886)       // Location of frame counter
 
 // undef MAGIC to disable image checking
 #define MAGIC 0xdeadbeef
@@ -104,7 +104,7 @@ unsigned short peek(screen screen,unsigned int y,unsigned int x);
 void setFontMasking(unsigned int m);
 void printCharAt(screen screen,library *font,unsigned int x,unsigned int y,char c);
 void printAt(screen screen,library *font,unsigned int x,unsigned y,char *s);
-int loadScreen(unsigned char *scr,char *file);
+int loadScreen(unsigned char *scr,char *dir,char *file);
 
 // Developmental
 

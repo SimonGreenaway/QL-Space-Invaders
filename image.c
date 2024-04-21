@@ -77,6 +77,7 @@ void* myMalloc(unsigned int i)
 		printf("Memory allocation error of %d bytes\n",i);
 		exit(3);
 	}
+	else memset(p,i,0);
 
 	return p;
 }
@@ -937,9 +938,14 @@ void show(screen screen,unsigned int lowy,unsigned int highy)
 	copyScreen(SCREEN,screen,lowy,highy);
 }
 
-int loadScreen(unsigned char *scr,char *file)
+int loadScreen(unsigned char *scr,char *dir,char *file)
 {
-        FILE *in=fopen(file,"rb");
+	char file2[128];
+        FILE *in;
+
+	sprintf(file2,"%s%s",dir,file);
+
+        in=fopen(file2,"rb");
 
         if(in!=NULL)
         {

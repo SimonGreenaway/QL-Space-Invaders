@@ -37,6 +37,9 @@ unsigned int lowY;
 #endif
 
 char *drive="";
+unsigned long systemVariables=163840;
+char *rom;
+unsigned short *FRAMES=(unsigned short *)163886;
 
 struct player
 {
@@ -130,7 +133,7 @@ void printScores()
 }
 
 /////////////////////   
-// TIME AND FRAMES //
+// TIME AND shortFRAMES //
 /////////////////////                   
 
 unsigned int frameCounter=0,lastFrame;  
@@ -277,7 +280,7 @@ void handleKeys(unsigned int frames)
 		return;
 	}
 
-	while(frames>=keyTimer.value)
+	if(frames>=keyTimer.value)
 	{
 		key=keyrow(1);	// Read the bottom row of the keyboard
 
@@ -291,7 +294,7 @@ void handleKeys(unsigned int frames)
 				spriteClear(scratch,moon,&player);
 				#endif
 
-				player.x--;	// Move left
+				player.x-=4;	// Move left
 				spritePlot(scratch,&player);
 			}
                 	else if((key&16)&&(player.x<XMAX-player.image[0]->x*4))
@@ -302,7 +305,7 @@ void handleKeys(unsigned int frames)
 				player.draw=1;
 				#endif
 
-				player.x++;	// Move right
+				player.x+=4;	// Move right
 				spritePlot(scratch,&player);
 			}
 
@@ -450,31 +453,31 @@ int handlePlayerBullet(unsigned int frames)
 	unsigned int i,j,skipped,hit=0;
 	unsigned short pk;
 
-        while((player_bullet.active)&&(player_bullet.timer.value<frames))
+        if((player_bullet.active)&&(player_bullet.timer.value<frames))
         {
-                for(skipped=frames-player_bullet.timer.value+1;skipped--;skipped>=0)
+                skipped=frames-player_bullet.timer.value+1;
+
                 {
-			for(i=0;i<4;i++)
+			#ifndef DOUBLEBUFFER
+			player_bullet.draw=0;
+			spriteClear(scratch,moon,&player_bullet);
+			player_bullet.draw=1;
+			#endif
+
+			for(i=0;i<skipped;i++) if(!hit)
 			{
-				#ifndef DOUBLEBUFFER
-				player_bullet.draw=0;
-				spritePlot(scratch,&player_bullet);
-				player_bullet.draw=1;
-				#endif
 				player_bullet.y--;
 
-				if(!hit)
-				{
-					pk=peek(scratch,player_bullet.y+2,player_bullet.x+3);
+				pk=peek(scratch,player_bullet.y+2,player_bullet.x+3);
 
-       				        if(((pk&0x80C0)==0x80C0) // White bit 3
-				         ||((pk&0x2030)==0x2030) // White bit 2
-					 ||((pk&0x080C)==0x080C)   // White bit 1
-					 ||((pk&0x0203)==0x0203)   // White bit 0
-       	     		           	 ||(pk&0xAA00))          // Anything green?
-					{
-						hit=player_bullet.y;
-					}
+      			        if(((pk&0x80C0)==0x80C0) // White bit 3
+			         ||((pk&0x2030)==0x2030) // White bit 2
+				 ||((pk&0x080C)==0x080C)   // White bit 1
+				 ||((pk&0x0203)==0x0203)   // White bit 0
+            		           	 ||(pk&0xAA00))          // Anything green?
+				{
+					hit=player_bullet.y;
+					break;
 				}
 			}
 
@@ -551,18 +554,16 @@ int handlePlayerBullet(unsigned int frames)
 
 							// Set up explosion at the invader's locations
 
-							player_bullet.currentImage=2;
-							player_bullet.x=players[currentPlayer].sprites[i].x;
-							player_bullet.y=players[currentPlayer].sprites[i].y;
+							//player_bullet.currentImage=2;
+							//player_bullet.x=players[currentPlayer].sprites[i].x;
+							//player_bullet.y=players[currentPlayer].sprites[i].y;
 
-							spritePlot(scratch,&player_bullet);
+							//spritePlot(scratch,&player_bullet);
 
 		              				player_bullet.currentImage=0;
 
-							s->draw=0;
-        	        	        	        spritePlot(background,s);
-     		           		                s->draw=1;
-		
+        	        	        	        spriteClear(background,moon,s);
+
 							s->y=-1;	
 	
 							player_bullet.active=0;
@@ -872,12 +873,12 @@ void handleUFO(unsigned int frames)
 
 void saveBases()
 {
-	memcpy(players[currentPlayer].bases,(unsigned char *)scratch+192*128,(211-192)*128);
+	memcpy(players[currentPlayer].bases,(unsigned char *)scratch+192*128,16*128);
 }
 
 void loadBases()
 {
-	memcpy((unsigned char *)background+192*128,players[currentPlayer].bases,(211-192)*128);
+	memcpy((unsigned char *)background+192*128,players[currentPlayer].bases,16*128);
 }
 
 /////////////
@@ -893,11 +894,8 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
         cls(scratch);
         cls(background);
 
-	if(bases)
-	{
-		//loadScreen((unsigned char *)scratch+157*128,"moon_scr");
-		copyScreen(scratch,moon,157,255);
-	}
+	if(bases) copyScreen(scratch,moon,157,255);
+
 
 	sprintf(buffer,"%d",players[currentPlayer].lives);
 	printAt(scratch,&font,XMIN+4,255-8,buffer);
@@ -969,7 +967,7 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
 // setupInvaders //
 ///////////////////
 
-void setupInvaders(unsigned int frames)
+void setupInvaders(unsigned int frames,unsigned int show)
 {
 	unsigned int i;
 
@@ -995,7 +993,7 @@ void setupInvaders(unsigned int frames)
 		s->mask=0;
 		s->draw=1;
 
-		spritePlot(background,s);
+		if(show) spritePlot(background,s);
         }
 
 	invaderSoundTimer=0;
@@ -1041,7 +1039,7 @@ void introScreens()
 	cls(scratch);
 	cls(background);
         //setupGame(getFrames());
-	setupInvaders(getFrames());
+	setupInvaders(getFrames(),0);
 
 	setupBG(0,0,0);
 
@@ -1078,7 +1076,11 @@ puts("e");
 
 		// Score table
 
+		#ifdef DOUBLEBUFFER
 		copyAllScreen(scratch,background);
+		#else
+		cls(SCREEN);
+		#endif
 
 		printScores();
 
@@ -1089,9 +1091,22 @@ puts("e");
 
 		if(keysleep(100)) return;
 
+		#ifdef DOUBLEBUFFER
+		copyAllScreen(scratch,background);
+		#else
+		cls(SCREEN);
+		#endif
+
 		doHelp();
 
 		if(keysleep(350)) return;
+
+		#ifdef DOUBLEBUFFER
+		copyAllScreen(scratch,background);
+		#else
+		cls(SCREEN);
+		#endif
+
 	}
 }
 
@@ -1103,7 +1118,7 @@ void initiate(unsigned int convert)
 
 	init();
 
-	loaded=loadScreen((unsigned char *)SCREEN,"logo_scr");
+	loaded=loadScreen((unsigned char *)SCREEN,drive,"logo_scr");
 
 	#ifdef DOUBLEBUFFER
 	scratch=createScreen();
@@ -1114,7 +1129,8 @@ void initiate(unsigned int convert)
 
 	moon=createScreen();
 	cls(moon);
-	loadScreen((unsigned char *)moon+157*128,"moon_scr");
+
+	loadScreen((unsigned char *)moon+157*128,drive,"moon_scr");
 
 	// font
 
@@ -1169,10 +1185,15 @@ void initiate(unsigned int convert)
 
 	// Create areas for storing players bases
 
-	players[0].bases=myMalloc(128*(211-195+1));
-	players[1].bases=myMalloc(128*(211-195+1));
+	players[0].bases=myMalloc(128*20);
+	players[1].bases=myMalloc(128*20);
 
-	while(getFrames()<timeout);
+	while(getFrames()<timeout)
+	{
+		unsigned int i;
+
+		for(i=0;i<10;i++) if(keyrow(i)) return;
+	}
 }
 
 //////////
@@ -1409,7 +1430,7 @@ void setupGame(unsigned int frames)
 	ufo.y=64;
 
 	keyTimer.value=0;
-	keyTimer.delta=1;
+	keyTimer.delta=5;
 }
 
 
@@ -1426,7 +1447,7 @@ void mainLoop(int convert)
 
 	while(1)
 	{
-		if(!goes[currentPlayer]++) setupInvaders(getFrames());
+		if(!goes[currentPlayer]++) setupInvaders(getFrames(),0);
 
 		setupGame(getFrames());
 
@@ -1448,7 +1469,7 @@ void mainLoop(int convert)
 			char s[80];
 			unsigned int frames;
 
-			if(!goes[currentPlayer]++) setupInvaders(getFrames());
+			if(!goes[currentPlayer]++) setupInvaders(getFrames(),1);
 
 		        cls(scratch);
 		        cls(background);
@@ -1517,7 +1538,7 @@ void mainLoop(int convert)
 			switch(gameLoop())
 			{
 				case 0: players[currentPlayer].wave++ ;
-					setupInvaders(getFrames()); break;		// Wave completed
+					setupInvaders(getFrames(),1); break;		// Wave completed
 				case 1: players[currentPlayer].lives--; break;	// Base hit
 				case 2: players[currentPlayer].lives=0; break;	// Invaders hit the bottom
 			}
@@ -1655,6 +1676,17 @@ int main(int argc, char *argv[])
 		else if(strcmp(argv[s],"-ipc")==0) ipctest();
 		else if(strcmp(argv[s],"-c")==0) convert=1;
 		else if(strcmp(argv[s],"-d")==0) drive=argv[++s];
+		else if(strcmp(argv[s],"-rom")==0) rom=argv[++s];
+		else if(strcmp(argv[s],"-sys")==0)
+		{
+			systemVariables=atoi(argv[++s]);
+			FRAMES=(unsigned short *)(systemVariables+46);
+		}
+		else
+		{
+			printf("Unknown command line argument: %s\n",argv[s]);
+			exit(4);	
+		}
 	}
 
 	mainLoop(convert);
