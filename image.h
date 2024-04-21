@@ -39,8 +39,8 @@ typedef struct
 	unsigned int magic;
 	#endif
 
-	short y;
-	short x;
+	unsigned short y;
+	unsigned short x;
 
 	char *name;
 
@@ -57,7 +57,7 @@ typedef struct
 
 typedef struct
 {
-	unsigned int active:1;
+	unsigned int active;
 
 	int images;
 	image *image[8];

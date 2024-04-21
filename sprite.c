@@ -12,7 +12,7 @@
 #define DEBUG(x) { Fill(0,8,0); printAt(&font,0,0,x); showScratch(scratch); }
 //#undef DEBUG
 
-#undef PROFILE
+#define PROFILE
 #define FPS
 
 #ifdef PROFILE
@@ -70,7 +70,7 @@ unsigned char ufoScorePointer=0;
 unsigned int invaderSoundTimer;
 
 #ifdef FPS
-unsigned int fpsCounter,fpsTimer;
+unsigned int fpsCounter,fpsTimer,fpsStart;
 #endif
 
 screen background,scratch,moon;
@@ -342,7 +342,20 @@ void handleKeys(unsigned int frames)
 // HandleInvaderBullets //
 //////////////////////////
 
-unsigned char reload;
+unsigned int reload;
+
+/////////////////
+// invaderFire //
+/////////////////               
+
+void setInvaderReload()         
+{                            
+        if(players[currentPlayer].score<=200) reload=getFrames()+30;
+        else if(players[currentPlayer].score<=1000) reload=getFrames()+10;
+        else if(players[currentPlayer].score<=2000) reload=getFrames()+9;
+        else if(players[currentPlayer].score<=3000) reload=getFrames()+8;
+        else reload=getFrames()+7;
+}
 
 int handleInvaderBullets(unsigned int frames)
 {
@@ -353,9 +366,7 @@ int handleInvaderBullets(unsigned int frames)
 	        if((bullets[i].active)&&(bullets[i].timer.value<=frames))	// Fired?
 	        {
 			#ifndef DOUBLEBUFFER
-			bullets[i].draw=0;
 			spriteClear(scratch,moon,&bullets[i]);	// Draw bullet if still active
-			bullets[i].draw=1;
 			#endif
 
 			bullets[i].timer.value=frames+bullets[i].timer.delta;
@@ -367,17 +378,16 @@ int handleInvaderBullets(unsigned int frames)
 				bullets[i].active=0;
 				bulletCount--;
 
-				if(players[currentPlayer].score<200) reload=frames+0x30;
-				else if(players[currentPlayer].score<1000) reload=frames+0x10;
-				else if(players[currentPlayer].score<2000) reload=frames+0x0B;
-				else if(players[currentPlayer].score<3000) reload=frames+0x08;
-				else reload=getFrames()+0x07;
+				setInvaderReload();
 			
 				#ifndef IMMORTAL	 
 				if((bullets[i].x>=player.x)&&(bullets[i].x<player.x+16))
 				{
+					// Player hit!
+
 					unsigned int j;
 
+					
 					for(j=0;j<10;j++)
 					{			
 						player.currentImage=1;
@@ -606,15 +616,6 @@ int handlePlayerBullet(unsigned int frames)
 // invaderFire //
 /////////////////
 
-void setInvaderReload()
-{
-	if(players[currentPlayer].score<=200) reload=getFrames()+30;
-	else if(players[currentPlayer].score<=1000) reload=getFrames()+10;
-	else if(players[currentPlayer].score<=2000) reload=getFrames()+9;
-	else if(players[currentPlayer].score<=3000) reload=getFrames()+8;
-	else reload=getFrames()+7;
-}
-
 void invaderFire(unsigned int frames)
 {
 	//ShotReloadRate:
@@ -626,7 +627,7 @@ void invaderFire(unsigned int frames)
 	//;
 	//; 1CB8: 02 10 20 30
 
-	if((reload<getFrames())&&(bulletCount<maxBulletCount))
+	if((reload<frames)&&(bulletCount<maxBulletCount))
 	{
 		unsigned int firingInvader,bullet;
 
@@ -660,6 +661,7 @@ void invaderFire(unsigned int frames)
 				}
 
 				bulletCount++;
+				setInvaderReload();
 
 				if(bulletTypes[bullet]==0)
 				{
@@ -706,7 +708,6 @@ void invaderFire(unsigned int frames)
 				bullets[bullet].timer.delta=3;
 				bullets[bullet].currentImage=0;
 
-				setInvaderReload();
 
 				//if(sound) do_sound(3000,255,1,200,0,5,0,9);
 
@@ -725,20 +726,14 @@ void invaderFire(unsigned int frames)
 
 int bounceInvaders()
 {
-	unsigned int i;
+	unsigned int i,lowest=0;
 
 	// Move the invaders down and reverse direction
-
-	unsigned int lowest=0;
-
-	players[currentPlayer].direction=-players[currentPlayer].direction;
 
 	for(i=0;i<SPRITES;i++)
 	{
 		if(players[currentPlayer].sprites[i].y>-1)
 		{
-			players[currentPlayer].sprites[i].dx=-players[currentPlayer].sprites[i].dx; // Change direction
-
 			spriteClear(background,moon,&players[currentPlayer].sprites[i]);
 
 			lowest=max(lowest,players[currentPlayer].sprites[i].y);
@@ -747,12 +742,15 @@ int bounceInvaders()
 
 	if(lowest+16>=195) fill(background,lowest+8,lowest+16,0);
 
+	players[currentPlayer].direction=-players[currentPlayer].direction;
+
 	for(i=0;i<SPRITES;i++)
 	{
 		sprite *s=&players[currentPlayer].sprites[i];
 
 		if(s->y>-1)     // Is sprite alive?
 		{
+			players[currentPlayer].sprites[i].dx=players[currentPlayer].direction;
 			s->y+=8;        // Move invader down
 
 			// Game over?
@@ -777,6 +775,8 @@ int handleInvaders(unsigned int frames)
 
 		if(nextInvader==SPRITES) // All the sprites have been drawn
 		{
+			unsigned int bounce=0;
+
 			nextInvader=0; // Reset counter
 
 			// Check for bounce
@@ -785,12 +785,20 @@ int handleInvaders(unsigned int frames)
 			{
 				if(players[currentPlayer].sprites[i].y!=-1)
 				{
-					unsigned int x=players[currentPlayer].sprites[i].x;
+					unsigned int x=players[currentPlayer].sprites[i].x+players[currentPlayer].sprites[i].dx;
 
-					if((x<=XMIN) ||(players[currentPlayer].direction==1)&&(x>=XMAX-17))
-						return bounceInvaders();
+					if(x<XMIN)
+					{
+						bounce=1;
+					}
+					else if(x>XMAX-17)
+					{
+						bounce=1;
+					}
 				}
 			}
+
+			if(bounce) bounceInvaders();
 		}
 
 		if((s->y>-1)&&(s->timer.value<=frames))	// Time to move?
@@ -1211,7 +1219,8 @@ int gameLoop()
 	#ifdef FPS
 	char s[80];
 	fpsCounter=0;
-	fpsTimer=getFrames()+50;
+	fpsStart=getFrames();
+	fpsTimer=fpsStart+50;
 	#endif
 	
 	player.x=XMIN;
@@ -1221,6 +1230,8 @@ int gameLoop()
 	#endif
 
 	printScores();
+
+	reload=getFrames()+5*50;
 
 	while(1)
 	{
@@ -1323,10 +1334,9 @@ int gameLoop()
 		fpsCounter++;
 		if(fpsTimer<getFrames())
 		{
-			sprintf(s,"%d",fpsCounter);
+			sprintf(s,"%d",fpsCounter*500/((getFrames()-fpsStart)));
 
 			fpsTimer=getFrames()+50;
-			fpsCounter=0;
 
 			fill(background,0,8,0);
 			printAt(background,&font,0,0,s);
@@ -1447,7 +1457,7 @@ void mainLoop(int convert)
 
 	while(1)
 	{
-		if(!goes[currentPlayer]++) setupInvaders(getFrames(),0);
+		//if(!goes[currentPlayer]++) setupInvaders(getFrames(),1);
 
 		setupGame(getFrames());
 
@@ -1469,13 +1479,13 @@ void mainLoop(int convert)
 			char s[80];
 			unsigned int frames;
 
-			if(!goes[currentPlayer]++) setupInvaders(getFrames(),1);
-
 		        cls(scratch);
 		        cls(background);
 
 		        setupBG(0,0,0);   
                
+			if(!goes[currentPlayer]++) setupInvaders(getFrames(),0);
+
 			// TODO: Following not seen on screen 
 		        printAt(scratch,&font,xPrint(10),100,currentPlayer==0?"PLAYER <1>":"PLAYER <2>");
 
@@ -1526,7 +1536,7 @@ void mainLoop(int convert)
 				if(s->y>-1) s->timer.value=frames+(SPRITES-i);
 			}
 
-			setInvaderReload();
+			//setInvaderReload();
 			invaderSoundTimer=getFrames()+50;
 
 			playerReload=1;
@@ -1538,7 +1548,7 @@ void mainLoop(int convert)
 			switch(gameLoop())
 			{
 				case 0: players[currentPlayer].wave++ ;
-					setupInvaders(getFrames(),1); break;		// Wave completed
+					break;		// Wave completed
 				case 1: players[currentPlayer].lives--; break;	// Base hit
 				case 2: players[currentPlayer].lives=0; break;	// Invaders hit the bottom
 			}
