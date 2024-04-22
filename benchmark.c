@@ -44,7 +44,7 @@ void benchmark()
                                         if(y+lib.images[s].y>=256)
                                         {
                                                 y=0;
-                                                x+=lib.images[s].x*2+16;
+                                                x+=(lib.images[s].x<<1)+16;
                                         }
 
                                         x++;
@@ -61,7 +61,7 @@ void benchmark()
 
                         showScratch(0,256);
 
-                        printf("%c %d x %d -> %d\n",pass==1?'M':' ',lib.images[s].x*4,lib.images[s].y,c);
+                        printf("%c %d x %d -> %d\n",pass==1?'M':' ',lib.images[s].x<<2,lib.images[s].y,c);
                         initBG();
                 }
         }

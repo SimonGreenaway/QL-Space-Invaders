@@ -104,9 +104,9 @@ void init()
 
 	mt_dmode(&colours,&mode);
 
-	for(i=0;i<256;i++) addresses[i]=(unsigned char *)(i*128);
+	for(i=0;i<256;i++) addresses[i]=(unsigned char *)(i<<7);
 
-	for(i=0;i<8;i++) bits[i]=(i&3)+(i&4)*128;
+	for(i=0;i<8;i++) bits[i]=(i&3)+(i&4)<<7;
 
 	SCREEN=(screen)0x20000;
 }
@@ -120,14 +120,14 @@ void cls(screen screen)
 
 void fill(screen screen,unsigned int rowStart,unsigned int rowEnd,unsigned char c)
 {
-	memset((char *)screen+rowStart*128,c,128*(rowEnd-rowStart));
+	memset((char *)screen+(rowStart<<7),c,(rowEnd-rowStart)<<7);
 }
 
 // Plot a point in the given colour
 
 void plot(screen screen,unsigned short x,unsigned short y,unsigned char c)
 {
-	unsigned char *address=(unsigned char *)screen+y*128;
+	unsigned char *address=(unsigned char *)screen+(y<<7);
 
 	(*address)=((*address)&masks[x&3])|(bits[c]*shifts[x&3]);
 }
@@ -144,9 +144,9 @@ void spritePlot(screen screen,sprite *sprite)
 	unsigned short *shifter=image->datashifter[sprite->x&3];
 	unsigned short *maskshifter=image->maskshifter[sprite->x&3];
 
-	unsigned xlim=image->x/2;
+	unsigned xlim=image->x>>1;
 
-	address+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
+	address+=(unsigned short*)addresses[sprite->y]+(sprite->x>>2);
 
 	#ifdef MAGIC
 	if(image->magic!=MAGIC)
@@ -316,7 +316,7 @@ void spritePlot(screen screen,sprite *sprite)
 		
 					address+=addressDelta;
 				}
-	
+
 				break;
 	
 			default:	for(a=0;a<image->y;a++)
@@ -393,7 +393,7 @@ void spritePlot(screen screen,sprite *sprite)
 		
 					address+=addressDelta;
 				}
-	
+
 				break;
 	
 			default:	for(a=0;a<image->y;a++)
@@ -429,10 +429,10 @@ void spriteClear(screen scr,screen background,sprite *sprite)
 	unsigned short *shifter=image->datashifter[sprite->x&3];
 	unsigned short *maskshifter=image->maskshifter[sprite->x&3];
 
-	unsigned xlim=image->x/2;
+	unsigned xlim=image->x>>1;
 
-	address+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
-	address2+=(unsigned short*)addresses[sprite->y]+(sprite->x/4);
+	address+=(unsigned short*)addresses[sprite->y]+(sprite->x>>2);
+	address2+=(unsigned short*)addresses[sprite->y]+(sprite->x>>2);
 
 	#ifdef MAGIC
 	if(image->magic!=MAGIC)
@@ -553,7 +553,7 @@ void imagePlot(unsigned int x,unsigned int y,image *image)
 {
 	unsigned short *pmask=image->mask,*data=image->data;
 	const int shifts=2*(x&3);
-	unsigned char *address=addresses[y]+2*(x/4);
+	unsigned char *address=addresses[y]+2*(x>>2);
 	unsigned int addressRow=128-2*image->x;
 
 	unsigned int yloop;
@@ -602,7 +602,7 @@ void tilePlot(unsigned short x,unsigned short y,image *image)
 
 		for(b=0;b<image->x;b++)
 		{
-			unsigned char *address=addresses[a+y]+x/4+b;
+			unsigned char *address=addresses[a+y]+(x>>2)+b;
 
 			//(*address)=((*address)&*mask)|(*data);
 			*address=*data;
@@ -893,7 +893,7 @@ unsigned short peek(screen screen,unsigned int y,unsigned int x)
 {
 	unsigned short *address=(unsigned short *)screen;
 	unsigned short data;
-	address+=(unsigned short*)addresses[y]+(x/4);
+	address+=(unsigned short*)addresses[y]+(x>>2);
 
 	data=*address;
 
@@ -920,7 +920,7 @@ void closeScreen(screen s)
 
 void copyScreen(screen to,screen from,unsigned int rowStart,unsigned int rowEnd)
 {
-	memcpy((char *)to+rowStart*128,(char *)from+rowStart*128,(rowEnd-rowStart)*128);
+	memcpy((char *)to+(rowStart<<7),(char *)from+(rowStart<<7),(rowEnd-rowStart)<<7);
 }
 
 void copyAllScreen(screen to,screen from)
