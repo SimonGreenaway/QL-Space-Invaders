@@ -1,0 +1,3 @@
+[submodule "QL-sprites"]
+	path = QL-sprites
+	url = https://github.com/SimonGreenaway/QL-sprites.git

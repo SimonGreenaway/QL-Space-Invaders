@@ -1249,18 +1249,20 @@ int gameLoop()
 		#ifdef PROFILE
 		profileN=0;
 
-		if(profileCounter==0) profileCounter=getFrames();
+
+		if(profileCounter==0) profileCounter=frames;
 
 		// 0
 		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
+		profileCounter=frames;
 		
 		#endif
 
 		// Wait for next frame
 
-		while((frames=getFrames())==lastFrames);
-		lastFrames=frames;
+		frames=getFrames();
+		//while((frames=getFrames())==lastFrames);
+		//lastFrames=frames;
 
 		#ifdef PROFILE
 		// 1
