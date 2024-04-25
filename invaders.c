@@ -7,6 +7,11 @@
 
 #include "image.h"
 
+
+#ifdef HILOCALS
+long _stack=96L*1024L; /* size of stack */
+#endif
+
 #undef DOUBLEBUFFER
 
 #define DEBUG(x) { Fill(0,8,0); printAt(&font,0,0,x); showScratch(scratch); }
@@ -140,7 +145,7 @@ unsigned int frameCounter=0,lastFrame;
 
 unsigned int getFrames()
 {
-        unsigned int frames=*FRAMES;
+        unsigned short frames=*FRAMES;
 
         if(frames<lastFrame) frameCounter+=0x10000;
         lastFrame=frames;               
@@ -717,63 +722,72 @@ void invaderFire(unsigned int frames)
 }
 
 ///////////////////////////////
+// bounceInvaders            //
+//                           //
+// returns: 1 - game overn   //
+//          0 - still going! // 
+///////////////////////////////
+
+unsigned int waveTime=0;
+
+int bounceInvaders()
+{
+        unsigned int i,lowest=0;
+
+        // Move the invaders down and reverse direction
+
+        for(i=0;i<SPRITES;i++)
+                if(currentPlayer->sprites[i].active)
+                        lowest=max(lowest,currentPlayer->sprites[i].y);
+
+        if(lowest+16>=195) fill(background,lowest+8,lowest+16,0);
+
+        currentPlayer->direction=-currentPlayer->direction; 
+                
+        for(i=0;i<SPRITES;i++)
+        {
+                sprite *s=&currentPlayer->sprites[i];
+
+                if(s->active)     // Is sprite alive?
+                {
+                        spriteClear(background,moon,&currentPlayer->sprites[i]);
+
+                        currentPlayer->sprites[i].dx=currentPlayer->direction;
+                        s->y+=8;        // Move invader down
+
+                        // Game over?
+                        if(s->y>=player.y)  return 1;
+
+                        spritePlot(background,s);
+                }
+        }
+
+	//printf("%f\n",(getFrames()-waveTime)/50.0);
+	//exit(1);
+
+        return 0;
+}
+
+///////////////////////////////
 // handleInvaders            //
 //                           //
 // returns: 1 - invaders win //
 //          0 - still going! // 
 ///////////////////////////////
 
-int bounceInvaders()
-{
-	unsigned int i,lowest=0;
-
-	// Move the invaders down and reverse direction
-
-	for(i=0;i<SPRITES;i++)
-	{
-		if(currentPlayer->sprites[i].active)
-		{
-			spriteClear(background,moon,&currentPlayer->sprites[i]);
-
-			lowest=max(lowest,currentPlayer->sprites[i].y);
-		}
-	}
-
-	if(lowest+16>=195) fill(background,lowest+8,lowest+16,0);
-
-	currentPlayer->direction=-currentPlayer->direction;
-
-	for(i=0;i<SPRITES;i++)
-	{
-		sprite *s=&currentPlayer->sprites[i];
-
-		if(s->active)     // Is sprite alive?
-		{
-			currentPlayer->sprites[i].dx=currentPlayer->direction;
-			s->y+=8;        // Move invader down
-
-			// Game over?
-			if(s->y>=player.y)  return 1;
-
-			spritePlot(background,s);
-		}
-	}
-
-	return 0;
-}
-
 unsigned int nextInvader=0;
 
 int handleInvaders(unsigned int frames)
 {
-	unsigned int i;
+	unsigned int start=nextInvader;
 
-        for(i=0;i<SPRITES;i++)
+        do
         {
 		sprite *s=&currentPlayer->sprites[nextInvader++];
 
 		if(nextInvader==SPRITES) // All the sprites have been drawn
 		{
+			unsigned int i;
 			nextInvader=0; // Reset counter
 
 			// Check for bounce
@@ -805,10 +819,9 @@ int handleInvaders(unsigned int frames)
 			#ifdef DOUBLEBUFFER
 			lowY=min(lowY,s->y);
 			#endif
-
-			if(getFrames()>frames+1) break;
 		}
         }
+	while((getFrames()<=frames+1)&&(nextInvader!=start));
 
 	if(frames>=invaderSoundTimer)
 	{
@@ -1223,6 +1236,8 @@ int gameLoop()
 	printScores();
 
 	reload=getFrames()+5*50;
+
+	waveTime=getFrames();
 
 	while(1)
 	{
@@ -1670,7 +1685,15 @@ void ipctest()
 
 int main(int argc, char *argv[])
 {
-	int s,convert=0;;
+	int s,convert=0;
+
+	#ifdef HILOCALS
+	if(((unsigned int)&s)<131072)
+	{
+		printf("Local variable in low memory: %d\n",(unsigned int)&s);
+		exit(1);
+	}
+	#endif
 
 	// Parse the args
 

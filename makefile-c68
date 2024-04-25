@@ -33,7 +33,7 @@ deploy:	invaders logo.scr moon.scr
 	cp BOOT_flp1 /home/simon/emulators/ql/emulators/sQLux/flp1/BOOT
 
 run:   	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.20 --RAMSIZE=896 --SOUND 8 -b "LRUN flp1_BOOT"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.20 --RAMSIZE=300 --SOUND 8 -b "LRUN flp1_BOOT"
 
 runjm:	deploy
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JM.ROM --SPEED=0.75 --SOUND 8 -b "LRUN flp1_BOOT"
@@ -42,7 +42,7 @@ runjs:	deploy
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JS.ROM --SPEED=0.75 --SOUND 8 -b "LRUN flp1_BOOT"
 
 runfast:	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --RAMSIZE=896 --SPEED=10 --SOUND 8 -b "LRUN flp1_BOOT"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --RAMSIZE=512 --SPEED=10 --SOUND 8 -b "LRUN flp1_BOOT"
 
 convert:   	deploy 
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
@@ -57,7 +57,7 @@ bm:   	invaders
 
 dist:	convert
 	rm -f image.o screen.o libimage.a interrupt.o
-	cp invaders /home/simon/emulators/ql/emulators/sQLux/flp1
+	cp inavers /home/simon/emulators/ql/emulators/sQLux/flp1
 	cp invaders_blb /home/simon/emulators/ql/emulators/sQLux/flp1_invaders_lib
 	cp font_blb /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib
 	cp logo.scr /home/simon/emulators/ql/emulators/sQLux/flp1/logo_scr

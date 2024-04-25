@@ -77,14 +77,31 @@ void* myMalloc(unsigned int i)
 		printf("Memory allocation error of %d bytes\n",i);
 		exit(3);
 	}
-	else memset(p,i,0);
+
+	#ifdef HIMEM	
+	if((unsigned int)p<262144)
+	{
+		free(p);
+
+		do
+		{
+			p=malloc(1024);
+		}
+		while ((unsigned int)p<262144);
+
+		free(p);
+		p=malloc(i);
+	}
+	#endif
+
+	memset(p,i,0);
 
 	return p;
 }
 
 // Initialise the sprite system
 
-long _stack = 4L*1024L; /* size of stack */
+//long _stack = 4L*1024L; /* size of stack */
 long _mneed = 4L*1024L; /* minimum requirement */
 //long _mneed = 256L*1024L; /* minimum requirement */
 long _memmax = 9999L * 1024L; /* maximum allowed */
