@@ -6,7 +6,7 @@
 #include <qdos.h>
 
 #include "image.h"
-
+#include "system_variables.h"
 
 #ifdef HILOCALS
 long _stack=96L*1024L; /* size of stack */
@@ -14,8 +14,7 @@ long _stack=96L*1024L; /* size of stack */
 
 #undef DOUBLEBUFFER
 
-#define DEBUG(x) { Fill(0,8,0); printAt(&font,0,0,x); showScratch(scratch); }
-//#undef DEBUG
+//#define DEBUG(x) { Fill(0,8,0); printAt(&font,0,0,x); showScratch(scratch); }
 
 #undef PROFILE
 #define FPS
@@ -25,6 +24,8 @@ long _stack=96L*1024L; /* size of stack */
 #endif
 
 #define IMMORTAL
+
+#define FRAMES SV_RAND
 
 library lib,font;	// Image libraries
 
@@ -44,7 +45,6 @@ unsigned int lowY;
 char *drive="";
 unsigned long systemVariables=163840;
 char *rom;
-unsigned short *FRAMES=(unsigned short *)163886;
 
 struct player
 {
@@ -138,7 +138,7 @@ void printScores()
 }
 
 /////////////////////   
-// TIME AND shortFRAMES //
+// TIME AND short //
 /////////////////////                   
 
 unsigned int frameCounter=0,lastFrame;  
@@ -907,7 +907,6 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
         cls(background);
 
 	if(bases) copyScreen(scratch,moon,157,255);
-
 
 	sprintf(buffer,"%d",currentPlayer->lives);
 	printAt(scratch,&font,XMIN+4,255-8,buffer);
@@ -1706,8 +1705,7 @@ int main(int argc, char *argv[])
 		else if(strcmp(argv[s],"-rom")==0) rom=argv[++s];
 		else if(strcmp(argv[s],"-sys")==0)
 		{
-			systemVariables=atoi(argv[++s]);
-			FRAMES=(unsigned short *)(systemVariables+46);
+			setSysBase(atoi(argv[++s]));
 		}
 		else
 		{

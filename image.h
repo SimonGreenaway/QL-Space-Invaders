@@ -1,5 +1,3 @@
-//#define FRAMES ((unsigned short *)163886)       // Location of frame counter
-
 // undef MAGIC to disable image checking
 #define MAGIC 0xdeadbeef
 
@@ -10,12 +8,8 @@
 #undef SECONDSCREEN
 
 #ifdef SECONDSCREEN
-#define FRAMES ((unsigned short *)163886+0x8000)       // Location of frame counter
 #define SCREEN2 ((char *)0x28000)
-#define RAMTOPM ((unsigned long *)(0x28020);
 #endif
-
-#define RAMTOPM ((unsigned long *)(0x28020);
 
 typedef void * screen;
 

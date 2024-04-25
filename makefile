@@ -1,10 +1,14 @@
-invaders:	invaders.o image.o  spritePlot.o
+invaders:	invaders.o image.o  spritePlot.o system_variables.o
 	rm -f invaders
-	qld -o invaders invaders.o image.o  spritePlot.o -lm
+	qld -o invaders invaders.o image.o  spritePlot.o system_variables.o -lm
 
 invaders.o:	invaders.c image.h 
 		@echo $(PATH)
 		qcc -O -o invaders.o -c invaders.c
+
+system_variables.o:	system_variables.c system_variables.h
+		@echo $(PATH)
+		qcc -O -o system_variables.o -c system_variables.c
 
 spritePlot.o:	spritePlot.c image.h 
 		qcc -O -o spritePlot.o -c spritePlot.c
