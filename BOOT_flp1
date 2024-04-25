@@ -2,5 +2,5 @@ OPEN #8,con_512x256a0x0_0
 INK #8,4
 CLS #8
 PRINT #8;"Loading space invaders..."
-EXEC_W flp1_invaders,#8;"-d flp1_ -rom "&VER$()&" -sys "&VER$(-2)
+EXEC_W flp1_invaders,#8;"-d flp1_ -rom "&VER$(0)&" -sys "&VER$(-2)
 CLOSE #8

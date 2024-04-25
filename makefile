@@ -40,13 +40,13 @@ run:   	deploy
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.20 --RAMSIZE=896 --SOUND 8 -b "LRUN flp1_BOOT"
 
 runjm:	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JM.ROM --SPEED=0.75 --SOUND 8 -b "LRUN flp1_BOOT"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JM.ROM --SPEED=10 --SOUND 8 -b "LRUN flp1_BOOT"
 
 runjs:	deploy
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JS.ROM --SPEED=0.75 --SOUND 8 -b "LRUN flp1_BOOT"
 
 runfast:	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --RAMSIZE=896 --SPEED=10 --SOUND 8 -b "LRUN flp1_BOOT"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --RAMSIZE=256 --SPEED=10 --SOUND 8 -b "LRUN flp1_BOOT"
 
 convert:   	deploy 
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib

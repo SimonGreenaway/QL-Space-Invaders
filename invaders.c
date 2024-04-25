@@ -1460,6 +1460,8 @@ void mainLoop(int convert)
 	unsigned int i;
 	unsigned int goes[2];
 
+	puts("Hello!");
+
 	initiate(convert);
 
 	while(1)
@@ -1696,6 +1698,8 @@ int main(int argc, char *argv[])
 
 	// Parse the args
 
+	setSysBase((unsigned char *)0x28000);
+
 	for(s=1;s<argc;s++)
 	{
 		if(strcmp(argv[s],"-bm")==0) benchmark();
@@ -1705,7 +1709,9 @@ int main(int argc, char *argv[])
 		else if(strcmp(argv[s],"-rom")==0) rom=argv[++s];
 		else if(strcmp(argv[s],"-sys")==0)
 		{
-			setSysBase(atoi(argv[++s]));
+			if((argv[s][0]>='0')&&(argv[s][1]<='9'))
+				setSysBase((unsigned char *)atoi(argv[++s]));
+			else s++;
 		}
 		else
 		{
