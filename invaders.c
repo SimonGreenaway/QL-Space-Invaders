@@ -45,6 +45,8 @@ unsigned int lowY;
 char *drive="";
 unsigned long systemVariables=163840;
 char *rom;
+float qdos=-1;
+int job=-1;
 
 struct player
 {
@@ -1707,6 +1709,8 @@ int main(int argc, char *argv[])
 		else if(strcmp(argv[s],"-c")==0) convert=1;
 		else if(strcmp(argv[s],"-d")==0) drive=argv[++s];
 		else if(strcmp(argv[s],"-rom")==0) rom=argv[++s];
+		else if(strcmp(argv[s],"-qdos")==0) qdos=atof(argv[++s]);
+		else if(strcmp(argv[s],"-job")==0) job=atoi(argv[++s]);
 		else if(strcmp(argv[s],"-sys")==0)
 		{
 			if((argv[s][0]>='0')&&(argv[s][1]<='9'))
