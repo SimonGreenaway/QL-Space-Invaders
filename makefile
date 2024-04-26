@@ -1,30 +1,27 @@
-invaders:	invaders.o image.o  spritePlot.o system_variables.o
+invaders:	invaders.o image.o spritePlot.o system_variables.o
 	rm -f invaders
-	qld -o invaders invaders.o image.o  spritePlot.o system_variables.o -lm
+	qld -o invaders invaders.o image.o spritePlot.o system_variables.o -L. -lm
 
-invaders.o:	invaders.c image.h 
-		@echo $(PATH)
-		qcc -O -o invaders.o -c invaders.c
-
-system_variables.o:	system_variables.c system_variables.h
-		@echo $(PATH)
-		qcc -O -o system_variables.o -c system_variables.c
+invaders.o:	invaders.c QL-sprites/libsprite.a
+		qcc -O -IQL-sprites -o invaders.o -c invaders.c
 
 spritePlot.o:	spritePlot.c image.h 
 		qcc -O -o spritePlot.o -c spritePlot.c
-
-libimage.a:	image.o
-		qdos-ar -rc libimage.a image.o
 
 image.o:	image.c image.h
 		qcc -O -o image.o -c image.c
 		#qcc -O -S image.c
 
+system_variables.o:	system_variables.c system_variables.h
+		qcc -O -o system_variables.o -c system_variables.c
+
 clean:
-	rm -f image.o screen.o libimage.a spritePlot.o interrupt.o invaders.o invaders.img invaders.zip image.s invaders.mdv invaders.hfe inv
+	rm -f screen.o interrupt.o invaders.o invaders.img invaders.zip invaders.mdv invaders.hfe inv libsprite.a
+	cd QL-sprites && make clean
 
 cleaner:	clean
 	rm -f invaders
+	cd QL-sprites && make cleaner
 
 deploy:	invaders logo.scr moon.scr
 	cp invaders_blb /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_blb

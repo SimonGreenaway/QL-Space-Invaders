@@ -5,8 +5,7 @@
 #include <math.h>
 #include <qdos.h>
 
-#include "image.h"
-#include "system_variables.h"
+#include "QL-sprites/image.h"
 
 #ifdef HILOCALS
 long _stack=96L*1024L; /* size of stack */

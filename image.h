@@ -1,3 +1,5 @@
+#include "system_variables.h"
+
 // undef MAGIC to disable image checking
 #define MAGIC 0xdeadbeef
 

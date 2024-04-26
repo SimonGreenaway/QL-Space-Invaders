@@ -1,4 +1,4 @@
-void setSysBase(void *a);
+void setSysBase(char *a);
 char *getSysBase();
 
 #define SV_BASE ((void *)getSysBase())
