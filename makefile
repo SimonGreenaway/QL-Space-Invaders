@@ -16,7 +16,7 @@ system_variables.o:	system_variables.c system_variables.h
 		qcc -O -o system_variables.o -c system_variables.c
 
 clean:
-	rm -f screen.o interrupt.o invaders.o invaders.img invaders.zip invaders.mdv invaders.hfe inv libsprite.a
+	rm -f screen.o interrupt.o invaders.o invaders.img invaders.zip invaders.mdv invaders.hfe inv libsprite.a spriteplot.o system_variables.o image.o
 	cd QL-sprites && make clean
 
 cleaner:	clean
