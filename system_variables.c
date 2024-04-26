@@ -1,13 +1,13 @@
 #include "system_variables.h"
 
-void *sys_base=(char *)0x20000;
+void *sys_base=(unsigned char *)0x20000;
 
-void setSysBase(char *a)
+void setSysBase(unsigned char *a)
 {
 	sys_base=a;
 }
 
-char *getSysBase()
+unsigned char *getSysBase()
 {
 	return sys_base;
 }

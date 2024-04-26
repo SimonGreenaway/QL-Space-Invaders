@@ -1,5 +1,5 @@
-void setSysBase(char *a);
-char *getSysBase();
+void setSysBase(unsigned char *a);
+unsigned char *getSysBase();
 
 #define SV_BASE ((void *)getSysBase())
 #define SV_IDENT ((unsigned short *)(getSysBase()+0x0))

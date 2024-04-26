@@ -482,7 +482,7 @@ int handlePlayerBullet(unsigned int frames)
 
 			for(i=0;i<skipped;i++) if(!hit)
 			{
-				player_bullet.y--;
+				player_bullet.y-=2;
 
 				pk=peek(scratch,player_bullet.y+2,player_bullet.x+3);
 
@@ -508,13 +508,20 @@ int handlePlayerBullet(unsigned int frames)
                                 if((ufo.active)&&(ufo.x<=player_bullet.x)
                                                &&(ufo.x+16>=player_bullet.x))
                                 {
-                                        player_bullet.currentImage=3;
-                                        player_bullet.x=ufo.x;
-                                        player_bullet.y=ufo.y;
-                                        spritePlot(scratch,&player_bullet);
-                                        player_bullet.currentImage=0;
+					// Bodge - need explostion
+
+                                        //player_bullet.currentImage=3;
+                                        //player_bullet.x=ufo.x;
+                                        //player_bullet.y=ufo.y;
+                                        //spritePlot(scratch,&player_bullet);
+                                        //player_bullet.currentImage=0;
 
                                         player_bullet.active=0;
+
+					// Bodge - need explosion
+					ufo.draw=0; ufo.mask=1;
+					spritePlot(scratch,&ufo);
+
                                         ufo.active=0;
 
                                         currentPlayer->score+=ufoScores[ufoScorePointer]*10;
@@ -531,9 +538,10 @@ int handlePlayerBullet(unsigned int frames)
 
 				// Explosion!!!
 		
-				player_bullet.currentImage++;
-				spritePlot(scratch,&player_bullet);
-       		              	player_bullet.currentImage--;
+				// BODGE - need explosion
+				//player_bullet.currentImage++;
+				//spritePlot(scratch,&player_bullet);
+       		              	//player_bullet.currentImage--;
 	
 				player_bullet.active=0;
 
