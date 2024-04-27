@@ -5,6 +5,7 @@
 #include <math.h>
 #include <qdos.h>
 
+
 #include "QL-sprites/image.h"
 
 #ifdef HILOCALS
@@ -1731,7 +1732,7 @@ void test()
 
 	exit(0);
 }
-	
+
 //////////
 // main //
 //////////
@@ -1739,8 +1740,6 @@ void test()
 int main(int argc, char *argv[])
 {
 	int s,convert=0;
-
-	puts("Hello");
 
 	#ifdef HILOCALS
 	if(((unsigned int)&s)<131072)

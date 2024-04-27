@@ -2,9 +2,11 @@
 20 INK #8,4
 30 CLS #8
 40 PRINT #8;"Loading space invaders..."
-50 IF VER$="JSL1" THEN
-60 EXEC_W flp1_invaders,#8;"-d mdv1_ -rom "&VER$(0)&" -sys "&VER$(-2)&" -qdos "&VER$(1)&" -job "&VER$(-1)
+45 LET v$=VER$
+50 IF v$="JSL1" THEN
+55 PRINT #8;"JSL1"
+60 EXEC_W mdv1_invaders,#8;"-d mdv_ -rom "&VER$(0)&" -sys "&VER$(-2)&" -qdos "&VER$(1)&" -job "&VER$(-1)
 70 ELSE
-80 EXEC_W flp1_invaders,#8;"-d mdv1_ -rom "&VER$
+80 EXEC_W mdv1_invaders,#8;"-d mdv_ -rom "&v$
 90 END IF
 120 CLOSE #8

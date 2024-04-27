@@ -1,19 +1,21 @@
+COPTS=-O3 -fomit-frame-pointer
+
 invaders:	invaders.o image.o spritePlot.o system_variables.o
 	rm -f invaders
 	qdos-gcc -o invaders invaders.o image.o spritePlot.o system_variables.o
 
 invaders.o:	invaders.c QL-sprites/libsprite.a
-		qdos-gcc -O3 -IQL-sprites -o invaders.o -c invaders.c
+		qdos-gcc $(COPTS) -IQL-sprites -o invaders.o -c invaders.c
 
 spritePlot.o:	spritePlot.c image.h 
-		qdos-gcc -O3 -o spritePlot.o -c spritePlot.c
+		qdos-gcc $(COPTS) -o spritePlot.o -c spritePlot.c
 
 image.o:	image.c image.h
-		qdos-gcc -O3 -o image.o -c image.c
+		qdos-gcc $(COPTS) -o image.o -c image.c
 		#qcc -O -S image.c
 
 system_variables.o:	system_variables.c system_variables.h
-		qdos-gcc -O3 -o system_variables.o -c system_variables.c
+		qdos-gcc $(COPTS) -o system_variables.o -c system_variables.c
 
 clean:
 	rm -f screen.o interrupt.o invaders.o invaders.img invaders.zip invaders.mdv invaders.hfe inv libsprite.a spriteplot.o system_variables.o image.o

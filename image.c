@@ -102,11 +102,11 @@ void* myMalloc(unsigned int i)
 // Initialise the sprite system
 
 //long _stack = 4L*1024L; /* size of stack */
-long _mneed = 4L*1024L; /* minimum requirement */
+ //long _mneed = 4L*1024L; /* minimum requirement */
 //long _mneed = 256L*1024L; /* minimum requirement */
-long _memmax = 9999L * 1024L; /* maximum allowed */
-long _memincr = 1L * 1024L; /* increment size */
-long _memqdos = 20L * 1024L; /* minimum for QDOS */
+ //long _memmax = 9999L * 1024L; /* maximum allowed */
+ //long _memincr = 1L * 1024L; /* increment size */
+ //long _memqdos = 20L * 1024L; /* minimum for QDOS */
 
 //long _stack = 500*1024L; /* size of stack */
 
