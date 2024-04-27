@@ -1,19 +1,19 @@
 invaders:	invaders.o image.o spritePlot.o system_variables.o
 	rm -f invaders
-	qdos-gcc -o invaders invaders.o image.o spritePlot.o system_variables.o
+	qld -o invaders invaders.o image.o spritePlot.o system_variables.o -lm
 
 invaders.o:	invaders.c QL-sprites/libsprite.a
-		qdos-gcc -O3 -IQL-sprites -o invaders.o -c invaders.c
+		qcc -O -IQL-sprites -o invaders.o -c invaders.c
 
 spritePlot.o:	spritePlot.c image.h 
-		qdos-gcc -O3 -o spritePlot.o -c spritePlot.c
+		qcc -O -o spritePlot.o -c spritePlot.c
 
 image.o:	image.c image.h
-		qdos-gcc -O3 -o image.o -c image.c
+		qcc -O -o image.o -c image.c
 		#qcc -O -S image.c
 
 system_variables.o:	system_variables.c system_variables.h
-		qdos-gcc -O3 -o system_variables.o -c system_variables.c
+		qcc -O -o system_variables.o -c system_variables.c
 
 clean:
 	rm -f screen.o interrupt.o invaders.o invaders.img invaders.zip invaders.mdv invaders.hfe inv libsprite.a spriteplot.o system_variables.o image.o
@@ -36,20 +36,14 @@ deploy:	invaders logo.scr moon.scr
 run:   	deploy
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.20 --RAMSIZE=896 --SOUND 8 -b "LRUN flp1_BOOT"
 
-test:   invaders
-	cp invaders /home/simon/emulators/ql/emulators/sQLux/flp1
-	cp test.lib /home/simon/emulators/ql/emulators/sQLux/flp1/test_lib
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=1 -b "LRESPR flp1_sigext_rext:EW flp1_invaders,#1;'-t'"
-
-runjm:	deploy
 runjm:	deploy
 	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JM.ROM --SPEED=10 --SOUND 8 -b "LRUN flp1_BOOT"
 
 runjs:	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JS.ROM --SPEED=0.75 --SOUND 8 -b "LRUN flp1_BOOT"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --ROMDIR ~/emulators/ql/THE_DISTRIBUTION/qos/ROMs --SYSROM JS.ROM --SPEED=0.75 --SOUND 8 --RAMSIZE=384 -b "LRUN flp1_BOOT"
 
 runfast:	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=10 --SOUND 8 -b "LRUN flp1_BOOT"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --RAMSIZE=256 --SPEED=10 --SOUND 8 -b "LRUN flp1_BOOT"
 
 convert:   	deploy 
 	cp font.lib /home/simon/emulators/ql/emulators/sQLux/flp1/font_lib

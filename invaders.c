@@ -22,7 +22,7 @@ long _stack=96L*1024L; /* size of stack */
 #undef FPS
 #endif
 
-#define IMMORTAL
+#undef IMMORTAL
 
 #define FRAMES SV_RAND
 
@@ -1471,8 +1471,6 @@ void mainLoop(int convert)
 	unsigned int i;
 	unsigned int goes[2];
 
-	puts("Hello!");
-
 	initiate(convert);
 
 	while(1)
@@ -1690,6 +1688,49 @@ void ipctest()
 
 	exit(0);
 }
+
+void test()
+{
+	library l;
+	sprite s;
+	unsigned int i,j,k,m;
+
+	init();
+
+	loadLibrary(&l,"test_lib",1); 
+
+	for(i=0;i<4;i++) s.image[i]=&l.images[i];
+
+	for(m=1;m<4;m++)
+	{
+		s.draw=m&1; 
+		s.mask=(m&2)>1;
+
+		for(j=0;j<4;j++)
+		{
+			for(i=0;i<32768;i++)
+				*((unsigned char *)(0x20000+i))=*((unsigned char*)i);
+
+			printf("M=%d D=%d\n",s.mask,s.draw);
+	
+	
+			s.x=s.y=0;
+			s.currentImage=j;
+		
+			for(i=0;i<4;i++)
+			{
+				s.x=i; s.y=i*s.image[s.currentImage]->y;
+			
+				spritePlot(SCREEN,&s);
+			}
+		
+			while(!keyrow(1));
+			while(keyrow(1));
+		}
+	}
+
+	exit(0);
+}
 	
 //////////
 // main //
@@ -1698,6 +1739,8 @@ void ipctest()
 int main(int argc, char *argv[])
 {
 	int s,convert=0;
+
+	puts("Hello");
 
 	#ifdef HILOCALS
 	if(((unsigned int)&s)<131072)
@@ -1714,6 +1757,7 @@ int main(int argc, char *argv[])
 	for(s=1;s<argc;s++)
 	{
 		if(strcmp(argv[s],"-bm")==0) benchmark();
+		if(strcmp(argv[s],"-t")==0) test();
 		else if(strcmp(argv[s],"-ipc")==0) ipctest();
 		else if(strcmp(argv[s],"-c")==0) convert=1;
 		else if(strcmp(argv[s],"-d")==0) drive=argv[++s];

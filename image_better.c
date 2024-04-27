@@ -201,15 +201,14 @@ void spritePlot(screen screen,sprite *sprite)
 				{
 					*address++=*address&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
-					*address=(*address&*maskshifter++|*shifter++);
-					*address++=(*address&*maskshifter++|*shifter++);
+					*address++=(*address&*maskshifter++|*shifter++)
+							&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
-					*address=(*address&*maskshifter++|*shifter++);
-					*address++=(*address&*maskshifter++|*shifter++);
-						
+					*address++=(*address&*maskshifter++|*shifter++)
+							&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
-					*address=(*address&*maskshifter++|*shifter++);
-					*address++=(*address&*maskshifter++|*shifter++);
+					*address++=(*address&*maskshifter++|*shifter++)
+							&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
 					*address=  *address&*maskshifter++|*shifter++; 
 		
@@ -222,11 +221,11 @@ void spritePlot(screen screen,sprite *sprite)
 				{
 					*address++=*address&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
-					*address=(*address&*maskshifter++|*shifter++);
-					*address++=(*address&*maskshifter++|*shifter++);
+					*address++=(*address&*maskshifter++|*shifter++)
+							&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
-					*address=(*address&*maskshifter++|*shifter++);
-					*address++=(*address&*maskshifter++|*shifter++);
+					*address++=(*address&*maskshifter++|*shifter++)
+							&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
 					*address=  *address&*maskshifter++|*shifter++; 
 		
@@ -239,9 +238,8 @@ void spritePlot(screen screen,sprite *sprite)
 				{
 					*address++=*address&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
-					*address=(*address&*maskshifter++|*shifter++);
-					*address++=(*address&*maskshifter++|*shifter++);
-
+					*address++=(*address&*maskshifter++|*shifter++)
+							&*maskshifter++|*shifter++; 
 					*address++=*address&*maskshifter++|*shifter++; 
 					*address=  *address&*maskshifter++|*shifter++; 
 		
@@ -282,7 +280,7 @@ void spritePlot(screen screen,sprite *sprite)
 
 		switch(xlim) // Welcome to loop unroll City....
 		{
-			case 14:	for(a=0;a<image->y;a++)
+			case 4:	for(a=0;a<image->y;a++)
 				{
 					*address++|=*shifter++; 
 					*address++|=*shifter++; 
@@ -302,7 +300,7 @@ void spritePlot(screen screen,sprite *sprite)
 	
 				break;
 	
-			case 13:	for(a=0;a<image->y;a++)
+			case 3:	for(a=0;a<image->y;a++)
 				{
 					*address++|=*shifter++; 
 					*address++|=*shifter++; 
@@ -319,7 +317,7 @@ void spritePlot(screen screen,sprite *sprite)
 	
 				break;
 		
-			case 12:	for(a=0;a<image->y;a++)
+			case 2:	for(a=0;a<image->y;a++)
 				{
 					*address++|=*shifter++; 
 					*address++|=*shifter++; 
@@ -365,7 +363,7 @@ void spritePlot(screen screen,sprite *sprite)
 
 		switch(xlim) // Welcome to loop unroll City....
 		{
-			case 14:	for(a=0;a<image->y;a++)
+			case 4:	for(a=0;a<image->y;a++)
 				{
 					*address++=*address&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
@@ -382,7 +380,7 @@ void spritePlot(screen screen,sprite *sprite)
 	
 				break;
 	
-			case 13:	for(a=0;a<image->y;a++)
+			case 3:	for(a=0;a<image->y;a++)
 				{
 					*address++=*address&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
@@ -397,7 +395,7 @@ void spritePlot(screen screen,sprite *sprite)
 	
 				break;
 		
-			case 12:	for(a=0;a<image->y;a++)
+			case 2:	for(a=0;a<image->y;a++)
 				{
 					*address++=*address&*maskshifter++; 
 					*address++=*address&*maskshifter++; 
