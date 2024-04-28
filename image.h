@@ -107,9 +107,3 @@ void setFontMasking(unsigned int m);
 void printCharAt(screen screen,library *font,unsigned int x,unsigned int y,char c);
 void printAt(screen screen,library *font,unsigned int x,unsigned y,char *s);
 int loadScreen(unsigned char *scr,char *dir,char *file);
-
-// Developmental
-
-void draw8x8(screen screen,sprite *sprite);
-
-
