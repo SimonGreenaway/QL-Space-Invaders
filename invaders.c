@@ -278,7 +278,6 @@ void handleKeys(unsigned int frames)
 	{
 		if(player.timer.value>frames) return;
 
-
 		playerVisible=1;	// Make player visible
 		player.timer.value=frames;
 		keyTimer.value=frames;
@@ -302,7 +301,7 @@ void handleKeys(unsigned int frames)
 				spriteClear(scratch,moon,&player);
 				#endif
 
-				player.x-=4;	// Move left
+				player.x--;	// Move left
 				spritePlot(scratch,&player);
 			}
                 	else if((key&16)&&(player.x<XMAX-player.image[0]->x<<2))
@@ -313,7 +312,7 @@ void handleKeys(unsigned int frames)
 				player.draw=1;
 				#endif
 
-				player.x+=4;	// Move right
+				player.x++;	// Move right
 				spritePlot(scratch,&player);
 			}
 
@@ -1459,7 +1458,7 @@ void setupGame(unsigned int frames)
 	ufo.y=64;
 
 	keyTimer.value=0;
-	keyTimer.delta=5;
+	keyTimer.delta=1;
 	
 	currentPlayer=&players[currentPlayerId=0];
 }
