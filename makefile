@@ -1,8 +1,8 @@
 COPTS=-O3 -fomit-frame-pointer -std=gnu9x
 
-invaders:	invaders.o image.o spritePlot.o system_variables.o
+invaders:	invaders.o QL-sprites/libsprite.a
 	rm -f invaders
-	qdos-gcc -o invaders invaders.o image.o spritePlot.o system_variables.o
+	qdos-gcc -o invaders invaders.o -LQL-sprites -lsprite
 
 invaders.o:	invaders.c QL-sprites/libsprite.a
 		qdos-gcc $(COPTS) -IQL-sprites -o invaders.o -c invaders.c
@@ -17,9 +17,12 @@ image.o:	image.c image.h
 system_variables.o:	system_variables.c system_variables.h
 		qdos-gcc $(COPTS) -o system_variables.o -c system_variables.c
 
+QL-sprites/libsprite.a:
+	make -C QL-sprites
+
 clean:
 	rm -f screen.o interrupt.o invaders.o invaders.img invaders.zip invaders.mdv invaders.hfe inv libsprite.a spritePlot.o system_variables.o image.o
-	cd QL-sprites && make clean
+	make -C QL-sprites clean
 
 cleaner:	clean
 	rm -f invaders
@@ -36,7 +39,7 @@ deploy:	invaders logo.scr moon.scr
 	cp BOOT_flp1 /home/simon/emulators/ql/emulators/sQLux/flp1/BOOT
 
 run:   	deploy
-	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.20 --RAMSIZE=896 --SOUND 8 -b "LRUN flp1_BOOT"
+	cd /home/simon/emulators/ql/emulators/sQLux && ./sqlux --SPEED=0.70 --RAMSIZE=896 --SOUND 8 -b "LRUN flp1_BOOT"
 
 test:   invaders
 	cp invaders /home/simon/emulators/ql/emulators/sQLux/flp1

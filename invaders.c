@@ -5,7 +5,6 @@
 #include <math.h>
 #include <qdos.h>
 
-
 #include "QL-sprites/image.h"
 
 #ifdef HILOCALS
@@ -173,15 +172,15 @@ void doHelp()
 	printAt(scratch,&font,50,55,"<1> - 1 PLAYER GAME");
 	printAt(scratch,&font,50,80,"<2> - 1 PLAYER GAME");
 	printAt(scratch,&font,50,105,"<S> - SOUND TOGGLE");
-	printAt(scratch,&font,50,130,"<P> - PAUSE GAME TOGGLE");
-	printAt(scratch,&font,50,155," F1 - HELP");
+	//printAt(scratch,&font,50,130,"<P> - PAUSE GAME TOGGLE");
+	printAt(scratch,&font,50,130," F1 - HELP");
 
-	printAt(scratch,&font,xPrint(10),190,"THANKS TO:");
-	printAt(scratch,&font,30,206,"GEORGIUS KONSTANTOPULOS (TESTING)");
-	printAt(scratch,&font,30,216,"JB1ZZEL (TESTING & MOON BACKGROUND)");
-	printAt(scratch,&font,30,226,"JOHN ENGDAHL (TESTING)");
-	printAt(scratch,&font,30,236,"SILVERIO M RS, JOBDONE");
-	printAt(scratch,&font,30,246,"   & STEPHEN USHER (TESTING)");
+	printAt(scratch,&font,xPrint(10),170,"THANKS TO:");
+	printAt(scratch,&font,30,186,"GEORGIUS KONSTANTOPULOS (TESTING)");
+	printAt(scratch,&font,30,196,"JB1ZZEL (TESTING & MOON BACKGROUND)");
+	printAt(scratch,&font,30,206,"JOHN ENGDAHL (TESTING)");
+	printAt(scratch,&font,30,216,"SILVERIO M RS, JOBDONE");
+	printAt(scratch,&font,30,226,"   & STEPHEN USHER (TESTING)");
 
 	#ifdef DOUBLEBUFFER
 	showAll(scratch);
@@ -337,12 +336,14 @@ void handleKeys(unsigned int frames)
 		}
 	}
 
+	/* Pause
 	if(keyrow(4)&32)
 	{
 		while(keyrow(4)&32); 
 		while((keyrow(4)&32)==0); 
 		while(keyrow(4)&32); 
 	}
+	*/
 }
 
 //////////////////////////

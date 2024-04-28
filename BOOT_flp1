@@ -4,7 +4,6 @@
 40 PRINT #8;"Loading space invaders..."
 45 LET v$=VER$
 50 IF v$="JSL1" THEN
-55 PRINT #8;"JSL1"
 60 EXEC_W flp1_invaders,#8;"-d flp1_ -rom "&VER$(0)&" -sys "&VER$(-2)&" -qdos "&VER$(1)&" -job "&VER$(-1)
 70 ELSE
 80 EXEC_W flp1_invaders,#8;"-d flp1_ -rom "&v$
