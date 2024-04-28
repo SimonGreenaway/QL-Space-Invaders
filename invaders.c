@@ -177,10 +177,11 @@ void doHelp()
 	printAt(scratch,&font,50,155," F1 - HELP");
 
 	printAt(scratch,&font,xPrint(10),190,"THANKS TO:");
-	printAt(scratch,&font,30,210,"GEORGIUS KONSTANTOPULOS (TESTING)");
-	printAt(scratch,&font,30,220,"JB1ZZEL (TESTING & MOON BACKGROUND)");
-	printAt(scratch,&font,30,230,"JOHN ENGDAHL (TESTING)");
-	printAt(scratch,&font,30,240,"SILVERIO M RS (TESTING)");
+	printAt(scratch,&font,30,206,"GEORGIUS KONSTANTOPULOS (TESTING)");
+	printAt(scratch,&font,30,216,"JB1ZZEL (TESTING & MOON BACKGROUND)");
+	printAt(scratch,&font,30,226,"JOHN ENGDAHL (TESTING)");
+	printAt(scratch,&font,30,236,"SILVERIO M RS, JOBDONE");
+	printAt(scratch,&font,30,246,"   & STEPHEN USHER (TESTING)");
 
 	#ifdef DOUBLEBUFFER
 	showAll(scratch);
@@ -831,7 +832,8 @@ int handleInvaders(unsigned int frames)
 			#endif
 		}
         }
-	while((getFrames()<=frames+1)&&(nextInvader!=start));
+	//while((getFrames()<=frames+1)&&(nextInvader!=start));
+	while(nextInvader!=start);
 
 	if(frames>=invaderSoundTimer)
 	{
@@ -1565,6 +1567,8 @@ void mainLoop(int convert)
 			switch(gameLoop())
 			{
 				case 0: currentPlayer->wave++ ;
+					setupInvaders(getFrames(),0);
+					setupBG(1,1,1);
 					break;		// Wave completed
 				case 1: currentPlayer->lives--; break;	// Base hit
 				case 2: currentPlayer->lives=0; break;	// Invaders hit the bottom
@@ -1596,10 +1600,11 @@ void benchmark()
 	unsigned int s;
 
 	init();
+
 	loadLibrary(&lib,"test_lib",1);
 	copyAllScreen(background,SCREEN);
 
-	for(s=0;s<3;s++)
+	for(s=0;s<4;s++)
 	{
 		const int n=10;
 
@@ -1648,44 +1653,10 @@ void benchmark()
 			showAll(scratch);
 			#endif
 
-			printf("%c %d x %d -> %f\n",pass==1?'M':' ',lib.images[s].x<<4,lib.images[s].y,c/10.0);
+			printf("%c %d x %d -> %d\n",pass==1?'M':' ',lib.images[s].x<<4,lib.images[s].y,c);
 			copyAllScreen(background,SCREEN);
 		}
 	}
-
-	exit(0);
-}
-
-void do_no_sound()
-{
-}
-
-void ipctest()
-{
-	unsigned int pass,t,c,c0;
-	float a,b;
-
-	for(pass=1;pass<=2;pass++)
-	{
-		t=getFrames()+500;
-
-		while(getFrames()<t)
-		{
-			if(pass==1)
-				do_no_sound();
-			else
-				do_sound(490,176,0,0,0,0,8,0);
-
-			c++;
-		}
-
-		if(pass==1) c0=c;
-	}
-
-	a=500.0/c0;
-	b=500.0/c;
-	printf("Void loop:\t%d\t%f\n",c0,a);
-	printf("Sound loop:\t%d\t%f\t%f\n",c,b,b-a);
 
 	exit(0);
 }
@@ -1718,15 +1689,46 @@ void test()
 			s.x=s.y=0;
 			s.currentImage=j;
 		
-			for(i=0;i<4;i++)
+			for(i=0;1;i++)
 			{
 				s.x=i; s.y=i*s.image[s.currentImage]->y;
-			
+				if(s.y+s.image[s.currentImage]->y>=255) break;	
 				spritePlot(SCREEN,&s);
 			}
 		
 			while(!keyrow(1));
 			while(keyrow(1));
+
+			if(m==3)
+			{
+				s.draw=0;
+				for(i=0;1;i++)
+				{
+					s.x=i; s.y=i*s.image[s.currentImage]->y;
+					if(s.y+s.image[s.currentImage]->y>=255) break;	
+					spritePlot(SCREEN,&s);
+				}
+				s.draw=1;
+				while(!keyrow(1));
+				while(keyrow(1));
+
+				s.y=0;
+
+				for(i=0;i<255-s.image[s.currentImage]->y;i++)
+				{
+					unsigned int f;
+
+					s.x=i;
+								
+					spritePlot(SCREEN,&s);
+
+					s.draw=0;
+					f=getFrames();		
+					while(f>=getFrames()) ;
+					spritePlot(SCREEN,&s);
+					s.draw=1;
+				}
+			}
 		}
 	}
 
@@ -1757,7 +1759,6 @@ int main(int argc, char *argv[])
 	{
 		if(strcmp(argv[s],"-bm")==0) benchmark();
 		if(strcmp(argv[s],"-t")==0) test();
-		else if(strcmp(argv[s],"-ipc")==0) ipctest();
 		else if(strcmp(argv[s],"-c")==0) convert=1;
 		else if(strcmp(argv[s],"-d")==0) drive=argv[++s];
 		else if(strcmp(argv[s],"-rom")==0) rom=argv[++s];

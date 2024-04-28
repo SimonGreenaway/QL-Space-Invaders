@@ -1,4 +1,4 @@
-COPTS=-O3 -fomit-frame-pointer
+COPTS=-O3 -fomit-frame-pointer -std=gnu9x
 
 invaders:	invaders.o image.o spritePlot.o system_variables.o
 	rm -f invaders
@@ -18,7 +18,7 @@ system_variables.o:	system_variables.c system_variables.h
 		qdos-gcc $(COPTS) -o system_variables.o -c system_variables.c
 
 clean:
-	rm -f screen.o interrupt.o invaders.o invaders.img invaders.zip invaders.mdv invaders.hfe inv libsprite.a spriteplot.o system_variables.o image.o
+	rm -f screen.o interrupt.o invaders.o invaders.img invaders.zip invaders.mdv invaders.hfe inv libsprite.a spritePlot.o system_variables.o image.o
 	cd QL-sprites && make clean
 
 cleaner:	clean
@@ -76,12 +76,13 @@ dist:	convert
 	qltools invaders.img -fdd invaders -W
 	cp BOOT_flp1 BOOT
 	cp logo.scr logo_scr
-	qltools invaders.img -W BOOT invaders invaders_blb font_blb logo_scr LICENSE
+	cp moon.scr moon_scr
+	qltools invaders.img -W BOOT invaders invaders_blb font_blb logo_scr moon_scr LICENSE
 	cp BOOT_mdv1 BOOT
 	cp invaders.zip i.zip
 	#zip i.zip -d logo.scr
 	mdvtool create name invaders zip_import i.zip import BOOT write invaders.mdv 
-	rm -f BOOT i.zip logo_scr
+	rm -f BOOT i.zip logo_scr moon_scr
 
 git:	cleaner
 	git add .
