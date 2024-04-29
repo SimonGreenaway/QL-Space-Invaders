@@ -4,16 +4,9 @@
 #include <string.h>
 #include <math.h>
 #include <qdos.h>
+#include <sms.h>
 
 #include "QL-sprites/image.h"
-
-#ifdef HILOCALS
-long _stack=96L*1024L; /* size of stack */
-#endif
-
-#undef DOUBLEBUFFER
-
-//#define DEBUG(x) { Fill(0,8,0); printAt(&font,0,0,x); showScratch(scratch); }
 
 #undef PROFILE
 #define FPS
@@ -22,9 +15,7 @@ long _stack=96L*1024L; /* size of stack */
 #undef FPS
 #endif
 
-#undef IMMORTAL
-
-#define FRAMES SV_RAND
+#define IMMORTAL
 
 library lib,font;	// Image libraries
 
@@ -37,12 +28,7 @@ library lib,font;	// Image libraries
 #define XMIN ((256-WIDTH)>>1)
 #define XMAX (XMIN+WIDTH)
 
-#ifdef DOUBLEBUFFER
-unsigned int lowY;
-#endif
-
 char *drive="";
-unsigned long systemVariables=163840;
 char *rom;
 float qdos=-1;
 int job=-1;
@@ -79,12 +65,16 @@ unsigned int invaderSoundTimer;
 unsigned int fpsCounter,fpsTimer,fpsStart;
 #endif
 
-screen background,scratch,moon;
+screen moon;
+
+// Work out the x offset to print in the center of the screen
 
 unsigned int xPrint(unsigned int chars)
 {
 	return XMIN+((XMAX-XMIN)-6*chars)>>1;
 }
+
+// Fast /10
 
 unsigned int divu10(unsigned int n)
 {
@@ -99,6 +89,8 @@ unsigned int divu10(unsigned int n)
 
     return q + (r > 9);
 }
+
+// Fast *10
 
 unsigned int mul10(unsigned int z)
 {
@@ -129,62 +121,31 @@ void printScores()
 	scorePrint(hs,highScore);
 	scorePrint(p2,players[1].score);
 
-	fill(background,48,48+8,0);
+	fill(SCREEN,48,48+8,0);
 	sprintf(s,"%4s     %4s     %4s",p1,hs,p2);
-	printAt(background,&font,xPrint(strlen(s)),16+32,s);	
-
-	#ifdef DOUBLEBUFFER
-	copyScreen(SCREEN,background,48,48+8);
-	#endif
-}
-
-/////////////////////   
-// TIME AND short //
-/////////////////////                   
-
-unsigned int frameCounter=0,lastFrame;  
-
-unsigned int getFrames()
-{
-        unsigned short frames=*FRAMES;
-
-        if(frames<lastFrame) frameCounter+=0x10000;
-        lastFrame=frames;               
-
-        return  frameCounter+frames;
-}
-
-void msleep(unsigned int frames)
-{
-	unsigned int end=getFrames()+frames;
-
-	while(getFrames()<end);
+	printAt(SCREEN,&font,xPrint(strlen(s)),16+32,s);	
 }
 
 void doHelp()
 {
 	// Show help
 
-	cls(scratch);
+	cls(SCREEN);
 
-	printAt(scratch,&font,xPrint(12),00,"HELP SCREEN");
-	printAt(scratch,&font,50,30,"<C> - ADD A COIN");
-	printAt(scratch,&font,50,55,"<1> - 1 PLAYER GAME");
-	printAt(scratch,&font,50,80,"<2> - 1 PLAYER GAME");
-	printAt(scratch,&font,50,105,"<S> - SOUND TOGGLE");
-	//printAt(scratch,&font,50,130,"<P> - PAUSE GAME TOGGLE");
-	printAt(scratch,&font,50,130," F1 - HELP");
+	printAt(SCREEN,&font,xPrint(12),00,"HELP SCREEN");
+	printAt(SCREEN,&font,50,30,"<C> - ADD A COIN");
+	printAt(SCREEN,&font,50,55,"<1> - 1 PLAYER GAME");
+	printAt(SCREEN,&font,50,80,"<2> - 2 PLAYER GAME");
+	printAt(SCREEN,&font,50,105,"<S> - SOUND TOGGLE");
+	//printAt(SCREEN,&font,50,130,"<P> - PAUSE GAME TOGGLE");
+	printAt(SCREEN,&font,50,130," F1 - HELP");
 
-	printAt(scratch,&font,xPrint(10),170,"THANKS TO:");
-	printAt(scratch,&font,30,186,"GEORGIUS KONSTANTOPULOS (TESTING)");
-	printAt(scratch,&font,30,196,"JB1ZZEL (TESTING & MOON BACKGROUND)");
-	printAt(scratch,&font,30,206,"JOHN ENGDAHL (TESTING)");
-	printAt(scratch,&font,30,216,"SILVERIO M RS, JOBDONE");
-	printAt(scratch,&font,30,226,"   & STEPHEN USHER (TESTING)");
-
-	#ifdef DOUBLEBUFFER
-	showAll(scratch);
-	#endif
+	printAt(SCREEN,&font,xPrint(10),170,"THANKS TO:");
+	printAt(SCREEN,&font,30,186,"GEORGIUS KONSTANTOPULOS (TESTING)");
+	printAt(SCREEN,&font,30,196,"JB1ZZEL (TESTING & MOON BACKGROUND)");
+	printAt(SCREEN,&font,30,206,"JOHN ENGDAHL (TESTING)");
+	printAt(SCREEN,&font,30,216,"SILVERIO M RS, JOBDONE");
+	printAt(SCREEN,&font,30,226,"   & STEPHEN USHER (TESTING)");
 }
 
 int keysleep(unsigned int frames)
@@ -247,11 +208,7 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 			return 2;  // Player 2 start?
 		}
 
-		if(*s!=32) printCharAt(scratch,&font,x,y,*s);
-
-		#ifdef DOUBLEBUFFER
-                showAll(scratch);
-		#endif
+		if(*s!=32) printCharAt(SCREEN,&font,x,y,*s);
 
 		s++;
 		x+=6;
@@ -281,7 +238,7 @@ void handleKeys(unsigned int frames)
 		player.timer.value=frames;
 		keyTimer.value=frames;
 
-		spritePlot(scratch,&player);
+		spritePlot(SCREEN,&player);
 
 		return;
 	}
@@ -296,23 +253,19 @@ void handleKeys(unsigned int frames)
 		{
         	        if((key&2)&&(player.x>XMIN))
 			{
-				#ifndef DOUBLEBUFFER
-				spriteClear(scratch,moon,&player);
-				#endif
+				spriteClear(SCREEN,moon,&player);
 
 				player.x--;	// Move left
-				spritePlot(scratch,&player);
+				spritePlot(SCREEN,&player);
 			}
                 	else if((key&16)&&(player.x<XMAX-player.image[0]->x<<2))
 			{
-				#ifndef DOUBLEBUFFER
 				player.draw=0;
-				spriteClear(scratch,moon,&player);
+				spriteClear(SCREEN,moon,&player);
 				player.draw=1;
-				#endif
 
 				player.x++;	// Move right
-				spritePlot(scratch,&player);
+				spritePlot(SCREEN,&player);
 			}
 
 			if((key&64)&&(!player_bullet.active)&&playerReload)	// Fire (if not already fired)
@@ -373,9 +326,7 @@ int handleInvaderBullets(unsigned int frames)
 	{
 	        if((bullets[i].active)&&(bullets[i].timer.value<=frames))	// Fired?
 	        {
-			#ifndef DOUBLEBUFFER
-			spriteClear(scratch,moon,&bullets[i]);	// Draw bullet if still active
-			#endif
+			spriteClear(SCREEN,moon,&bullets[i]);	// Draw bullet if still active
 
 			bullets[i].timer.value=frames+bullets[i].timer.delta;
 	       	        bullets[i].y+=(currentPlayer->invaderCount<=8?5:4);
@@ -399,25 +350,20 @@ int handleInvaderBullets(unsigned int frames)
 					for(j=0;j<10;j++)
 					{			
 						player.currentImage=1;
-						spritePlot(scratch,&player);
+						spritePlot(SCREEN,&player);
 
-						#ifdef DOUBLEBUFFER
-						showAll(scratch);
-						#endif
 						msleep(10);
 
 						player.draw=0;
-						spritePlot(scratch,&player);
+						spritePlot(SCREEN,&player);
 						player.draw=1;
 
 						player.currentImage=2;
-						spritePlot(scratch,&player);
-						#ifdef DOUBLEBUFFER
-						showAll(scratch);
-						#endif
+						spritePlot(SCREEN,&player);
 						msleep(10);
+
 						player.draw=0;
-						spritePlot(scratch,&player);
+						spritePlot(SCREEN,&player);
 						player.draw=1;
 					}
 
@@ -428,15 +374,15 @@ int handleInvaderBullets(unsigned int frames)
 	       		}
 			else
 			{
-				if(peek(scratch,bullets[i].y+4,bullets[i].x)&0xAA00
-				 ||peek(scratch,bullets[i].y+6,bullets[i].x)&0xAA00)
+				if(peek(SCREEN,bullets[i].y+4,bullets[i].x)&0xAA00
+				 ||peek(SCREEN,bullets[i].y+6,bullets[i].x)&0xAA00)
 				{
 					// Hit something!
 
 					bullets[i].currentImage=4;
 					bullets[i].mask=1;
 					bullets[i].x-=2;
-					spriteClear(background,moon,&bullets[i]);
+					spriteClear(SCREEN,moon,&bullets[i]);
 	
 					bullets[i].currentImage=0;
 					bullets[i].mask=0;
@@ -448,11 +394,7 @@ int handleInvaderBullets(unsigned int frames)
 
 		if(bullets[i].active)
 		{
-			spritePlot(scratch,&bullets[i]);	// Draw bullet if still active
-
-			#ifdef DOUBLEBUFFER
-			lowY=min(lowY,bullets[i].y);
-			#endif
+			spritePlot(SCREEN,&bullets[i]);	// Draw bullet if still active
 		}
 	}
 
@@ -476,17 +418,15 @@ int handlePlayerBullet(unsigned int frames)
                 skipped=frames-player_bullet.timer.value+1;
 
                 {
-			#ifndef DOUBLEBUFFER
 			player_bullet.draw=0;
-			spriteClear(scratch,moon,&player_bullet);
+			spriteClear(SCREEN,moon,&player_bullet);
 			player_bullet.draw=1;
-			#endif
 
 			for(i=0;i<skipped;i++) if(!hit)
 			{
 				player_bullet.y-=2;
 
-				pk=peek(scratch,player_bullet.y+2,player_bullet.x+3);
+				pk=peek(SCREEN,player_bullet.y+2,player_bullet.x+3);
 
       			        if(((pk&0x80C0)==0x80C0) // White bit 3
 			         ||((pk&0x2030)==0x2030) // White bit 2
@@ -501,10 +441,6 @@ int handlePlayerBullet(unsigned int frames)
 
 			player_bullet.timer.value=frames+player_bullet.timer.delta;
 
-			#ifdef DOUBLEBUFFER
-			lowY=min(lowY,player_bullet.y);
-			#endif
-
 			if(player_bullet.y<=64)	// Reached the top
        		       	{
                                 if((ufo.active)&&(ufo.x<=player_bullet.x)
@@ -515,14 +451,14 @@ int handlePlayerBullet(unsigned int frames)
                                         //player_bullet.currentImage=3;
                                         //player_bullet.x=ufo.x;
                                         //player_bullet.y=ufo.y;
-                                        //spritePlot(scratch,&player_bullet);
+                                        //spritePlot(SCREEN,&player_bullet);
                                         //player_bullet.currentImage=0;
 
                                         player_bullet.active=0;
 
 					// Bodge - need explosion
 					ufo.draw=0; ufo.mask=1;
-					spritePlot(scratch,&ufo);
+					spritePlot(SCREEN,&ufo);
 
                                         ufo.active=0;
 
@@ -531,10 +467,6 @@ int handlePlayerBullet(unsigned int frames)
 
                                         ufoScorePointer=(ufoScorePointer+1)&15;
 
-					#ifdef DOUBLEBUFFER
-					lowY=64;
-					#endif
-
                                         return 0;
                                 }
 
@@ -542,14 +474,10 @@ int handlePlayerBullet(unsigned int frames)
 		
 				// BODGE - need explosion
 				//player_bullet.currentImage++;
-				//spritePlot(scratch,&player_bullet);
+				//spritePlot(SCREEN,&player_bullet);
        		              	//player_bullet.currentImage--;
 	
 				player_bullet.active=0;
-
-				#ifdef DOUBLEBUFFER
-				lowY=64; // Make sure we erase the old bullet
-				#endif
 
 				return 0;
 			}
@@ -584,11 +512,11 @@ int handlePlayerBullet(unsigned int frames)
 							//player_bullet.x=players[currentPlayer].sprites[i].x;
 							//player_bullet.y=players[currentPlayer].sprites[i].y;
 
-							//spritePlot(scratch,&player_bullet);
+							//spritePlot(SCREEN,&player_bullet);
 
 		              				player_bullet.currentImage=0;
 
-        	        	        	        spriteClear(background,moon,s);
+        	        	        	        spriteClear(SCREEN,moon,s);
 
 							s->active=0;	
 							player_bullet.active=0;
@@ -606,13 +534,13 @@ int handlePlayerBullet(unsigned int frames)
                                 player_bullet.currentImage=4;
                                 player_bullet.y-=1;
 				player_bullet.mask=1;
-                               	spritePlot(background,&player_bullet);
+                               	spritePlot(SCREEN,&player_bullet);
 				player_bullet.mask=0;
                                 player_bullet.currentImage=0;
 
                                 player_bullet.active=0;
 
-				//show(background,0,256); while(1);
+				//show(SCREEN,0,256); while(1);
 
                                 return 0;
 			}
@@ -621,7 +549,7 @@ int handlePlayerBullet(unsigned int frames)
 
 	if(player_bullet.active)
 	{
-		spritePlot(scratch,&player_bullet);	// Draw bullet if still active
+		spritePlot(SCREEN,&player_bullet);	// Draw bullet if still active
 	}
 
 	return 0;	// Wave still ongoing
@@ -723,7 +651,6 @@ void invaderFire(unsigned int frames)
 				bullets[bullet].timer.delta=3;
 				bullets[bullet].currentImage=0;
 
-
 				//if(sound) do_sound(3000,255,1,200,0,5,0,9);
 
 				break;
@@ -751,7 +678,7 @@ int bounceInvaders()
                 if(currentPlayer->sprites[i].active)
                         lowest=max(lowest,currentPlayer->sprites[i].y);
 
-        if(lowest+16>=195) fill(background,lowest+8,lowest+16,0);
+        if(lowest+16>=195) fill(SCREEN,lowest+8,lowest+16,0);
 
         currentPlayer->direction=-currentPlayer->direction; 
                 
@@ -761,7 +688,7 @@ int bounceInvaders()
 
                 if(s->active)     // Is sprite alive?
                 {
-                        spriteClear(background,moon,&currentPlayer->sprites[i]);
+                        spriteClear(SCREEN,moon,s);
 
                         currentPlayer->sprites[i].dx=currentPlayer->direction;
                         s->y+=8;        // Move invader down
@@ -769,7 +696,7 @@ int bounceInvaders()
                         // Game over?
                         if(s->y>=player.y)  return 1;
 
-                        spritePlot(background,s);
+                        spritePlot(SCREEN,s);
                 }
         }
 
@@ -786,55 +713,40 @@ int bounceInvaders()
 //          0 - still going! // 
 ///////////////////////////////
 
-unsigned int nextInvader=0;
-
 int handleInvaders(unsigned int frames)
 {
-	unsigned int start=nextInvader;
+	unsigned int i,bounce=0;
 
-        do
+	for(i=0;i<SPRITES;i++)
         {
-		sprite *s=&currentPlayer->sprites[nextInvader++];
-
-		if(nextInvader==SPRITES) // All the sprites have been drawn
-		{
-			unsigned int i;
-			nextInvader=0; // Reset counter
-
-			// Check for bounce
-
-			for(i=0;i<SPRITES;i++)
-			{
-				if(currentPlayer->sprites[i].active)
-				{
-					unsigned int x=currentPlayer->sprites[i].x+currentPlayer->sprites[i].dx;
-
-					if((x<XMIN)||(x>XMAX-17))
-					{
-						bounceInvaders(); break;
-					}
-				}
-			}
-		}
+		sprite *s=&currentPlayer->sprites[i];
 
 		if((s->active)&&(s->timer.value<=frames))	// Time to move?
 		{
 			// Clear old invader from BG
-			spriteClear(background,moon,s);
+			spriteClear(SCREEN,moon,s);
 
 			s->x+=s->dx;				// Move invader
 		        s->currentImage=1-s->currentImage; 	// Animate
 			s->timer.value+=s->timer.delta;		// Set up timer for next movement 
-			spritePlot(background,s);	// Draw invader on BG
+			spritePlot(SCREEN,s);	// Draw invader on BG
 
-			#ifdef DOUBLEBUFFER
-			lowY=min(lowY,s->y);
-			#endif
+			if(i+1==SPRITES) // Only check after all sprites have moved
+			{
+				unsigned int j;
+
+				for(j=0;j<SPRITES;j++)
+				{
+					s=&currentPlayer->sprites[j];
+				
+					if((s->active)&&((s->x<XMIN)||(s->x>XMAX-17))) bounce=1;
+				}
+			}
 		}
         }
-	//while((getFrames()<=frames+1)&&(nextInvader!=start));
-	while(nextInvader!=start);
 
+	if(bounce) bounceInvaders();
+	
 	if(frames>=invaderSoundTimer)
 	{
 		invaderSoundTimer+=max(5,currentPlayer->newDelta);
@@ -868,17 +780,11 @@ void handleUFO(unsigned int frames)
         }
         else
         {
-		#ifdef DOUBLEBUFFER
-		lowY=64;
-		#endif
-
 		if(ufo.timer.value<frames) // Is it time to move?
 		{
-			#ifndef DOUBLEBUFFER
 			ufo.draw=0;
-                	spritePlot(scratch,&ufo);	// Draw the UFO
+                	spritePlot(SCREEN,&ufo);	// Draw the UFO
 			ufo.draw=1;
-			#endif
 			
 			ufo.x+=ufo.dx;		// Move
 
@@ -891,18 +797,18 @@ void handleUFO(unsigned int frames)
 			ufo.timer.value=frames+ufo.timer.delta;	// Set the next time to run
 		}
 
-                spritePlot(scratch,&ufo);	// Draw the UFO
+                spritePlot(SCREEN,&ufo);	// Draw the UFO
        }
 }
 
 void saveBases()
 {
-	memcpy(currentPlayer->bases,(unsigned char *)scratch+(192<<7),2048);
+	memcpy(currentPlayer->bases,(unsigned char *)SCREEN+(192<<7),2048);
 }
 
 void loadBases()
 {
-	memcpy((unsigned char *)background+(192<<7),currentPlayer->bases,2048);
+	memcpy((unsigned char *)SCREEN+(192<<7),currentPlayer->bases,2048);
 }
 
 /////////////
@@ -915,17 +821,16 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
         char buffer[80];
         sprite base;
 
-        cls(scratch);
-        cls(background);
+        cls(SCREEN);
 
-	if(bases) copyScreen(scratch,moon,157,255);
+	if(bases) copyScreen(SCREEN,moon,157,255);
 
 	sprintf(buffer,"%d",currentPlayer->lives);
-	printAt(scratch,&font,XMIN+4,255-8,buffer);
+	printAt(SCREEN,&font,XMIN+4,255-8,buffer);
 
-        printAt(scratch,&font,xPrint(26),32,"SCORE<1> HI-SCORE SCORE<2>");
+        printAt(SCREEN,&font,xPrint(26),32,"SCORE<1> HI-SCORE SCORE<2>");
 	sprintf(buffer,"CREDIT %02d",credits);
-        printAt(scratch,&font,XMAX-6*strlen(buffer)-20,255-8,buffer);
+        printAt(SCREEN,&font,XMAX-6*strlen(buffer)-20,255-8,buffer);
 
         if(bases&&life)
 	{
@@ -938,7 +843,7 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
 	                s.currentImage=0;
 	                s.x=XMIN+i*48+32; s.y=195;
 	
-	                spritePlot(scratch,&s);
+	                spritePlot(SCREEN,&s);
 	        }
 
 		saveBases();
@@ -955,7 +860,7 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
                 base.draw=1;
                 base.y=245;
 
-	        for(base.x=XMIN;base.x<XMAX;base.x+=32) spritePlot(scratch,&base);
+	        for(base.x=XMIN;base.x<XMAX;base.x+=32) spritePlot(SCREEN,&base);
         }
 
         base.image[0]=&lib.images[8];
@@ -965,7 +870,7 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
 
         for(i=0;i<currentPlayer->lives-1;i++)
         {
-                spritePlot(scratch,&base);
+                spritePlot(SCREEN,&base);
                 base.x+=16;
         }
 
@@ -979,11 +884,7 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
                 //spritePlot(&base);
         }
 
-	#ifdef DEBUGDOUBLE
-        showAll(scratch);
-	#endif 
-
-        copyAllScreen(background,SCREEN);
+        //copyAllScreen(SCREEN,SCREEN);
 }
 
 ///////////////////
@@ -1017,7 +918,7 @@ void setupInvaders(unsigned int frames,unsigned int show)
 		s->active=1;
 		s->draw=1;
 
-		if(show) spritePlot(background,s);
+		if(show) spritePlot(SCREEN,s);
         }
 
 	invaderSoundTimer=0;
@@ -1035,17 +936,12 @@ void startGameScreen()
 	while(gameMode==0)
 	{
 		setupBG(0,0,0);
-		copyAllScreen(scratch,background);
 		printScores();
 
-		printAt(scratch,&font,xPrint(4),90,"PUSH");
+		printAt(SCREEN,&font,xPrint(4),90,"PUSH");
 
-		if(credits>1) printAt(scratch,&font,xPrint(20),130,"1 OR 2PLAYERS BUTTON");
-		else printAt(scratch,&font,xPrint(19),130,"ONLY 1PLAYER BUTTON");
-
-		#ifdef DOUBLEBUFFER
-		showAll(scratch);
-		#endif
+		if(credits>1) printAt(SCREEN,&font,xPrint(20),130,"1 OR 2PLAYERS BUTTON");
+		else printAt(SCREEN,&font,xPrint(19),130,"ONLY 1PLAYER BUTTON");
 
 		keysleep(INT_MAX);
 	}
@@ -1060,8 +956,7 @@ void introScreens()
 	unsigned int x=xPrint(0)-56; // Middle of screen
 	unsigned int ks;
 
-	cls(scratch);
-	cls(background);
+	cls(SCREEN);
         //setupGame(getFrames());
 	setupInvaders(getFrames(),0);
 
@@ -1069,26 +964,24 @@ void introScreens()
 
 	while(1)
 	{
-		copyAllScreen(scratch,background); printScores(); showAll(scratch);
+		printScores();
 
 		if(slowPrintAt(xPrint(4),70,"PLAY")) return;
 		if(slowPrintAt(xPrint(14),100,"SPACE INVADERS")) return;
 
 		if(keysleep(150)) return;
 
-		printAt(scratch,&font,xPrint(21),130,"*SCORE ADVANCE TABLE*");
+		printAt(SCREEN,&font,xPrint(21),130,"*SCORE ADVANCE TABLE*");
 		ufo.active=1;
 		ufo.x=x-3; ufo.y=150;
 		ufo.image[0]=&lib.images[29];
-		spritePlot(scratch,&ufo); ufo.image[0]=&lib.images[7]; ufo.active=0;
+		spritePlot(SCREEN,&ufo); ufo.image[0]=&lib.images[7]; ufo.active=0;
 
-		players[0].sprites[0].x=x; players[0].sprites[0].y=170; spritePlot(scratch,&players[0].sprites[0]);
+		players[0].sprites[0].x=x; players[0].sprites[0].y=170; spritePlot(SCREEN,&players[0].sprites[0]);
 
-		players[0].sprites[SPRITES>>1].x=x-1; players[0].sprites[SPRITES>>1].y=190; spritePlot(scratch,&players[0].sprites[SPRITES>>1]);
+		players[0].sprites[SPRITES>>1].x=x-1; players[0].sprites[SPRITES>>1].y=190; spritePlot(SCREEN,&players[0].sprites[SPRITES>>1]);
 
-		players[0].sprites[SPRITES-1].x=x-1; players[0].sprites[SPRITES-1].y=210; players[0].sprites[SPRITES-1].image[0]=&lib.images[30]; spritePlot(scratch,&players[0].sprites[SPRITES-1]); players[0].sprites[SPRITES-1].image[0]=&lib.images[0];
-
-		showAll(scratch);
+		players[0].sprites[SPRITES-1].x=x-1; players[0].sprites[SPRITES-1].y=210; players[0].sprites[SPRITES-1].image[0]=&lib.images[30]; spritePlot(SCREEN,&players[0].sprites[SPRITES-1]); players[0].sprites[SPRITES-1].image[0]=&lib.images[0];
 
 		if(slowPrintAt(x+16,150,"=? MYSTERY")) return; 
 		if(slowPrintAt(x+16,170,"=30 POINTS")) return; 
@@ -1099,37 +992,24 @@ void introScreens()
 
 		// Score table
 
-		#ifdef DOUBLEBUFFER
-		copyAllScreen(scratch,background);
-		#else
 		cls(SCREEN);
-		#endif
 
 		printScores();
 
-		printAt(scratch,&font,xPrint(12),100,"INSERT  COIN"); showAll(scratch);
+		printAt(SCREEN,&font,xPrint(12),100,"INSERT  COIN"); 
 		if(slowPrintAt(xPrint(16),140,"<1 OR 2 PLAYERS>")) return;
 		if(slowPrintAt(xPrint(17),140+24,"*1 PLAYER  1 COIN")) return;
 		if(slowPrintAt(xPrint(18),140+48,"*2 PLAYERS 2 COINS")) return;
 
 		if(keysleep(100)) return;
 
-		#ifdef DOUBLEBUFFER
-		copyAllScreen(scratch,background);
-		#else
 		cls(SCREEN);
-		#endif
 
 		doHelp();
 
 		if(keysleep(350)) return;
 
-		#ifdef DOUBLEBUFFER
-		copyAllScreen(scratch,background);
-		#else
 		cls(SCREEN);
-		#endif
-
 	}
 }
 
@@ -1142,13 +1022,6 @@ void initiate(unsigned int convert)
 	init();
 
 	loaded=loadScreen((unsigned char *)SCREEN,drive,"logo_scr");
-
-	#ifdef DOUBLEBUFFER
-	scratch=createScreen();
-	background=createScreen();
-	#else
-	background=scratch=SCREEN;
-	#endif
 
 	moon=createScreen();
 	cls(moon);
@@ -1223,6 +1096,9 @@ void initiate(unsigned int convert)
 // game //
 //////////
 
+unsigned int delayCounts=0,frames=0;
+long lastTime=0;
+
 int gameLoop()
 {
 	unsigned int frames,lastFrames=0;
@@ -1252,145 +1128,37 @@ int gameLoop()
 
 	while(1)
 	{
-		#ifdef DOUBLEBUFFER
-		lowY=232;
-		#endif
-
-		#ifdef PROFILE
-		profileN=0;
-
-
-		if(profileCounter==0) profileCounter=frames;
-
-		// 0
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=frames;
-		
-		#endif
-
 		// Wait for next frame
 
 		frames=getFrames();
-		//while((frames=getFrames())==lastFrames);
-		//lastFrames=frames;
-
-		#ifdef PROFILE
-		// 1
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
 
 		// Move the invaders on the BG screen
-
 		if(handleInvaders(frames)) return 2; // GAME OVER!
-
-		#ifdef PROFILE
-		// 2
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
 
 		invaderFire(frames);
 
-		#ifdef PROFILE
-		// 3
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
-
-		#ifdef DOUBLEBUFFER
-		if(scratch!=SCREEN)
-			copyScreen(scratch,background,64,256-player.image[0]->y-24+8);	// Copy the BG to scratch...
-		#endif
-
-		#ifdef PROFILE
-		// 4
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
-
 		handleKeys(frames);	// Fire/move the player
-
-		// 5
-		#ifdef PROFILE
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
 
 		if(handlePlayerBullet(frames)) return 0; // LEVEL CLEARED!
 
-		// 6
-		#ifdef PROFILE
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
-
 		handleUFO(frames);
 
-		// 7
-		#ifdef PROFILE
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
-
-		if(handleInvaderBullets(frames))
-		{
-	        	#ifdef DOUBLEBUFFER
-			showAll(scratch);
-			#endif
-			return 1; // LOSE A LIFE!
-		}
-
-		// spritePlot(scratch,&player);
-
-		// 8
-		#ifdef PROFILE
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
+		if(handleInvaderBullets(frames)) return 1; // LOSE A LIFE!
 
 		#ifdef FPS
 		fpsCounter++;
 		if(fpsTimer<getFrames())
 		{
+			#ifdef IMMORTAL
+			sprintf(s,"%d IMMORTAL MODE!",fpsCounter*500/((getFrames()-fpsStart)));
+			#else
 			sprintf(s,"%d",fpsCounter*500/((getFrames()-fpsStart)));
+			#endif
 
 			fpsTimer=getFrames()+50;
 
-			fill(background,0,8,0);
-			printAt(background,&font,0,0,s);
-
-			#ifdef DOUBLEBUFFER
-			if(background!=SCREEN) copyScreen(SCREEN,background,0,8);
-			#endif
-		}
-		#endif
-
-		// 9
-		#ifdef PROFILE
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
-
-		#ifdef DOUBLEBUFFER
-		if(scratch!=SCREEN) show(scratch,lowY,232);
-		#endif
-
-		// 10 
-		#ifdef PROFILE
-		profileCounts[profileN++]+=(getFrames()-profileCounter);
-		profileCounter=getFrames();
-		#endif
-
-		#ifdef PROFILE
-		if(keyrow(3))
-		{
-			unsigned int sum=0;
-
-			for(frames=0;frames<10;frames++) sum+=profileCounts[frames];
-			for(frames=0;frames<10;frames++) printf("%d\t%d\t%d\n",frames,profileCounts[frames],(100*profileCounts[frames])/sum);
-			while(keyrow(3));
-			profileCounter=getFrames();
+			fill(SCREEN,0,8,0);
+			printAt(SCREEN,&font,0,0,s);
 		}
 		#endif
 	}
@@ -1498,19 +1266,14 @@ void mainLoop(int convert)
 			char s[80];
 			unsigned int frames;
 
-		        cls(scratch);
-		        cls(background);
+		        cls(SCREEN);
 
 		        setupBG(0,0,0);   
                
 			if(!goes[currentPlayerId]++) setupInvaders(getFrames(),0);
 
 			// TODO: Following not seen on screen 
-		        printAt(scratch,&font,xPrint(10),100,currentPlayerId==0?"PLAYER <1>":"PLAYER <2>");
-
-			#ifdef DOUBLEBUFFER
-			showAll(scratch);
-			#endif
+		        printAt(SCREEN,&font,xPrint(10),100,currentPlayerId==0?"PLAYER <1>":"PLAYER <2>");
 
 			// Blink the score of the next player
 
@@ -1531,11 +1294,7 @@ void mainLoop(int convert)
 		                else 
 					sprintf(s,"%04d     %04d     %c%c%c%c",players[0].score,highScore,'Z'+1,'Z'+1,'Z'+1,'Z'+1);
 
-       				printAt(scratch,&font,xPrint(strlen(s)),48,s);
-
-				#ifdef DOUBLEBUFFER
-				showAll(scratch);
-				#endif
+       				printAt(SCREEN,&font,xPrint(strlen(s)),48,s);
 			}
 
 			setFontMasking(0);
@@ -1555,7 +1314,6 @@ void mainLoop(int convert)
 				if(s->active) s->timer.value=frames+(SPRITES-i);
 			}
 
-			//setInvaderReload();
 			invaderSoundTimer=getFrames()+50;
 
 			playerReload=1;
@@ -1574,165 +1332,18 @@ void mainLoop(int convert)
 				case 2: currentPlayer->lives=0; break;	// Invaders hit the bottom
 			}
 			
-
 			saveBases();
 
 			if(gameMode==2)
-			{
 				currentPlayer=&players[currentPlayerId=1-currentPlayerId];
-			}
 		}
 
-		printAt(scratch,&font,xPrint(9),70,"GAME OVER");
-
-		#ifdef DOUBLEBUFFER
-		showAll(scratch);
-		#endif
+		printAt(SCREEN,&font,xPrint(9),70,"GAME OVER");
 
 		sleep(5);
 
 		if(currentPlayer->score>highScore) highScore=currentPlayer->score;
 	}
-}
-
-void benchmark()
-{
-	unsigned int s;
-
-	init();
-
-	loadLibrary(&lib,"test_lib",1);
-	copyAllScreen(background,SCREEN);
-
-	for(s=0;s<4;s++)
-	{
-		const int n=10;
-
-		unsigned long t,c=0,pass;
-		unsigned int x=0,y=0;
-		sprite sprite[8];
-
-		for(c=0;c<8;c++)
-		{
-			sprite[c].image[0]=&lib.images[s];
-			sprite[c].currentImage=0;
-			sprite[c].x=x++;
-
-			sprite[c].y=y;
-			sprite[c].draw=1;
-
-			y+=sprite[c].image[0]->y;
-			if(y+sprite[c].image[0]->y>255) y=0;
-		}
-
-		for(pass=0;pass<2;pass++)
-		{
-			for(c=0;c<8;c++) sprite[c].mask=pass;
-
-			t=getFrames()+n*50;
-	
-			while(t>getFrames())
-			{
-				unsigned int i,y=0,x=0;
-
-				copyAllScreen(scratch,background);
-
-				for(i=0;i<8;i++)
-				{
-					spritePlot(scratch,&sprite[i]);
-				}
-
-				c+=8;
-
-				#ifdef DOUBLEBUFFER
-				showAll(scratch);
-				#endif
-			}
-
-			#ifdef DOUBLEBUFFER
-			showAll(scratch);
-			#endif
-
-			printf("%c %d x %d -> %d\n",pass==1?'M':' ',lib.images[s].x<<4,lib.images[s].y,c);
-			copyAllScreen(background,SCREEN);
-		}
-	}
-
-	exit(0);
-}
-
-void test()
-{
-	library l;
-	sprite s;
-	unsigned int i,j,k,m;
-
-	init();
-
-	loadLibrary(&l,"test_lib",1); 
-
-	for(i=0;i<4;i++) s.image[i]=&l.images[i];
-
-	for(m=1;m<4;m++)
-	{
-		s.draw=m&1; 
-		s.mask=(m&2)>1;
-
-		for(j=0;j<4;j++)
-		{
-			for(i=0;i<32768;i++)
-				*((unsigned char *)(0x20000+i))=*((unsigned char*)i);
-
-			printf("M=%d D=%d\n",s.mask,s.draw);
-	
-	
-			s.x=s.y=0;
-			s.currentImage=j;
-		
-			for(i=0;1;i++)
-			{
-				s.x=i; s.y=i*s.image[s.currentImage]->y;
-				if(s.y+s.image[s.currentImage]->y>=255) break;	
-				spritePlot(SCREEN,&s);
-			}
-		
-			while(!keyrow(1));
-			while(keyrow(1));
-
-			if(m==3)
-			{
-				s.draw=0;
-				for(i=0;1;i++)
-				{
-					s.x=i; s.y=i*s.image[s.currentImage]->y;
-					if(s.y+s.image[s.currentImage]->y>=255) break;	
-					spritePlot(SCREEN,&s);
-				}
-				s.draw=1;
-				while(!keyrow(1));
-				while(keyrow(1));
-
-				s.y=0;
-
-				for(i=0;i<255-s.image[s.currentImage]->y;i++)
-				{
-					unsigned int f;
-
-					s.x=i;
-								
-					spritePlot(SCREEN,&s);
-
-					s.draw=0;
-					f=getFrames();		
-					while(f>=getFrames()) ;
-					spritePlot(SCREEN,&s);
-					s.draw=1;
-				}
-			}
-		}
-	}
-
-	exit(0);
 }
 
 //////////
@@ -1742,34 +1353,21 @@ void test()
 int main(int argc, char *argv[])
 {
 	int s,convert=0;
+	void *sv;
+	long ver;
 
-	#ifdef HILOCALS
-	if(((unsigned int)&s)<131072)
-	{
-		printf("Local variable in low memory: %d\n",(unsigned int)&s);
-		exit(1);
-	}
-	#endif
+	sms_info(&sv,&ver);
+	setSysBase(sv);
 
 	// Parse the args
 
-	setSysBase((unsigned char *)0x28000);
-
 	for(s=1;s<argc;s++)
 	{
-		if(strcmp(argv[s],"-bm")==0) benchmark();
-		if(strcmp(argv[s],"-t")==0) test();
-		else if(strcmp(argv[s],"-c")==0) convert=1;
+		if(strcmp(argv[s],"-c")==0) convert=1;
 		else if(strcmp(argv[s],"-d")==0) drive=argv[++s];
 		else if(strcmp(argv[s],"-rom")==0) rom=argv[++s];
 		else if(strcmp(argv[s],"-qdos")==0) qdos=atof(argv[++s]);
 		else if(strcmp(argv[s],"-job")==0) job=atoi(argv[++s]);
-		else if(strcmp(argv[s],"-sys")==0)
-		{
-			if((argv[s][0]>='0')&&(argv[s][1]<='9'))
-				setSysBase((unsigned char *)atoi(argv[++s]));
-			else s++;
-		}
 		else
 		{
 			printf("Unknown command line argument: %s\n",argv[s]);

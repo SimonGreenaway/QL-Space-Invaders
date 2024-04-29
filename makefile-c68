@@ -2,21 +2,19 @@ COPTS=-O3 -fomit-frame-pointer -std=gnu9x
 
 invaders:	invaders.o QL-sprites/libsprite.a
 	rm -f invaders
-	make -C QL-sprites
-	qdos-gcc -o invaders invaders.o -LQL-sprites -lsprite
+	qld -o invaders invaders.o -LQL-sprites -lsprite
 
 invaders.o:	invaders.c QL-sprites/libsprite.a
-		qdos-gcc $(COPTS) -IQL-sprites -o invaders.o -c invaders.c
+		qcc $(COPTS) -IQL-sprites -o invaders.o -c invaders.c
 
 spritePlot.o:	spritePlot.c image.h 
-		qdos-gcc $(COPTS) -o spritePlot.o -c spritePlot.c
+		qcc $(COPTS) -o spritePlot.o -c spritePlot.c
 
 image.o:	image.c image.h
-		qdos-gcc $(COPTS) -o image.o -c image.c
-		#qcc -O -S image.c
+		qcc $(COPTS) -o image.o -c image.c
 
 system_variables.o:	system_variables.c system_variables.h
-		qdos-gcc $(COPTS) -o system_variables.o -c system_variables.c
+		qcc $(COPTS) -o system_variables.o -c system_variables.c
 
 QL-sprites/libsprite.a:
 	make -C QL-sprites
@@ -27,6 +25,7 @@ clean:
 
 cleaner:	clean
 	rm -f invaders
+	cd QL-sprites && make cleaner
 
 deploy:	invaders logo.scr moon.scr
 	cp invaders_blb /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_blb
