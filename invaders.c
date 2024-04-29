@@ -1096,7 +1096,7 @@ void initiate(unsigned int convert)
 // game //
 //////////
 
-unsigned int delayCounts=0,frames=0;
+unsigned int delayCounts=0;
 long lastTime=0;
 
 int gameLoop()
@@ -1242,6 +1242,8 @@ void mainLoop(int convert)
 	unsigned int i;
 	unsigned int goes[2];
 
+	framesInit();
+
 	initiate(convert);
 
 	while(1)
@@ -1358,6 +1360,7 @@ int main(int argc, char *argv[])
 
 	sms_info(&sv,&ver);
 	setSysBase(sv);
+
 
 	// Parse the args
 
