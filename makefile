@@ -22,11 +22,11 @@ QL-sprites/libsprite.a:
 	make -C QL-sprites
 
 clean:
-	rm -f screen.o interrupt.o invaders.o invaders.img invaders.zip invaders.mdv invaders.hfe inv libsprite.a spritePlot.o system_variables.o image.o
+	rm -f screen.o interrupt.o invaders.o libsprite.a spritePlot.o system_variables.o image.o
 	make -C QL-sprites clean
 
 cleaner:	clean
-	rm -f invaders
+	rm -f invaders invaders.img invaders.zip invaders.mdv invaders.hfe
 
 deploy:	invaders logo.scr moon.scr
 	cp invaders_blb /home/simon/emulators/ql/emulators/sQLux/flp1/invaders_blb
