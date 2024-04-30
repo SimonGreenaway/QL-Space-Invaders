@@ -257,7 +257,7 @@ void handleKeys(unsigned int frames)
 				player.x--;	// Move left
 				spritePlot(SCREEN,&player);
 			}
-                	else if((key&16)&&(player.x<XMAX-player.image[0]->x<<2))
+                	else if((key&16)&&(player.x+(player.image[0]->x<<2)<XMAX))
 			{
 				spriteClear(SCREEN,moon,&player);
 				player.x++;	// Move right
@@ -680,10 +680,10 @@ int bounceInvaders()
                         currentPlayer->sprites[i].dx=currentPlayer->direction;
                         s->y+=8;        // Move invader down
 
+                        spritePlot(SCREEN,s);
+
                         // Game over?
                         if(s->y>=player.y)  return 1;
-
-                        spritePlot(SCREEN,s);
                 }
         }
 
@@ -740,7 +740,8 @@ int handleInvaders(unsigned int frames)
 		
 			if((s->active)&&((s->x+s->dx<XMIN)||(s->x+s->dx>XMAX-17)))
 			{
-				bounceInvaders(); break;
+				if(bounceInvaders()) return 1;
+				else break;
 			}
 		}
         }
@@ -1360,6 +1361,7 @@ void mainLoop(int convert)
 				case 1: currentPlayer->lives--; break;	// Base hit
 				case 2: currentPlayer->lives=0; break;	// Invaders hit the bottom
 			}
+
 			
 			saveBases();
 
@@ -1368,6 +1370,7 @@ void mainLoop(int convert)
 		}
 
 		printAt(SCREEN,&font,xPrint(9),70,"GAME OVER");
+		gameMode=0;
 
 		sleep(5);
 
