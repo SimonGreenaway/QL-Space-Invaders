@@ -37,7 +37,7 @@ struct player
 {
 	sprite sprites[SPRITES];
 	unsigned int newDelta,invaderCount,shotCount,score,lives,wave;
-	int direction;
+	int direction,invaderExplosion,invaderExplosionTimer,ufoExplosionTimer;
 
 	unsigned char *bases;
 };
@@ -342,13 +342,14 @@ int handleInvaderBullets(unsigned int frames)
 
 					unsigned int j;
 
-					
 					for(j=0;j<10;j++)
-					{			
+					{
+						unsigned int t;
+			
 						player.currentImage=1;
 						spritePlot(SCREEN,&player);
 
-						msleep(10);
+						t=getFrames()+10; while(getFrames()<t);
 
 						player.draw=0;
 						spritePlot(SCREEN,&player);
@@ -356,7 +357,7 @@ int handleInvaderBullets(unsigned int frames)
 
 						player.currentImage=2;
 						spritePlot(SCREEN,&player);
-						msleep(10);
+						t=getFrames()+10; while(getFrames()<t);
 
 						player.draw=0;
 						spritePlot(SCREEN,&player);
@@ -368,7 +369,7 @@ int handleInvaderBullets(unsigned int frames)
 				}
 				#endif
 	       		}
-			else
+			else if(bullets[i].y<220)
 			{
 				if(peek(SCREEN,bullets[i].y+4,bullets[i].x)&0xAA00
 				 ||peek(SCREEN,bullets[i].y+6,bullets[i].x)&0xAA00)
@@ -378,8 +379,9 @@ int handleInvaderBullets(unsigned int frames)
 					bullets[i].currentImage=4;
 					bullets[i].mask=1;
 					bullets[i].x-=2;
-					spriteClear(SCREEN,moon,&bullets[i]);
 	
+					spriteClear(SCREEN,moon,&bullets[i]);
+
 					bullets[i].currentImage=0;
 					bullets[i].mask=0;
 					bullets[i].active=0;
@@ -406,140 +408,137 @@ int handleInvaderBullets(unsigned int frames)
 
 int handlePlayerBullet(unsigned int frames)
 {
-	unsigned int i,j,skipped,hit=0;
-	unsigned short pk;
-
         if((player_bullet.active)&&(player_bullet.timer.value<frames))
         {
-                skipped=frames-player_bullet.timer.value+1;
+		unsigned int i,hit=0;
 
-                {
-			player_bullet.draw=0;
-			spriteClear(SCREEN,moon,&player_bullet);
-			player_bullet.draw=1;
+		player_bullet.draw=0;
+		spriteClear(SCREEN,moon,&player_bullet);
+		player_bullet.draw=1;
 
-			for(i=0;i<skipped;i++) if(!hit)
+		// Hit detection...
+
+		for(i=0;i<8;i++) // The loop limit defines player bullet speed
+		{
+			unsigned short pk;
+
+			player_bullet.y--;
+
+			pk=peek(SCREEN,player_bullet.y+2,player_bullet.x+3);
+
+			// We need to only see white (invaders) and green (shield)
+			if(((pk&0x80C0)==0x80C0) // White bit 3
+			 ||((pk&0x2030)==0x2030) // White bit 2
+			 ||((pk&0x080C)==0x080C)   // White bit 1
+			 ||((pk&0x0203)==0x0203)   // White bit 0
+       		         ||(pk&0xAA00))          // Anything green?
 			{
-				player_bullet.y-=2;
-
-				pk=peek(SCREEN,player_bullet.y+2,player_bullet.x+3);
-
-      			        if(((pk&0x80C0)==0x80C0) // White bit 3
-			         ||((pk&0x2030)==0x2030) // White bit 2
-				 ||((pk&0x080C)==0x080C)   // White bit 1
-				 ||((pk&0x0203)==0x0203)   // White bit 0
-            		           	 ||(pk&0xAA00))          // Anything green?
-				{
-					hit=player_bullet.y;
-					break;
-				}
+				hit=player_bullet.y;
+				break;
 			}
+		}
 
-			player_bullet.timer.value=frames+player_bullet.timer.delta;
+		player_bullet.timer.value=frames+player_bullet.timer.delta;
 
-			if(player_bullet.y<=64)	// Reached the top
-       		       	{
-                                if((ufo.active)&&(ufo.x<=player_bullet.x)
-                                               &&(ufo.x+16>=player_bullet.x))
-                                {
-					// Bodge - need explostion
-
-                                        //player_bullet.currentImage=3;
-                                        //player_bullet.x=ufo.x;
-                                        //player_bullet.y=ufo.y;
-                                        //spritePlot(SCREEN,&player_bullet);
-                                        //player_bullet.currentImage=0;
-
-                                        player_bullet.active=0;
-
-					// Bodge - need explosion
-					ufo.draw=0; ufo.mask=1;
-					spritePlot(SCREEN,&ufo);
-
-                                        ufo.active=0;
-
-                                        currentPlayer->score+=ufoScores[ufoScorePointer]*10;
-                                        printScores();
-
-                                        ufoScorePointer=(ufoScorePointer+1)&15;
-
-                                        return 0;
-                                }
-
-				// Explosion!!!
-		
-				// BODGE - need explosion
-				//player_bullet.currentImage++;
-				//spritePlot(SCREEN,&player_bullet);
-       		              	//player_bullet.currentImage--;
-	
+		if(player_bullet.y<=64)	// Reached the top
+       	       	{
+			if((ufo.active)&&(ufo.x<=player_bullet.x)
+					&&(ufo.x+16>=player_bullet.x))
+			{
 				player_bullet.active=0;
+
+				// Explosion!
+				ufo.draw=0; ufo.mask=1;
+				spritePlot(SCREEN,&ufo);
+				ufo.draw=1;
+				ufo.currentImage=1;
+				spritePlot(SCREEN,&ufo);
+
+				currentPlayer->ufoExplosionTimer=frames+25;
+
+				currentPlayer->score+=ufoScores[ufoScorePointer]*10;
+				printScores();
+
+				ufoScorePointer=(ufoScorePointer+1)&15;
 
 				return 0;
 			}
 
-			// Due to the moonscape, we need to do this:
+			// Explosion!!!
+	
+			// BODGE - need explosion
+			//player_bullet.currentImage++;
+			//spritePlot(SCREEN,&player_bullet);
+			//player_bullet.currentImage--;
 
-			if(hit)
+			player_bullet.active=0;
+
+			return 0;
+		}
+
+		// Due to the moonscape, we need to do this:
+
+		if(hit)
+		{
+			unsigned int i;
+
+			// Invader hit?
+
+			player_bullet.x+=3;
+
+			for(i=0;i<SPRITES;i++)
 			{
-				// Invader hit?
-
-				for(i=0;i<SPRITES;i++)
+				if(currentPlayer->sprites[i].active)
 				{
-					if(currentPlayer->sprites[i].active)
+					sprite *s=&currentPlayer->sprites[i];
+
+					//box(SCREEN,s->x-1,s->y,s->x+10,s->y+8,7);	
+					if((s->x-1<=player_bullet.x)
+					 &&(s->x+10>=player_bullet.x)
+				  	 &&(s->y<=player_bullet.y)
+					 &&(s->y+8>=player_bullet.y))
 					{
-						sprite *s=&currentPlayer->sprites[i];
+						currentPlayer->newDelta=(50*currentPlayer->invaderCount)/SPRITES;
 
-						if((abs(s->x-player_bullet.x)<11)
-					  	 &&(abs(s->y-player_bullet.y)<11))
+						if(currentPlayer->newDelta<s->timer.delta)
 						{
-							currentPlayer->newDelta=(50*currentPlayer->invaderCount)/SPRITES;
+							unsigned int j;
 
-							if(currentPlayer->newDelta<s->timer.delta)
-							{
-								unsigned int j;
-	
-								for(j=0;j<SPRITES;j++) currentPlayer->sprites[j].timer.delta=currentPlayer->newDelta;
-							}
-
-							// Set up explosion at the invader's locations
-
-							//player_bullet.currentImage=2;
-							//player_bullet.x=players[currentPlayer].sprites[i].x;
-							//player_bullet.y=players[currentPlayer].sprites[i].y;
-
-							//spritePlot(SCREEN,&player_bullet);
-
-		              				player_bullet.currentImage=0;
-
-        	        	        	        spriteClear(SCREEN,moon,s);
-
-							s->active=0;	
-							player_bullet.active=0;
-	
-							currentPlayer->score+=invaderScores[i/SPRITESX];
-							printScores();
-				
-							return --currentPlayer->invaderCount==0;	// Can only hit one thing!
+							for(j=0;j<SPRITES;j++) currentPlayer->sprites[j].timer.delta=currentPlayer->newDelta;
 						}
+
+						// Set up explosion at the invader's locations
+
+						spriteClear(SCREEN,moon,s);
+						s->currentImage=2;
+						spritePlot(SCREEN,s);
+
+						currentPlayer->invaderExplosion=i;
+						currentPlayer->invaderExplosionTimer=frames+10;
+						currentPlayer->ufoExplosionTimer=0;
+
+						player_bullet.active=0;
+
+						currentPlayer->score+=invaderScores[i/SPRITESX];
+						printScores();
+			
+						return --currentPlayer->invaderCount==0;	// Can only hit one thing!
 					}
 				}
-
-                                // Base?
-
-                                player_bullet.currentImage=4;
-                                player_bullet.y-=1;
-				player_bullet.mask=1;
-                               	spritePlot(SCREEN,&player_bullet);
-				player_bullet.mask=0;
-                                player_bullet.currentImage=0;
-
-                                player_bullet.active=0;
-
-				//show(SCREEN,0,256); while(1);
-
-                                return 0;
 			}
+
+			// Base?
+
+			player_bullet.currentImage=4;
+			player_bullet.y-=1;
+			player_bullet.mask=1;
+			spriteClear(SCREEN,moon,&player_bullet);
+			player_bullet.mask=0;
+			player_bullet.currentImage=0;
+
+			player_bullet.active=0;
+
+			return 0;
 		}
 	}
 
@@ -557,15 +556,6 @@ int handlePlayerBullet(unsigned int frames)
 
 void invaderFire(unsigned int frames)
 {
-	//ShotReloadRate:
-	//; The tables at 1CB8 and 1AA1 control how fast shots are created. The speed is based
-	//; on the upper byte of the player's score. For a score of less than or equal 0200 then
-	//; the fire speed is 30. For a score less than or equal 1000 the shot speed is 10. Less
-	//; than or equal 2000 the speed is 0B. Less than or equal 3000 is 08. And anything
-	//; above 3000 is 07.
-	//;
-	//; 1CB8: 02 10 20 30
-
 	if((reload<frames)&&(bulletCount<maxBulletCount))
 	{
 		unsigned int firingInvader,bullet;
@@ -574,7 +564,7 @@ void invaderFire(unsigned int frames)
 		{
 			if(!bullets[bullet].active)
 			{
-				int k;
+				unsigned int k;
 
 				// Pick type
 
@@ -674,6 +664,7 @@ int bounceInvaders()
                 if(currentPlayer->sprites[i].active)
                         lowest=max(lowest,currentPlayer->sprites[i].y);
 
+	// Do we need to wipe the base?
         if(lowest+16>=195) fill(SCREEN,lowest+8,lowest+16,0);
 
         currentPlayer->direction=-currentPlayer->direction; 
@@ -696,9 +687,6 @@ int bounceInvaders()
                 }
         }
 
-	//printf("%f\n",(getFrames()-waveTime)/50.0);
-	//exit(1);
-
         return 0;
 }
 
@@ -719,7 +707,16 @@ int handleInvaders(unsigned int frames)
 
 		if(s->active)
 		{
-			if(s->timer.value<=frames)	// Time to move?
+			if(currentPlayer->invaderExplosion==i)
+			{
+				if(currentPlayer->invaderExplosionTimer<frames)
+				{
+					spriteClear(SCREEN,moon,s);
+					s->active=0;
+					currentPlayer->invaderExplosion=-1;
+				}
+			}
+			else if(s->timer.value<=frames)	// Time to move?
 			{
 				// Clear old invader from BG
 				spriteClear(SCREEN,moon,s);
@@ -762,26 +759,44 @@ int handleInvaders(unsigned int frames)
 // handleUFO //
 ///////////////
 
+unsigned int nextUfoTime=INT_MAX;
+
 void handleUFO(unsigned int frames)
 {
 	if(!ufo.active)	// No ufo moving?
         {
-		// TODO: Convert to timer?
-
-		unsigned int r=rand(); // Get a random integer
-
-                if((r&255)==0)		// Every 128 frames fire a UFO
-                {
+		if(nextUfoTime==INT_MAX)
+		{
+			nextUfoTime=frames+(rand()&255)+50;
+		}
+		else if(nextUfoTime<frames)
+		{
 			ufo.active=1;
-                        ufo.x=(r&256)?XMIN:(XMAX-1-ufo.image[0]->x);	// Use a random bit for side to start on
+                        ufo.x=(nextUfoTime&1)?XMIN:(XMAX-1-ufo.image[0]->x);	// Use a random bit for side to start on
 			ufo.dx=(ufo.x==XMIN)?2:-2;		//  direction depends on start location
 			ufo.timer.value=0;
 			ufo.timer.delta=1;		// Move every 5 frames
+			nextUfoTime=INT_MAX;
                 }
         }
         else
         {
-		if(ufo.timer.value<frames) // Is it time to move?
+		if(currentPlayer->ufoExplosionTimer>0)
+		{
+			if(currentPlayer->ufoExplosionTimer<frames)
+			{
+				ufo.draw=0;
+				spriteClear(SCREEN,moon,&ufo);
+				ufo.draw=1;
+				ufo.currentImage=0;
+				ufo.active=0;
+				nextUfoTime=INT_MAX;
+				currentPlayer->ufoExplosionTimer=0;
+			}
+
+			return;
+		}
+		else if(ufo.timer.value<frames) // Is it time to move?
 		{
 			ufo.draw=0;
                 	spritePlot(SCREEN,&ufo);	// Draw the UFO
@@ -792,6 +807,7 @@ void handleUFO(unsigned int frames)
        	        	if((ufo.x<=XMIN)||(ufo.x>=(XMAX-ufo.image[0]->x)))	// Reached other end?
 			{
 				ufo.active=0;	// Switch off the UFO
+				
 				return;
 			}
 
@@ -802,14 +818,16 @@ void handleUFO(unsigned int frames)
        }
 }
 
+// Save and load player base state (needed to 2 player mode)
+
 void saveBases()
 {
-	memcpy(currentPlayer->bases,(unsigned char *)SCREEN+(192<<7),2048);
+	memcpy(currentPlayer->bases,(unsigned char *)SCREEN+(195<<7),16*128);
 }
 
 void loadBases()
 {
-	memcpy((unsigned char *)SCREEN+(192<<7),currentPlayer->bases,2048);
+	memcpy((unsigned char *)SCREEN+(195<<7),currentPlayer->bases,16*128);
 }
 
 /////////////
@@ -849,7 +867,7 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
 
 		saveBases();
 	}
-	else loadBases();
+	else if(life) loadBases();
 
         if(line)
         {
@@ -904,6 +922,7 @@ void setupInvaders(unsigned int frames,unsigned int show)
 
                 s->image[0]=&lib.images[ss];
                 s->image[1]=&lib.images[ss+1];
+		s->image[2]=&lib.images[11];
                 s->currentImage=0;
 
                 s->x=45+(x<<4)+(y==0?2:0)+1;
@@ -926,6 +945,7 @@ void setupInvaders(unsigned int frames,unsigned int show)
 
 	currentPlayer->invaderCount=SPRITES;
 	currentPlayer->newDelta=50;
+	currentPlayer->invaderExplosion=-1;
 }
 
 //////////////////
@@ -1225,6 +1245,7 @@ void setupGame(unsigned int frames)
 	shotCount=0;
 
 	ufo.image[0]=&lib.images[7];
+	ufo.image[1]=&lib.images[27];
 	ufo.currentImage=0;
 	ufo.mask=0;
 	ufo.draw=1;
