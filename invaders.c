@@ -15,7 +15,7 @@
 #undef FPS
 #endif
 
-#define IMMORTAL
+#undef IMMORTAL
 
 library lib,font;	// Image libraries
 
@@ -191,7 +191,7 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 		if(keyrow(2)&8)
 		{
 			credits++; 
-			while(keyrow(2)&8) ;
+			while(keyrow(2)&8);
 
 			return 1;
 		}
@@ -254,16 +254,12 @@ void handleKeys(unsigned int frames)
         	        if((key&2)&&(player.x>XMIN))
 			{
 				spriteClear(SCREEN,moon,&player);
-
 				player.x--;	// Move left
 				spritePlot(SCREEN,&player);
 			}
                 	else if((key&16)&&(player.x<XMAX-player.image[0]->x<<2))
 			{
-				player.draw=0;
 				spriteClear(SCREEN,moon,&player);
-				player.draw=1;
-
 				player.x++;	// Move right
 				spritePlot(SCREEN,&player);
 			}
@@ -715,38 +711,43 @@ int bounceInvaders()
 
 int handleInvaders(unsigned int frames)
 {
-	unsigned int i,bounce=0;
+	unsigned int i,lastMoved=0;
 
 	for(i=0;i<SPRITES;i++)
         {
 		sprite *s=&currentPlayer->sprites[i];
 
-		if((s->active)&&(s->timer.value<=frames))	// Time to move?
+		if(s->active)
 		{
-			// Clear old invader from BG
-			spriteClear(SCREEN,moon,s);
-
-			s->x+=s->dx;				// Move invader
-		        s->currentImage=1-s->currentImage; 	// Animate
-			s->timer.value+=s->timer.delta;		// Set up timer for next movement 
-			spritePlot(SCREEN,s);	// Draw invader on BG
-
-			if(i+1==SPRITES) // Only check after all sprites have moved
+			if(s->timer.value<=frames)	// Time to move?
 			{
-				unsigned int j;
+				// Clear old invader from BG
+				spriteClear(SCREEN,moon,s);
 
-				for(j=0;j<SPRITES;j++)
-				{
-					s=&currentPlayer->sprites[j];
-				
-					if((s->active)&&((s->x<XMIN)||(s->x>XMAX-17))) bounce=1;
-				}
+				s->x+=s->dx;				// Move invader
+			        s->currentImage=1-s->currentImage; 	// Animate
+				s->timer.value+=s->timer.delta;		// Set up timer for next movement 
+				spritePlot(SCREEN,s);	// Draw invader on BG
+
+				lastMoved=1; // We might be the last invader to move
+			}
+			else lastMoved=0; // More invaders to move this movement
+		}
+	}
+
+	if(lastMoved) // Have all the alive invaders moved?
+	{
+		for(i=0;i<SPRITES;i++)
+		{
+			sprite *s=&currentPlayer->sprites[i];
+		
+			if((s->active)&&((s->x+s->dx<XMIN)||(s->x+s->dx>XMAX-17)))
+			{
+				bounceInvaders(); break;
 			}
 		}
         }
 
-	if(bounce) bounceInvaders();
-	
 	if(frames>=invaderSoundTimer)
 	{
 		invaderSoundTimer+=max(5,currentPlayer->newDelta);
@@ -1047,6 +1048,7 @@ void initiate(unsigned int convert)
  	if(font.n==0)
  	{
  		puts("Error: Loaded 0 images from font library!\n");
+		framesClose();
  		exit(1);
  	}
 
@@ -1065,6 +1067,8 @@ void initiate(unsigned int convert)
 
 		puts("Sprite convertion completed.");
 
+               	framesClose();
+
 		exit(0);
 	}
 	else
@@ -1076,6 +1080,8 @@ void initiate(unsigned int convert)
  	if(lib.n==0)
  	{
  		puts("Error: Loaded 0 images from sprite library!\n");
+                framesClose();
+
  		exit(1);
  	}
 
