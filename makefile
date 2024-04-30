@@ -1,12 +1,15 @@
 COPTS=-O3 -fomit-frame-pointer -std=gnu9x
 
-invaders:	invaders.o QL-sprites/libsprite.a
+invaders:	invaders.o utils.o QL-sprites/libsprite.a
 	rm -f invaders
 	make -C QL-sprites
-	qdos-gcc -o invaders invaders.o -LQL-sprites -lsprite
+	qdos-gcc -o invaders invaders.o utils.o -LQL-sprites -lsprite
 
-invaders.o:	invaders.c QL-sprites/libsprite.a
+invaders.o:	invaders.c invaders.h
 		qdos-gcc $(COPTS) -IQL-sprites -o invaders.o -c invaders.c
+
+utils.o:	utils.c invaders.h
+		qdos-gcc $(COPTS) -IQL-sprites -o utils.o -c utils.c
 
 spritePlot.o:	spritePlot.c image.h 
 		qdos-gcc $(COPTS) -o spritePlot.o -c spritePlot.c
@@ -22,7 +25,7 @@ QL-sprites/libsprite.a:
 	make -C QL-sprites
 
 clean:
-	rm -f screen.o interrupt.o invaders.o libsprite.a spritePlot.o system_variables.o image.o
+	rm -f screen.o interrupt.o invaders.o libsprite.a spritePlot.o system_variables.o image.o utils.o
 	make -C QL-sprites clean
 
 cleaner:	clean

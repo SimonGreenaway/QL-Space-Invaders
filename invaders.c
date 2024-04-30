@@ -7,6 +7,7 @@
 #include <sms.h>
 
 #include "QL-sprites/image.h"
+#include "invaders.h"
 
 #undef PROFILE
 #define FPS
@@ -15,23 +16,16 @@
 #undef FPS
 #endif
 
-#undef IMMORTAL
+#define IMMORTAL
 
 library lib,font;	// Image libraries
 
-#define SPRITESX 11			// Number of invaders in a row
-#define SPRITESY 5			// Number of invader rows
-#define SPRITES (SPRITESX*SPRITESY)	// Total number of invaders
-#define MAXBULLETS 4
+char *drive=""; // Used to tell code from where to load image libs and screens.
+char *rom;	// For future development (dual screen).
+float qdos=-1;	//    "
+int job=-1;	//    "
 
-#define WIDTH 224
-#define XMIN ((256-WIDTH)>>1)
-#define XMAX (XMIN+WIDTH)
-
-char *drive="";
-char *rom;
-float qdos=-1;
-int job=-1;
+// Player holds all the information about each player, there can be 2
 
 struct player
 {
@@ -44,6 +38,7 @@ struct player
 
 struct player players[2],*currentPlayer=&players[0];
 
+// Game information
 unsigned int credits=0,currentPlayerId,gameMode=0;
 unsigned int sound=1;
 
@@ -55,8 +50,8 @@ sprite player,ufo,player_bullet;	// Other sprites
 unsigned int playerVisible;
 
 unsigned int highScore=0;			// Player scores
-int invaderScores[5]={30,20,20,10,10};
-unsigned char ufoScores[]={10,05,05,10,15,10,10,05,30,10,10,10,05,15,10,05};
+const int invaderScores[5]={30,20,20,10,10};
+const unsigned char ufoScores[]={10,05,05,10,15,10,10,05,30,10,10,10,05,15,10,05};
 unsigned char ufoScorePointer=0;
 
 unsigned int invaderSoundTimer;
@@ -66,36 +61,6 @@ unsigned int fpsCounter,fpsTimer,fpsStart;
 #endif
 
 screen moon;
-
-// Work out the x offset to print in the center of the screen
-
-unsigned int xPrint(unsigned int chars)
-{
-	return XMIN+((XMAX-XMIN)-6*chars)>>1;
-}
-
-// Fast /10
-
-unsigned int divu10(unsigned int n)
-{
-    unsigned q, r;
-
-    q = (n >> 1) + (n >> 2);
-    q = q + (q >> 4);
-    q = q + (q >> 8);
-    q = q + (q >> 16);
-    q = q >> 3;
-    r = n - (((q << 2) + q) << 1);
-
-    return q + (r > 9);
-}
-
-// Fast *10
-
-unsigned int mul10(unsigned int z)
-{
-        return (z<<3)+(z<<1);
-}
 
 void scorePrint(char *c,unsigned int z)
 {
@@ -128,24 +93,29 @@ void printScores()
 
 void doHelp()
 {
+	unsigned int y=5;
+
 	// Show help
 
 	cls(SCREEN);
 
-	printAt(SCREEN,&font,xPrint(12),00,"HELP SCREEN");
-	printAt(SCREEN,&font,50,30,"<C> - ADD A COIN");
-	printAt(SCREEN,&font,50,55,"<1> - 1 PLAYER GAME");
-	printAt(SCREEN,&font,50,80,"<2> - 2 PLAYER GAME");
-	printAt(SCREEN,&font,50,105,"<S> - SOUND TOGGLE");
-	//printAt(SCREEN,&font,50,130,"<P> - PAUSE GAME TOGGLE");
-	printAt(SCREEN,&font,50,130," F1 - HELP");
+	printAt(SCREEN,&font,xPrint(12),y,"HELP SCREEN");
+	printAt(SCREEN,&font,50,y+=16,"<C> - ADD A COIN");
+	printAt(SCREEN,&font,50,y+=16,"<1> - 1 PLAYER GAME");
+	printAt(SCREEN,&font,50,y+=16,"<2> - 2 PLAYER GAME");
+	printAt(SCREEN,&font,50,y+=16,"<S> - SOUND TOGGLE");
+	printAt(SCREEN,&font,50,y+=16," F1 - HELP");
 
-	printAt(SCREEN,&font,xPrint(10),170,"THANKS TO:");
-	printAt(SCREEN,&font,30,186,"GEORGIUS KONSTANTOPULOS (TESTING)");
-	printAt(SCREEN,&font,30,196,"JB1ZZEL (TESTING & MOON BACKGROUND)");
-	printAt(SCREEN,&font,30,206,"JOHN ENGDAHL (TESTING)");
-	printAt(SCREEN,&font,30,216,"SILVERIO M RS, JOBDONE");
-	printAt(SCREEN,&font,30,226,"   & STEPHEN USHER (TESTING)");
+	printAt(SCREEN,&font,xPrint(10),y+=20,"THANKS TO:");
+	printAt(SCREEN,&font,30,y+=15,"GEORGIUS KONSTANTOPULOS, JB1ZZEL");
+	printAt(SCREEN,&font,30,y+=14,"JOHN ENGDAHL, SILVERIO M RS,");
+	printAt(SCREEN,&font,30,y+=14,"ALVAROALEA, JB, SPKR/SMFS,");
+	printAt(SCREEN,&font,30,y+=14,"STEPHEN USHER, DEREK2210, XORA,");
+	printAt(SCREEN,&font,30,y+=14,"JOBDONE,STEPHEN USHER,");
+	printAt(SCREEN,&font,30,y+=14,"AND MANY OTHERS!");
+
+	while(1);
+
 }
 
 int keysleep(unsigned int frames)
@@ -295,15 +265,12 @@ void handleKeys(unsigned int frames)
 	*/
 }
 
-//////////////////////////
-// HandleInvaderBullets //
-//////////////////////////
-
-unsigned int reload;
 
 /////////////////
 // invaderFire //
 /////////////////               
+
+unsigned int reload;
 
 void setInvaderReload()         
 {                            
@@ -313,6 +280,10 @@ void setInvaderReload()
         else if(currentPlayer->score<=3000) reload=getFrames()+8;
         else reload=getFrames()+7;
 }
+
+//////////////////////////
+// HandleInvaderBullets //
+//////////////////////////
 
 int handleInvaderBullets(unsigned int frames)
 {
@@ -442,8 +413,9 @@ int handlePlayerBullet(unsigned int frames)
 
 		if(player_bullet.y<=64)	// Reached the top
        	       	{
-			if((ufo.active)&&(ufo.x<=player_bullet.x)
-					&&(ufo.x+16>=player_bullet.x))
+			if((ufo.active)
+				&&(ufo.x<=player_bullet.x)
+				&&(ufo.x+16>=player_bullet.x))
 			{
 				player_bullet.active=0;
 
@@ -665,7 +637,7 @@ int bounceInvaders()
                         lowest=max(lowest,currentPlayer->sprites[i].y);
 
 	// Do we need to wipe the base?
-        if(lowest+16>=195) fill(SCREEN,lowest+8,lowest+16,0);
+        if(lowest+16>=195) copyScreen(SCREEN,moon,lowest+8,lowest+16);
 
         currentPlayer->direction=-currentPlayer->direction; 
                 
