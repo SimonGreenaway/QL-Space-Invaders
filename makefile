@@ -25,7 +25,7 @@ QL-sprites/libsprite.a:
 	make -C QL-sprites
 
 clean:
-	rm -f screen.o interrupt.o invaders.o libsprite.a spritePlot.o system_variables.o image.o utils.o
+	rm -f screen.o interrupt.o invaders.o libsprite.a spritePlot.o system_variables.o image.o utils.o .bash_history
 	make -C QL-sprites clean
 
 cleaner:	clean

@@ -10,13 +10,13 @@
 #include "invaders.h"
 
 #undef PROFILE
-#define FPS
+#undef FPS
 
 #ifdef PROFILE
 #undef FPS
 #endif
 
-#define IMMORTAL
+#undef IMMORTAL
 
 library lib,font;	// Image libraries
 
@@ -47,7 +47,7 @@ unsigned char bulletTypes[3];	// Invader sprites
 unsigned maxBulletCount=1,bulletCount=0,shotCount=0;
 
 sprite player,ufo,player_bullet;	// Other sprites
-unsigned int playerVisible;
+unsigned int playerVisible,playerBulletExplosionTimer;
 
 unsigned int highScore=0;			// Player scores
 const int invaderScores[5]={30,20,20,10,10};
@@ -379,144 +379,156 @@ int handleInvaderBullets(unsigned int frames)
 
 int handlePlayerBullet(unsigned int frames)
 {
-        if((player_bullet.active)&&(player_bullet.timer.value<frames))
-        {
-		unsigned int i,hit=0;
-
-		player_bullet.draw=0;
-		spriteClear(SCREEN,moon,&player_bullet);
-		player_bullet.draw=1;
-
-		// Hit detection...
-
-		for(i=0;i<8;i++) // The loop limit defines player bullet speed
+        if(player_bullet.active)
+	{
+		if(playerBulletExplosionTimer>0)
 		{
-			unsigned short pk;
-
-			player_bullet.y--;
-
-			pk=peek(SCREEN,player_bullet.y+2,player_bullet.x+3);
-
-			// We need to only see white (invaders) and green (shield)
-			if(((pk&0x80C0)==0x80C0) // White bit 3
-			 ||((pk&0x2030)==0x2030) // White bit 2
-			 ||((pk&0x080C)==0x080C)   // White bit 1
-			 ||((pk&0x0203)==0x0203)   // White bit 0
-       		         ||(pk&0xAA00))          // Anything green?
+			if(frames>playerBulletExplosionTimer)
 			{
-				hit=player_bullet.y;
-				break;
-			}
-		}
-
-		player_bullet.timer.value=frames+player_bullet.timer.delta;
-
-		if(player_bullet.y<=64)	// Reached the top
-       	       	{
-			if((ufo.active)
-				&&(ufo.x<=player_bullet.x)
-				&&(ufo.x+16>=player_bullet.x))
-			{
+				spriteClear(SCREEN,moon,&player_bullet);
+				player_bullet.currentImage=0;
+				playerBulletExplosionTimer=0;
 				player_bullet.active=0;
-
-				// Explosion!
-				ufo.draw=0; ufo.mask=1;
-				spritePlot(SCREEN,&ufo);
-				ufo.draw=1;
-				ufo.currentImage=1;
-				spritePlot(SCREEN,&ufo);
-
-				currentPlayer->ufoExplosionTimer=frames+25;
-
-				currentPlayer->score+=ufoScores[ufoScorePointer]*10;
-				printScores();
-
-				ufoScorePointer=(ufoScorePointer+1)&15;
-
-				return 0;
 			}
-
-			// Explosion!!!
-	
-			// BODGE - need explosion
-			//player_bullet.currentImage++;
-			//spritePlot(SCREEN,&player_bullet);
-			//player_bullet.currentImage--;
-
-			player_bullet.active=0;
-
-			return 0;
 		}
+		else if(player_bullet.timer.value<frames)
+	        {
+			unsigned int i,hit=0;
 
-		// Due to the moonscape, we need to do this:
+			player_bullet.draw=0;
+			spriteClear(SCREEN,moon,&player_bullet);
+			player_bullet.draw=1;
 
-		if(hit)
-		{
-			unsigned int i;
+			// Hit detection...
 
-			// Invader hit?
-
-			player_bullet.x+=3;
-
-			for(i=0;i<SPRITES;i++)
+			for(i=0;i<8;i++) // The loop limit defines player bullet speed
 			{
-				if(currentPlayer->sprites[i].active)
+				unsigned short pk;
+				char z[120];
+				unsigned short *a;
+
+				player_bullet.y--;
+
+				pk=peek(SCREEN,player_bullet.y+2,player_bullet.x+3);
+
+				// We need to only see white (invaders) and green (shield)
+				if(((pk&0x80C0)==0x80C0) // White bit 3
+				 ||((pk&0x2030)==0x2030) // White bit 2
+				 ||((pk&0x080C)==0x080C)   // White bit 1
+				 ||((pk&0x0203)==0x0203)   // White bit 0
+	       		         ||(pk&0xAA00))          // Anything green?
 				{
-					sprite *s=&currentPlayer->sprites[i];
-
-					//box(SCREEN,s->x-1,s->y,s->x+10,s->y+8,7);	
-					if((s->x-1<=player_bullet.x)
-					 &&(s->x+10>=player_bullet.x)
-				  	 &&(s->y<=player_bullet.y)
-					 &&(s->y+8>=player_bullet.y))
-					{
-						currentPlayer->newDelta=(50*currentPlayer->invaderCount)/SPRITES;
-
-						if(currentPlayer->newDelta<s->timer.delta)
-						{
-							unsigned int j;
-
-							for(j=0;j<SPRITES;j++) currentPlayer->sprites[j].timer.delta=currentPlayer->newDelta;
-						}
-
-						// Set up explosion at the invader's locations
-
-						spriteClear(SCREEN,moon,s);
-						s->currentImage=2;
-						spritePlot(SCREEN,s);
-
-						currentPlayer->invaderExplosion=i;
-						currentPlayer->invaderExplosionTimer=frames+10;
-						currentPlayer->ufoExplosionTimer=0;
-
-						player_bullet.active=0;
-
-						currentPlayer->score+=invaderScores[i/SPRITESX];
-						printScores();
-			
-						return --currentPlayer->invaderCount==0;	// Can only hit one thing!
-					}
+					hit=player_bullet.y;
+					break;
 				}
 			}
+	
+			player_bullet.timer.value=frames+player_bullet.timer.delta;
+	
+			if(player_bullet.y<=64)	// Reached the top
+	       	       	{
+				if((ufo.active)
+					&&(ufo.x<=player_bullet.x)
+					&&(ufo.x+16>=player_bullet.x))
+				{
+					player_bullet.active=0;
+	
+					// Explosion!
+					ufo.draw=0; ufo.mask=1;
+					spritePlot(SCREEN,&ufo);
+					ufo.draw=1;
+					ufo.currentImage=1;
+					spritePlot(SCREEN,&ufo);
+	
+					currentPlayer->ufoExplosionTimer=frames+25;
+	
+					currentPlayer->score+=ufoScores[ufoScorePointer]*10;
+					printScores();
+	
+					ufoScorePointer=(ufoScorePointer+1)&15;
+	
+					return 0;
+				}
+	
+				// Explosion!!!
+		
+				player_bullet.currentImage++;
+				playerBulletExplosionTimer=frames+3;
+				spritePlot(SCREEN,&player_bullet);
+	
+				return 0;
+			}
+	
+			// Due to the moonscape, we need to do this:
+	
+			if(hit)
+			{
+				unsigned int i;
+	
+				// Invader hit?
+	
+				player_bullet.x+=3;
+	
+				for(i=0;i<SPRITES;i++)
+				{
+					if(currentPlayer->sprites[i].active)
+					{
+						sprite *s=&currentPlayer->sprites[i];
 
-			// Base?
-
-			player_bullet.currentImage=4;
-			player_bullet.y-=1;
-			player_bullet.mask=1;
-			spriteClear(SCREEN,moon,&player_bullet);
-			player_bullet.mask=0;
-			player_bullet.currentImage=0;
-
-			player_bullet.active=0;
-
-			return 0;
+						if((s->x-1<=player_bullet.x)
+						 &&(s->x+12>=player_bullet.x)
+					  	 &&(s->y<=player_bullet.y)
+						 &&(s->y+8>=player_bullet.y))
+						{
+							currentPlayer->newDelta=(50*currentPlayer->invaderCount)/SPRITES;
+	
+							if(currentPlayer->newDelta<s->timer.delta)
+							{
+								unsigned int j;
+	
+								for(j=0;j<SPRITES;j++) currentPlayer->sprites[j].timer.delta=currentPlayer->newDelta;
+							}
+	
+							// Set up explosion at the invader's locations
+	
+							spriteClear(SCREEN,moon,s);
+							s->currentImage=2;
+							spritePlot(SCREEN,s);
+	
+							currentPlayer->invaderExplosion=i;
+							currentPlayer->invaderExplosionTimer=frames+10;
+							currentPlayer->ufoExplosionTimer=0;
+	
+							player_bullet.active=0;
+	
+							currentPlayer->score+=invaderScores[i/SPRITESX];
+							printScores();
+				
+							return --currentPlayer->invaderCount==0;	// Can only hit one thing!
+						}
+					}
+				}
+	
+				// Base?
+	
+				player_bullet.currentImage=4;
+				player_bullet.y-=1;
+				player_bullet.mask=1;
+				spriteClear(SCREEN,moon,&player_bullet);
+				player_bullet.mask=0;
+				player_bullet.currentImage=0;
+	
+				player_bullet.active=0;
+	
+				return 0;
+			}
 		}
-	}
+	
 
-	if(player_bullet.active)
-	{
-		spritePlot(SCREEN,&player_bullet);	// Draw bullet if still active
+		if(player_bullet.active)
+		{
+			spritePlot(SCREEN,&player_bullet);	// Draw bullet if still active
+		}
 	}
 
 	return 0;	// Wave still ongoing
@@ -1149,7 +1161,7 @@ int gameLoop()
 		if(fpsTimer<getFrames())
 		{
 			#ifdef IMMORTAL
-			sprintf(s,"%d IMMORTAL MODE!",fpsCounter*500/((getFrames()-fpsStart)));
+			sprintf(s,"%d IMMORTAL MODE! %d",fpsCounter*500/((getFrames()-fpsStart)),player.x);
 			#else
 			sprintf(s,"%d",fpsCounter*500/((getFrames()-fpsStart)));
 			#endif
@@ -1306,6 +1318,7 @@ void mainLoop(int convert)
 			// Start the player a few seconds into the game
 			player.timer.value=frames+100;
 			playerVisible=0;
+			playerBulletExplosionTimer=0;
 
 			// Set invader timers
 
