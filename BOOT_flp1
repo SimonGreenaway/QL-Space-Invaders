@@ -9,3 +9,4 @@
 80 EXEC_W flp1_invaders,#8;"-d flp1_ -rom "&v$
 90 END IF
 120 CLOSE #8
+130 NEW

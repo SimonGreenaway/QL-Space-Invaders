@@ -12,7 +12,12 @@ Keys:
 	'c'	Insert a coin
 	'1'	1 player game (if coin added)
 	'2'	2 player game (if enough coins)
+	'ESC'	Quit to QDOS.
+
+In game:
 
 	cursor left	move left
 	cursor right	move right
 	space		fire!
+	'S'		Toggle sound on/off
+	'ESC'		Quit to QDOS.

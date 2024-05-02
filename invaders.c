@@ -61,6 +61,12 @@ unsigned int fpsCounter,fpsTimer,fpsStart;
 
 screen moon;
 
+void quit()
+{
+	framesClose();
+	exit(0);
+}
+
 void scorePrint(char *c,unsigned int z)
 {
         int a;
@@ -103,6 +109,7 @@ int doHelp()
 	printAt(SCREEN,&font,50,y+=16,"<1> - 1 PLAYER GAME");
 	printAt(SCREEN,&font,50,y+=16,"<2> - 2 PLAYER GAME");
 	printAt(SCREEN,&font,50,y+=16,"<S> - SOUND TOGGLE");
+	printAt(SCREEN,&font,50,y+=16,"<ESC> - QUIT GAME");
 	printAt(SCREEN,&font,50,y+=16," F1 - HELP");
 
 	printAt(SCREEN,&font,xPrint(10),y+=20,"THANKS TO:");
@@ -123,6 +130,8 @@ int keysleep(unsigned int frames)
 
 	while(getFrames()<target)
 	{
+	        if(keyrow(1)&8) quit();
+
 		if(keyrow(2)&8) // Coin key 'C' ?
 		{
 			credits++; 
@@ -156,6 +165,8 @@ int slowPrintAt(unsigned int x,unsigned y,char *s)
 		unsigned int frames=getFrames();
 
 		// Coin key 'C' ?
+
+		if(keyrow(1)&8) quit();
 
 		if(keyrow(2)&8)
 		{
@@ -253,6 +264,10 @@ void handleKeys(unsigned int frames)
 			while(keyrow(3));
 		}
 	}
+
+	if(keyrow(1)&8) quit();
+
+	//for(key=0;key<10;key++) if(keyrow(key)) printf("%d %d\n",key,keyrow(key));
 
 	/* Pause
 	if(keyrow(4)&32)
@@ -668,7 +683,7 @@ int bounceInvaders()
 
 int handleInvaders(unsigned int frames)
 {
-	unsigned int i,lastMoved=0;
+	unsigned lastMoved=0,i;
 
 	for(i=0;i<SPRITES;i++)
         {
@@ -680,10 +695,9 @@ int handleInvaders(unsigned int frames)
 			{
 				if(currentPlayer->invaderExplosionTimer<frames)
 				{
-					printf("%d %d\n",i,currentPlayer->invaderExplosion);
 					spriteClear(SCREEN,moon,s);
-					putchar('b');
 					s->active=0;
+					s->currentImage=0;
 					currentPlayer->invaderExplosion=-1;
 				}
 			}
@@ -695,11 +709,10 @@ int handleInvaders(unsigned int frames)
 				s->x+=s->dx;				// Move invader
 			        s->currentImage=1-s->currentImage; 	// Animate
 				s->timer.value+=s->timer.delta;		// Set up timer for next movement 
-				spritePlot(SCREEN,s);	// Draw invader on BG
+				spritePlot(SCREEN,s);	// Draw invader
 
-				lastMoved=1; // We might be the last invader to move
+				lastMoved=i==0; // We might be the last invader to move
 			}
-			else lastMoved=0; // More invaders to move this movement
 		}
 	}
 
@@ -905,7 +918,7 @@ void setupInvaders(unsigned int frames,unsigned int show)
                 s->dy=0;
 
                 s->timer.value=frames+(SPRITES-i);
-                s->timer.delta=50;
+                s->timer.delta=SPRITES;
 
 		s->mask=0;
 		s->active=1;
