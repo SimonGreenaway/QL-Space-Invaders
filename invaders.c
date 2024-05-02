@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -31,7 +30,7 @@ struct player
 {
 	sprite sprites[SPRITES];
 	unsigned int newDelta,invaderCount,shotCount,score,lives,wave;
-	int direction,invaderExplosion,invaderExplosionTimer,ufoExplosionTimer;
+	int invaderExplosion,invaderExplosionTimer,ufoExplosionTimer;
 
 	unsigned char *bases;
 };
@@ -43,7 +42,7 @@ unsigned int credits=0,currentPlayerId,gameMode=0;
 unsigned int sound=1;
 
 sprite bullets[3];
-unsigned char bulletTypes[3];	// Invader sprites
+unsigned char bulletTypes[3];	// Invader prites
 unsigned maxBulletCount=1,bulletCount=0,shotCount=0;
 
 sprite player,ufo,player_bullet;	// Other sprites
@@ -91,7 +90,7 @@ void printScores()
 	printAt(SCREEN,&font,xPrint(strlen(s)),16+32,s);	
 }
 
-void doHelp()
+int doHelp()
 {
 	unsigned int y=5;
 
@@ -109,12 +108,12 @@ void doHelp()
 	printAt(SCREEN,&font,xPrint(10),y+=20,"THANKS TO:");
 	printAt(SCREEN,&font,30,y+=15,"GEORGIUS KONSTANTOPULOS, JB1ZZEL");
 	printAt(SCREEN,&font,30,y+=14,"JOHN ENGDAHL, SILVERIO M RS,");
-	printAt(SCREEN,&font,30,y+=14,"ALVAROALEA, JB, SPKR/SMFS,");
+	printAt(SCREEN,&font,30,y+=14,"ALVARO ALEA, JB, SPKR/SMFS,");
 	printAt(SCREEN,&font,30,y+=14,"STEPHEN USHER, DEREK2210, XORA,");
 	printAt(SCREEN,&font,30,y+=14,"JOBDONE,STEPHEN USHER,");
 	printAt(SCREEN,&font,30,y+=14,"AND MANY OTHERS!");
 
-	while(1);
+	return keySleep(3);
 
 }
 
@@ -538,8 +537,11 @@ int handlePlayerBullet(unsigned int frames)
 // invaderFire //
 /////////////////
 
+int bulletImages[3][5]={{19,20,21,22,18},{23,24,23,24,18},{16,9,17,13,18}};
+
 void invaderFire(unsigned int frames)
 {
+
 	if((reload<frames)&&(bulletCount<maxBulletCount))
 	{
 		unsigned int firingInvader,bullet;
@@ -554,24 +556,9 @@ void invaderFire(unsigned int frames)
 
 				bulletTypes[bullet]=rand()/(RAND_MAX/3);
 
-				switch(bulletTypes[bullet])
-				{
-					case 0:  bullets[bullet].image[0]=&lib.images[19];
-						 bullets[bullet].image[1]=&lib.images[20];
-						 bullets[bullet].image[2]=&lib.images[21];
-						 bullets[bullet].image[3]=&lib.images[22];
-						 break;
-					case 1:  bullets[bullet].image[0]=&lib.images[23];
-						 bullets[bullet].image[1]=&lib.images[24];
-						 bullets[bullet].image[2]=&lib.images[23];
-						 bullets[bullet].image[3]=&lib.images[25];
-						 break;
-					default: bullets[bullet].image[0]=&lib.images[16];
-						 bullets[bullet].image[1]=&lib.images[9];
-						 bullets[bullet].image[2]=&lib.images[17];
-						 bullets[bullet].image[3]=&lib.images[13];
-						 break;
-				}
+				spriteClearImages(&bullets[bullet]);	
+			
+				for(k=0;k<5;k++) spriteAddImage(&bullets[bullet],&lib,bulletImages[bulletTypes[bullet]][k]);
 
 				bulletCount++;
 				setInvaderReload();
@@ -651,8 +638,6 @@ int bounceInvaders()
 	// Do we need to wipe the base?
         if(lowest+16>=195) copyScreen(SCREEN,moon,lowest+8,lowest+16);
 
-        currentPlayer->direction=-currentPlayer->direction; 
-                
         for(i=0;i<SPRITES;i++)
         {
                 sprite *s=&currentPlayer->sprites[i];
@@ -661,7 +646,7 @@ int bounceInvaders()
                 {
                         spriteClear(SCREEN,moon,s);
 
-                        currentPlayer->sprites[i].dx=currentPlayer->direction;
+                        currentPlayer->sprites[i].dx=-currentPlayer->sprites[i].dx;
                         s->y+=8;        // Move invader down
 
                         spritePlot(SCREEN,s);
@@ -695,7 +680,9 @@ int handleInvaders(unsigned int frames)
 			{
 				if(currentPlayer->invaderExplosionTimer<frames)
 				{
+					printf("%d %d\n",i,currentPlayer->invaderExplosion);
 					spriteClear(SCREEN,moon,s);
+					putchar('b');
 					s->active=0;
 					currentPlayer->invaderExplosion=-1;
 				}
@@ -842,9 +829,9 @@ void setupBG(unsigned int bases,unsigned int life,unsigned int line)
 	        {
         	        sprite s;
 
-			s.mask=1; s.draw=1;
-	                s.image[0]=&lib.images[26];
-	                s.currentImage=0;
+			spriteSetup(&s,"temp");
+
+	                spriteAddImage(&s,&lib,26);
 	                s.x=XMIN+i*48+32; s.y=195;
 	
 	                spritePlot(SCREEN,&s);
@@ -905,15 +892,16 @@ void setupInvaders(unsigned int frames,unsigned int show)
 
 		int x=(i%11),y=i/11,ss=y==0?2:(y<3?4:0);
 
-                s->image[0]=&lib.images[ss];
-                s->image[1]=&lib.images[ss+1];
-		s->image[2]=&lib.images[11];
+		spriteClearImages(s);
+		spriteAddImage(s,&lib,ss);
+		spriteAddImage(s,&lib,ss+1);
+		spriteAddImage(s,&lib,11);
                 s->currentImage=0;
 
                 s->x=45+(x<<4)+(y==0?2:0)+1;
                 s->y=(y<<4)+80+(currentPlayer->wave<<4);
 
-                s->dx=1;
+                s->dx=2;
                 s->dy=0;
 
                 s->timer.value=frames+(SPRITES-i);
@@ -931,6 +919,14 @@ void setupInvaders(unsigned int frames,unsigned int show)
 	currentPlayer->invaderCount=SPRITES;
 	currentPlayer->newDelta=50;
 	currentPlayer->invaderExplosion=-1;
+	currentPlayer->ufoExplosionTimer=0;
+	playerBulletExplosionTimer=0;
+
+	bulletCount=0;
+	for(i=0;i<3;i++)
+	{
+		bullets[i].active=0;
+	}
 }
 
 //////////////////
@@ -1011,7 +1007,7 @@ void introScreens()
 
 		cls(SCREEN);
 
-		doHelp();
+		if(doHelp()) return;
 
 		if(keysleep(350)) return;
 
@@ -1022,10 +1018,31 @@ void introScreens()
 
 void initiate(unsigned int convert)
 {
+	unsigned int i,j;
 	char name[80];
 	unsigned int timeout=getFrames()+150,loaded;
 
 	init();
+
+	spriteSetup(&ufo,"UFO");
+	spriteSetup(&player_bullet,"player bullet");
+
+	spriteSetup(&bullets[0],"bullet 0");
+	spriteSetup(&bullets[1],"bullet 1");
+	spriteSetup(&bullets[2],"bullet 2");
+
+	spriteSetup(&player,"player");
+
+	for(i=0;i<2;i++)
+	{
+
+		for(j=0;j<SPRITES;j++)
+		{
+			char *z=(char *)myMalloc(16);
+			sprintf(z,"sprite %d/%d",i,j);
+			spriteSetup(&players[i].sprites[j],z);
+		}
+	}
 
 	loaded=loadScreen((unsigned char *)SCREEN,drive,"logo_scr");
 
@@ -1188,11 +1205,12 @@ void setupGame(unsigned int frames)
 		bullets[i].x=0; bullets[i].y=-1;
 		bullets[i].dx=0; bullets[i].dy=0;
 
-		bullets[i].image[0]=&lib.images[16];
-		bullets[i].image[1]=&lib.images[9];
-		bullets[i].image[2]=&lib.images[17];
-		bullets[i].image[3]=&lib.images[13];
-		bullets[i].image[4]=&lib.images[18];
+		spriteClearImages(&bullets[i]);
+		spriteAddImage(&bullets[i],&lib,16);
+		spriteAddImage(&bullets[i],&lib,9);
+		spriteAddImage(&bullets[i],&lib,17);
+		spriteAddImage(&bullets[i],&lib,13);
+		spriteAddImage(&bullets[i],&lib,18);
 
 		bullets[i].currentImage=0;
 		bullets[i].mask=0;
@@ -1203,12 +1221,13 @@ void setupGame(unsigned int frames)
 	players[0].score=players[1].score=0;
 	players[0].lives=players[1].lives=6;
 	players[0].wave=players[1].wave=0;
-	players[0].direction=players[1].direction=1;
 
-	player.image[0]=&lib.images[8];
-	player.image[1]=&lib.images[10];
-	player.image[2]=&lib.images[14];
-	player.image[3]=&lib.images[31];
+	spriteClearImages(&player);
+	spriteAddImage(&player,&lib,8);
+	spriteAddImage(&player,&lib,10);
+	spriteAddImage(&player,&lib,14);
+	spriteAddImage(&player,&lib,31);
+
 	player.currentImage=0;
 	player.mask=1;
 	player.draw=1;
@@ -1216,11 +1235,12 @@ void setupGame(unsigned int frames)
 	player.x=0;
 	player.y=256-player.image[0]->y-24;
 
-	player_bullet.image[0]=&lib.images[12];
-	player_bullet.image[1]=&lib.images[15];
-	player_bullet.image[2]=&lib.images[11];
-	player_bullet.image[3]=&lib.images[27];
-        player_bullet.image[4]=&lib.images[32];
+	spriteClearImages(&player_bullet);
+	spriteAddImage(&player_bullet,&lib,12);
+	spriteAddImage(&player_bullet,&lib,15);
+	spriteAddImage(&player_bullet,&lib,11);
+	spriteAddImage(&player_bullet,&lib,27);
+	spriteAddImage(&player_bullet,&lib,32);
 	player_bullet.currentImage=0;
 	player_bullet.timer.value=0;
 	player_bullet.timer.delta=1;
@@ -1229,8 +1249,10 @@ void setupGame(unsigned int frames)
 	player_bullet.active=0;
 	shotCount=0;
 
-	ufo.image[0]=&lib.images[7];
-	ufo.image[1]=&lib.images[27];
+	spriteClearImages(&ufo);
+	spriteAddImage(&ufo,&lib,7);
+	spriteAddImage(&ufo,&lib,27);
+
 	ufo.currentImage=0;
 	ufo.mask=0;
 	ufo.draw=1;
@@ -1319,6 +1341,15 @@ void mainLoop(int convert)
 			player.timer.value=frames+100;
 			playerVisible=0;
 			playerBulletExplosionTimer=0;
+			currentPlayer->invaderCount=SPRITES;
+			currentPlayer->newDelta=50;
+			currentPlayer->invaderExplosion=-1;
+			currentPlayer->ufoExplosionTimer=0;
+			playerBulletExplosionTimer=0;
+			ufo.active=0;
+			
+			bulletCount=0;
+			for(i=0;i<3;i++) bullets[i].active=0;
 
 			// Set invader timers
 
