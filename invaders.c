@@ -683,7 +683,8 @@ int bounceInvaders()
 
 int handleInvaders(unsigned int frames)
 {
-	unsigned lastMoved=0,i;
+	unsigned i;
+	int lastMoved=-1;
 
 	for(i=0;i<SPRITES;i++)
         {
@@ -707,16 +708,18 @@ int handleInvaders(unsigned int frames)
 				spriteClear(SCREEN,moon,s);
 
 				s->x+=s->dx;				// Move invader
+				s->moves++;
 			        s->currentImage=1-s->currentImage; 	// Animate
 				s->timer.value+=s->timer.delta;		// Set up timer for next movement 
 				spritePlot(SCREEN,s);	// Draw invader
-
-				lastMoved=i==0; // We might be the last invader to move
 			}
+
+			if(lastMoved==-1) lastMoved=s->moves;
+			else if(lastMoved!=s->moves) lastMoved=-2;
 		}
 	}
 
-	if(lastMoved) // Have all the alive invaders moved?
+	if(lastMoved!=-2) // Have all the alive invaders moved?
 	{
 		for(i=0;i<SPRITES;i++)
 		{
