@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -7,6 +8,7 @@
 
 #include "QL-sprites/image.h"
 #include "invaders.h"
+#include "utils.h"
 
 #undef PROFILE
 #undef FPS
@@ -31,7 +33,7 @@ struct player
 	sprite sprites[SPRITES];
 	unsigned int newDelta,invaderCount,shotCount,score,lives,wave;
 	int nextInvader;
-	int invaderExplosion,invaderExplosionTimer,ufoExplosionTimer;
+	int ufoExplosionTimer;
 
 	unsigned char *bases;
 };
@@ -81,9 +83,41 @@ void scorePrint(char *c,unsigned int z)
         }
 }
 
+int keysleep(unsigned int frames)
+{
+	unsigned int target=getFrames()+frames;
+
+	while(getFrames()<target)
+	{
+	        if(keyrow(1)&8) quit();
+
+		if(keyrow(2)&8) // Coin key 'C' ?
+		{
+			credits++; 
+			while(keyrow(2)&8) ;
+
+			return 3;
+		}
+
+		if((keyrow(4)&8)&&(credits>0)) // Player 1 start '1' ?
+		{
+			gameMode=1;	
+			return 1; // Player 1 start?
+		}
+
+		if((keyrow(6)&2)&&(credits>1)) // Player 2 start '2' ?
+		{
+			gameMode=2;
+			return 2;  // Player 2 start?
+		}
+	}
+
+	return 0;
+}
+
 void printScores()
 {
-	char s[80],*sp=s;
+	char s[80];
 	char p1[5],hs[5],p2[5];
 
 	p1[4]=hs[4]=p2[4]='\0';
@@ -121,46 +155,11 @@ int doHelp()
 	printAt(SCREEN,&font,30,y+=14,"JOBDONE,STEPHEN USHER,");
 	printAt(SCREEN,&font,30,y+=14,"AND MANY OTHERS!");
 
-	return keySleep(3);
-
-}
-
-int keysleep(unsigned int frames)
-{
-	unsigned int target=getFrames()+frames;
-
-	while(getFrames()<target)
-	{
-	        if(keyrow(1)&8) quit();
-
-		if(keyrow(2)&8) // Coin key 'C' ?
-		{
-			credits++; 
-			while(keyrow(2)&8) ;
-
-			return 3;
-		}
-
-		if((keyrow(4)&8)&&(credits>0)) // Player 1 start '1' ?
-		{
-			gameMode=1;	
-			return 1; // Player 1 start?
-		}
-
-		if((keyrow(6)&2)&&(credits>1)) // Player 2 start '2' ?
-		{
-			gameMode=2;
-			return 2;  // Player 2 start?
-		}
-	}
-
-	return 0;
+	return keysleep(3);
 }
 
 int slowPrintAt(unsigned int x,unsigned y,char *s)
 {
-	unsigned key;
-
 	while(*s!=0)
 	{
 		unsigned int frames=getFrames();
@@ -234,13 +233,13 @@ void handleKeys(unsigned int frames)
 		{
         	        if((key&2)&&(player.x>XMIN))
 			{
-				spriteClear(SCREEN,moon,&player);
+				spriteClear(SCREEN,moon,&player,'b');
 				player.x--;	// Move left
 				spritePlot(SCREEN,&player);
 			}
                 	else if((key&16)&&(player.x+(player.image[0]->x<<2)<XMAX))
 			{
-				spriteClear(SCREEN,moon,&player);
+				spriteClear(SCREEN,moon,&player,'c');
 				player.x++;	// Move right
 				spritePlot(SCREEN,&player);
 			}
@@ -281,6 +280,8 @@ void handleKeys(unsigned int frames)
 }
 
 
+sprite *exploding;
+
 /////////////////
 // invaderFire //
 /////////////////               
@@ -308,7 +309,7 @@ int handleInvaderBullets(unsigned int frames)
 	{
 	        if((bullets[i].active)&&(bullets[i].timer.value<=frames))	// Fired?
 	        {
-			spriteClear(SCREEN,moon,&bullets[i]);	// Draw bullet if still active
+			spriteClear(SCREEN,moon,&bullets[i],'d');	// Draw bullet if still active
 
 			bullets[i].timer.value=frames+bullets[i].timer.delta;
 	       	        bullets[i].y+=(currentPlayer->invaderCount<=8?5:4);
@@ -322,7 +323,7 @@ int handleInvaderBullets(unsigned int frames)
 				setInvaderReload();
 			
 				#ifndef IMMORTAL	 
-				if((bullets[i].x>=player.x)&&(bullets[i].x<player.x+16))
+				if((bullets[i].x>=player.x)&&(bullets[i].x<player.x+14))
 				{
 					// Player hit!
 
@@ -366,7 +367,7 @@ int handleInvaderBullets(unsigned int frames)
 					bullets[i].mask=1;
 					bullets[i].x-=2;
 	
-					spriteClear(SCREEN,moon,&bullets[i]);
+					spriteClear(SCREEN,moon,&bullets[i],'e');
 
 					bullets[i].currentImage=0;
 					bullets[i].mask=0;
@@ -400,7 +401,7 @@ int handlePlayerBullet(unsigned int frames)
 		{
 			if(frames>playerBulletExplosionTimer)
 			{
-				spriteClear(SCREEN,moon,&player_bullet);
+				spriteClear(SCREEN,moon,&player_bullet,'f');
 				player_bullet.currentImage=0;
 				playerBulletExplosionTimer=0;
 				player_bullet.active=0;
@@ -411,7 +412,7 @@ int handlePlayerBullet(unsigned int frames)
 			unsigned int i,hit=0;
 
 			player_bullet.draw=0;
-			spriteClear(SCREEN,moon,&player_bullet);
+			spriteClear(SCREEN,moon,&player_bullet,'g');
 			player_bullet.draw=1;
 
 			// Hit detection...
@@ -419,8 +420,6 @@ int handlePlayerBullet(unsigned int frames)
 			for(i=0;i<8;i++) // The loop limit defines player bullet speed
 			{
 				unsigned short pk;
-				char z[120];
-				unsigned short *a;
 
 				player_bullet.y--;
 
@@ -506,12 +505,16 @@ int handlePlayerBullet(unsigned int frames)
 	
 							// Set up explosion at the invader's locations
 	
-							spriteClear(SCREEN,moon,s);
+							spriteClear(SCREEN,moon,s,'h');
 							s->currentImage=2;
 							spritePlot(SCREEN,s);
+							s->currentImage=0;
 	
-							currentPlayer->invaderExplosion=i;
-							currentPlayer->invaderExplosionTimer=frames+10;
+							exploding=s;
+							exploding->timer.value=frames+10;
+		
+							s->active=0;
+
 							currentPlayer->ufoExplosionTimer=0;
 	
 							player_bullet.active=0;
@@ -529,7 +532,7 @@ int handlePlayerBullet(unsigned int frames)
 				player_bullet.currentImage=4;
 				player_bullet.y-=1;
 				player_bullet.mask=1;
-				spriteClear(SCREEN,moon,&player_bullet);
+				spriteClear(SCREEN,moon,&player_bullet,'i');
 				player_bullet.mask=0;
 				player_bullet.currentImage=0;
 	
@@ -560,7 +563,7 @@ void invaderFire(unsigned int frames)
 
 	if((reload<frames)&&(bulletCount<maxBulletCount))
 	{
-		unsigned int firingInvader,bullet;
+		unsigned int firingInvader=0,bullet;
 
 		for(bullet=0;bullet<maxBulletCount;bullet++) // Find first free bullet
 		{
@@ -660,7 +663,7 @@ int bounceInvaders()
 
                 if(s->active)     // Is sprite alive?
                 {
-                        spriteClear(SCREEN,moon,s);
+                        spriteClear(SCREEN,moon,s,'k');
 
                         currentPlayer->sprites[i].dx=-currentPlayer->sprites[i].dx;
                         s->y+=8;        // Move invader down
@@ -682,60 +685,64 @@ int bounceInvaders()
 //          0 - still going! // 
 ///////////////////////////////
 
+void checkForBounce()
+{
+	unsigned int i;
+
+	for(i=0;i<SPRITES;i++)
+	{
+		sprite *s=&currentPlayer->sprites[i];
+
+		if((s->active)&&((s->x+s->dx<XMIN)||(s->x+s->dx>XMAX-17)))
+		{
+			if(bounceInvaders()) break;
+		}
+	}
+}
+
 int handleInvaders(unsigned int frames)
 {
-	unsigned i,bounceCheck=0;
-	int lastMoved=-1;
 	sprite *s;
 
-	do
+	// Check if we have an invader explosion and we need to clear it
+	if((exploding!=NULL)&&(exploding->timer.value<=frames))
+	{
+		exploding->currentImage=2;
+		spriteClear(SCREEN,moon,exploding,'a');
+		exploding->currentImage=0;
+		exploding=NULL;	
+	}
+
+	do // Find the next active invader to draw
 	{
 		s=&currentPlayer->sprites[currentPlayer->nextInvader--];
+
+		// If invader 0 is dead and we reach it we need to check for a bounce
+		// If alive, we need to move it then check later
+		if(!s->active&&(currentPlayer->nextInvader==-1))
+		{
+			checkForBounce();
+			currentPlayer->nextInvader=SPRITES-1;
+		}
 	}
 	while(!s->active);
 
-	if((s->x+s->image[s->currentImage]->x>XMAX)||(s->x<XMIN))
-	{
-		puts("Error: invaders have escaped playfield\n");
-		exit(1);
-	}
+	// Clear old invader from BG
+	spriteClear(SCREEN,moon,s,'l');
 
-	if(currentPlayer->invaderExplosion==i)
-	{
-		if(currentPlayer->invaderExplosionTimer<frames)
-		{
-			spriteClear(SCREEN,moon,s);
-			s->active=0;
-			s->currentImage=0;
-			currentPlayer->invaderExplosion=-1;
-		}
-	}
-	else // if(s->timer.value<=frames)	// Time to move?
-	{
-		// Clear old invader from BG
-		spriteClear(SCREEN,moon,s);
+	// Move, animate and draw invader
 
-		s->x+=s->dx;				// Move invader
-		s->moves++;
-	        s->currentImage=1-s->currentImage; 	// Animate
-		s->timer.value+=s->timer.delta;		// Set up timer for next movement 
-		spritePlot(SCREEN,s);	// Draw invader
+	s->x+=s->dx;				// Move invader
+        s->currentImage=1-s->currentImage; 	// Animate
+	s->timer.value+=s->timer.delta;		// Set up timer for next movement 
+	spritePlot(SCREEN,s);	// Draw invader
 
-                if(currentPlayer->nextInvader==-1)
-                {
-                        for(i=0;i<SPRITES;i++)
-                        {
-                                sprite *s=&currentPlayer->sprites[i];
+        if(currentPlayer->nextInvader==-1) // Invader movement phase complete?
+        {
+		checkForBounce();
 
-                                if((s->active)&&((s->x+s->dx<XMIN)||(s->x+s->dx>XMAX-17)))
-                                {
-                                        if(bounceInvaders()) break;
-                                }
-                        }
-
-                        currentPlayer->nextInvader=SPRITES-1;
-                }
-	}
+                currentPlayer->nextInvader=SPRITES-1;
+        }
 
 	if(frames>=invaderSoundTimer)
 	{
@@ -778,7 +785,7 @@ void handleUFO(unsigned int frames)
 			if(currentPlayer->ufoExplosionTimer<frames)
 			{
 				ufo.draw=0;
-				spriteClear(SCREEN,moon,&ufo);
+				spriteClear(SCREEN,moon,&ufo,'m');
 				ufo.draw=1;
 				ufo.currentImage=0;
 				ufo.active=0;
@@ -906,6 +913,8 @@ void setupInvaders(unsigned int frames,unsigned int show)
 {
 	unsigned int i;
 
+	exploding=NULL;
+
 	for(i=0;i<SPRITES;i++)
         {
 		sprite *s=&currentPlayer->sprites[i];
@@ -939,7 +948,6 @@ void setupInvaders(unsigned int frames,unsigned int show)
 	currentPlayer->invaderCount=SPRITES;
 	currentPlayer->nextInvader=SPRITES-1;
 	currentPlayer->newDelta=50;
-	currentPlayer->invaderExplosion=-1;
 	currentPlayer->ufoExplosionTimer=0;
 	playerBulletExplosionTimer=0;
 
@@ -977,7 +985,6 @@ void setupGame(unsigned int frames);
 void introScreens()
 {
 	unsigned int x=xPrint(0)-56; // Middle of screen
-	unsigned int ks;
 
 	cls(SCREEN);
         //setupGame(getFrames());
@@ -1150,7 +1157,7 @@ long lastTime=0;
 
 int gameLoop()
 {
-	unsigned int frames,lastFrames=0;
+	unsigned int frames=getFrames();
 
 	#ifdef PROFILE
 	unsigned int profileCounts[20],profileCounter=0,profileN;
@@ -1174,6 +1181,8 @@ int gameLoop()
 	reload=getFrames()+5*50;
 
 	waveTime=getFrames();
+
+	exploding=NULL;
 
 	while(1)
 	{
@@ -1345,8 +1354,6 @@ void mainLoop(int convert)
 
 			while(getFrames()<frames)
 			{
-				unsigned flashFrames;
-
 				if(getFrames()&1)
 		                	sprintf(s,"%04d     %04d     %04d",players[0].score,highScore,players[1].score);
 		                else if(currentPlayerId==0) 
@@ -1367,7 +1374,6 @@ void mainLoop(int convert)
 			playerBulletExplosionTimer=0;
 			currentPlayer->invaderCount=SPRITES;
 			currentPlayer->newDelta=50;
-			currentPlayer->invaderExplosion=-1;
 			currentPlayer->ufoExplosionTimer=0;
 			playerBulletExplosionTimer=0;
 			ufo.active=0;
@@ -1452,6 +1458,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	mainLoop(convert);
+	while(1) mainLoop(convert);
 }
 

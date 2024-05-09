@@ -1,14 +1,14 @@
-COPTS=-Os -fomit-frame-pointer -std=gnu9x
+COPTS=-Os -fomit-frame-pointer -std=gnu9x -Wall
 
 invaders:	invaders.o utils.o QL-sprites/libsprite.a
 	rm -f invaders
 	make -C QL-sprites
 	qdos-gcc -o invaders invaders.o utils.o -LQL-sprites -lsprite
 
-invaders.o:	invaders.c invaders.h
+invaders.o:	invaders.c invaders.h utils.h
 		qdos-gcc $(COPTS) -IQL-sprites -o invaders.o -c invaders.c
 
-utils.o:	utils.c invaders.h
+utils.o:	utils.c invaders.h utils.h
 		qdos-gcc $(COPTS) -IQL-sprites -o utils.o -c utils.c
 
 spritePlot.o:	spritePlot.c image.h 

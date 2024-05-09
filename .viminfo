@@ -11,13 +11,29 @@
 # hlsearch on (H) or off (h):
 ~h
 # Last Search Pattern:
-~Msle0~/\<OÂ\>
+~MSle0~/moves
 
 # Command Line History (newest to oldest):
 :wq
-|2,0,1714638113,,"wq"
+|2,0,1715270882,,"wq"
+:q!
+|2,0,1715270873,,"q!"
+:q
+|2,0,1715263072,,"q"
 
 # Search String History (newest to oldest):
+?/moves
+|2,1,1715270879,47,"moves"
+?/spriteCle
+|2,1,1715263524,47,"spriteCle"
+?/exit
+|2,1,1715262819,47,"exit"
+?/Inval
+|2,1,1715258232,47,"Inval"
+?/cleared
+|2,1,1715258088,47,"cleared"
+?/Invalid
+|2,1,1715258025,47,"Invalid"
 ? \<OÂ\>
 |2,1,1714638109,,"\\<OÂ\\>"
 
@@ -28,19 +44,289 @@
 # Debug Line History (newest to oldest):
 
 # Registers:
+""1	LINE	0
+		unsigned int moves;
+|3,1,1,1,1,0,1715270880,"	unsigned int moves;"
+"2	LINE	0
+			return;
+|3,0,2,1,1,0,1715258234,"		return;"
+"3	LINE	0
+			return;
+|3,0,3,1,1,0,1715258227,"		return;"
+"-	CHAR	0
+	 -Wextra
+|3,0,36,0,1,0,1715264800," -Wextra"
 
 # File marks:
-'0  1  8  ~/QL-sprites/makefile
-|4,48,1,8,1714638113,"~/QL-sprites/makefile"
+'0  69  1  ~/QL-sprites/image.h
+|4,48,69,1,1715270882,"~/QL-sprites/image.h"
+'1  545  4  ~/QL-sprites/image.c
+|4,49,545,4,1715270873,"~/QL-sprites/image.c"
+'2  13  0  ~/makefile
+|4,50,13,0,1715264809,"~/makefile"
+'3  1  0  ~/invaders.c
+|4,51,1,0,1715264354,"~/invaders.c"
+'4  1  54  ~/makefile
+|4,52,1,54,1715264340,"~/makefile"
+'5  1  54  ~/makefile
+|4,53,1,54,1715264340,"~/makefile"
+'6  1  46  ~/makefile
+|4,54,1,46,1715264323,"~/makefile"
+'7  1  46  ~/makefile
+|4,55,1,46,1715264323,"~/makefile"
+'8  545  4  ~/QL-sprites/image.c
+|4,56,545,4,1715263598,"~/QL-sprites/image.c"
+'9  756  26  ~/QL-sprites/image.c
+|4,57,756,26,1715263072,"~/QL-sprites/image.c"
 
 # Jumplist (newest first):
--'  1  8  ~/QL-sprites/makefile
-|4,39,1,8,1714638113,"~/QL-sprites/makefile"
+-'  69  1  ~/QL-sprites/image.h
+|4,39,69,1,1715270882,"~/QL-sprites/image.h"
+-'  1  0  ~/QL-sprites/image.h
+|4,39,1,0,1715270879,"~/QL-sprites/image.h"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715270873,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715270873,"~/QL-sprites/image.c"
+-'  13  0  ~/makefile
+|4,39,13,0,1715264809,"~/makefile"
+-'  13  0  ~/makefile
+|4,39,13,0,1715264809,"~/makefile"
+-'  13  0  ~/makefile
+|4,39,13,0,1715264809,"~/makefile"
+-'  13  0  ~/makefile
+|4,39,13,0,1715264809,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264798,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264798,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264798,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264798,"~/makefile"
+-'  1  0  ~/invaders.c
+|4,39,1,0,1715264354,"~/invaders.c"
+-'  1  0  ~/invaders.c
+|4,39,1,0,1715264354,"~/invaders.c"
+-'  1  0  ~/invaders.c
+|4,39,1,0,1715264354,"~/invaders.c"
+-'  1  0  ~/invaders.c
+|4,39,1,0,1715264354,"~/invaders.c"
+-'  1  0  ~/invaders.c
+|4,39,1,0,1715264354,"~/invaders.c"
+-'  1  0  ~/invaders.c
+|4,39,1,0,1715264354,"~/invaders.c"
+-'  1  0  ~/invaders.c
+|4,39,1,0,1715264354,"~/invaders.c"
+-'  1  0  ~/invaders.c
+|4,39,1,0,1715264354,"~/invaders.c"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264340,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264340,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264340,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264340,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264340,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264340,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264340,"~/makefile"
+-'  1  54  ~/makefile
+|4,39,1,54,1715264340,"~/makefile"
+-'  1  46  ~/makefile
+|4,39,1,46,1715264323,"~/makefile"
+-'  1  46  ~/makefile
+|4,39,1,46,1715264323,"~/makefile"
+-'  1  46  ~/makefile
+|4,39,1,46,1715264323,"~/makefile"
+-'  1  46  ~/makefile
+|4,39,1,46,1715264323,"~/makefile"
+-'  1  46  ~/makefile
+|4,39,1,46,1715264323,"~/makefile"
+-'  1  46  ~/makefile
+|4,39,1,46,1715264323,"~/makefile"
+-'  1  46  ~/makefile
+|4,39,1,46,1715264323,"~/makefile"
+-'  1  46  ~/makefile
+|4,39,1,46,1715264323,"~/makefile"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  545  4  ~/QL-sprites/image.c
+|4,39,545,4,1715263598,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
+-'  123  5  ~/QL-sprites/image.c
+|4,39,123,5,1715263550,"~/QL-sprites/image.c"
 
 # History of marks within files (newest to oldest):
+
+> ~/QL-sprites/image.h
+	*	1715270880	0
+	"	69	1
+	.	69	0
+	+	69	0
+
+> ~/QL-sprites/image.c
+	*	1715270871	0
+	"	545	4
+	^	506	46
+	.	506	45
+	+	186	8
+	+	186	3
+	+	187	3
+	+	188	3
+	+	486	8
+	+	486	2
+	+	487	3
+	+	488	3
+	+	486	2
+	+	487	2
+	+	488	2
+	+	186	2
+	+	187	2
+	+	188	2
+	+	459	67
+	+	480	119
+	+	486	48
+	+	493	26
+	+	498	62
+	+	506	45
+
+> ~/makefile
+	*	1715264809	0
+	"	13	0
+	^	1	55
+	.	1	47
+	+	1	47
 
 > ~/QL-sprites/makefile
 	*	1714638113	0
 	"	1	8
 	.	1	8
 	+	1	8
+
+> ~/invaders.c
+	"	1	0

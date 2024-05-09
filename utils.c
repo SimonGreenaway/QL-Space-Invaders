@@ -4,7 +4,7 @@
 
 unsigned int xPrint(unsigned int chars)
 {
-        return XMIN+((XMAX-XMIN)-6*chars)>>1;
+        return XMIN+(((XMAX-XMIN)-6*chars)>>1);
 }
 
 // Fast /10
