@@ -30,6 +30,7 @@ struct player
 {
 	sprite sprites[SPRITES];
 	unsigned int newDelta,invaderCount,shotCount,score,lives,wave;
+	int nextInvader;
 	int invaderExplosion,invaderExplosionTimer,ufoExplosionTimer;
 
 	unsigned char *bases;
@@ -683,55 +684,58 @@ int bounceInvaders()
 
 int handleInvaders(unsigned int frames)
 {
-	unsigned i;
+	unsigned i,bounceCheck=0;
 	int lastMoved=-1;
+	sprite *s;
 
-	for(i=0;i<SPRITES;i++)
-        {
-		sprite *s=&currentPlayer->sprites[i];
+	do
+	{
+		s=&currentPlayer->sprites[currentPlayer->nextInvader--];
+	}
+	while(!s->active);
 
-		if(s->active)
-		{
-			if(currentPlayer->invaderExplosion==i)
-			{
-				if(currentPlayer->invaderExplosionTimer<frames)
-				{
-					spriteClear(SCREEN,moon,s);
-					s->active=0;
-					s->currentImage=0;
-					currentPlayer->invaderExplosion=-1;
-				}
-			}
-			else if(s->timer.value<=frames)	// Time to move?
-			{
-				// Clear old invader from BG
-				spriteClear(SCREEN,moon,s);
-
-				s->x+=s->dx;				// Move invader
-				s->moves++;
-			        s->currentImage=1-s->currentImage; 	// Animate
-				s->timer.value+=s->timer.delta;		// Set up timer for next movement 
-				spritePlot(SCREEN,s);	// Draw invader
-			}
-
-			if(lastMoved==-1) lastMoved=s->moves;
-			else if(lastMoved!=s->moves) lastMoved=-2;
-		}
+	if((s->x+s->image[s->currentImage]->x>XMAX)||(s->x<XMIN))
+	{
+		puts("Error: invaders have escaped playfield\n");
+		exit(1);
 	}
 
-	if(lastMoved!=-2) // Have all the alive invaders moved?
+	if(currentPlayer->invaderExplosion==i)
 	{
-		for(i=0;i<SPRITES;i++)
+		if(currentPlayer->invaderExplosionTimer<frames)
 		{
-			sprite *s=&currentPlayer->sprites[i];
-		
-			if((s->active)&&((s->x+s->dx<XMIN)||(s->x+s->dx>XMAX-17)))
-			{
-				if(bounceInvaders()) return 1;
-				else break;
-			}
+			spriteClear(SCREEN,moon,s);
+			s->active=0;
+			s->currentImage=0;
+			currentPlayer->invaderExplosion=-1;
 		}
-        }
+	}
+	else // if(s->timer.value<=frames)	// Time to move?
+	{
+		// Clear old invader from BG
+		spriteClear(SCREEN,moon,s);
+
+		s->x+=s->dx;				// Move invader
+		s->moves++;
+	        s->currentImage=1-s->currentImage; 	// Animate
+		s->timer.value+=s->timer.delta;		// Set up timer for next movement 
+		spritePlot(SCREEN,s);	// Draw invader
+
+                if(currentPlayer->nextInvader==-1)
+                {
+                        for(i=0;i<SPRITES;i++)
+                        {
+                                sprite *s=&currentPlayer->sprites[i];
+
+                                if((s->active)&&((s->x+s->dx<XMIN)||(s->x+s->dx>XMAX-17)))
+                                {
+                                        if(bounceInvaders()) break;
+                                }
+                        }
+
+                        currentPlayer->nextInvader=SPRITES-1;
+                }
+	}
 
 	if(frames>=invaderSoundTimer)
 	{
@@ -933,6 +937,7 @@ void setupInvaders(unsigned int frames,unsigned int show)
 	invaderSoundTimer=0;
 
 	currentPlayer->invaderCount=SPRITES;
+	currentPlayer->nextInvader=SPRITES-1;
 	currentPlayer->newDelta=50;
 	currentPlayer->invaderExplosion=-1;
 	currentPlayer->ufoExplosionTimer=0;
@@ -1174,6 +1179,8 @@ int gameLoop()
 	{
 		// Wait for next frame
 
+		while(frames==getFrames()); 
+
 		frames=getFrames();
 
 		// Move the invaders on the BG screen
@@ -1317,6 +1324,7 @@ void mainLoop(int convert)
 		{
 			char s[80];
 			unsigned int frames;
+			unsigned int g;
 
 		        cls(SCREEN);
 
@@ -1369,12 +1377,14 @@ void mainLoop(int convert)
 
 			// Set invader timers
 
+			/*
 			for(i=0;i<SPRITES;i++)
 			{
 			        sprite *s=&currentPlayer->sprites[i];
 
 				if(s->active) s->timer.value=frames+(SPRITES-i);
 			}
+			*/
 
 			invaderSoundTimer=getFrames()+50;
 
@@ -1384,7 +1394,9 @@ void mainLoop(int convert)
 
 			loadBases();
 
-			switch(gameLoop())
+			g=gameLoop();
+
+			switch(g)
 			{
 				case 0: currentPlayer->wave++ ;
 					setupInvaders(getFrames(),0);
