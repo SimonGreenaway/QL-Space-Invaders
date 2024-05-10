@@ -685,7 +685,7 @@ int bounceInvaders()
 //          0 - still going! // 
 ///////////////////////////////
 
-void checkForBounce()
+int checkForBounce()
 {
 	unsigned int i;
 
@@ -695,9 +695,11 @@ void checkForBounce()
 
 		if((s->active)&&((s->x+s->dx<XMIN)||(s->x+s->dx>XMAX-17)))
 		{
-			if(bounceInvaders()) break;
+			return bounceInvaders();
 		}
 	}
+
+	return 0;
 }
 
 int handleInvaders(unsigned int frames)
@@ -721,7 +723,7 @@ int handleInvaders(unsigned int frames)
 		// If alive, we need to move it then check later
 		if(!s->active&&(currentPlayer->nextInvader==-1))
 		{
-			checkForBounce();
+			if(checkForBounce()) return 2;
 			currentPlayer->nextInvader=SPRITES-1;
 		}
 	}
@@ -739,7 +741,7 @@ int handleInvaders(unsigned int frames)
 
         if(currentPlayer->nextInvader==-1) // Invader movement phase complete?
         {
-		checkForBounce();
+		if(checkForBounce()) return 2;
 
                 currentPlayer->nextInvader=SPRITES-1;
         }
@@ -775,6 +777,7 @@ void handleUFO(unsigned int frames)
 			ufo.dx=(ufo.x==XMIN)?2:-2;		//  direction depends on start location
 			ufo.timer.value=0;
 			ufo.timer.delta=1;		// Move every 5 frames
+			ufo.currentImage=0;
 			nextUfoTime=INT_MAX;
                 }
         }
@@ -1372,7 +1375,6 @@ void mainLoop(int convert)
 			player.timer.value=frames+100;
 			playerVisible=0;
 			playerBulletExplosionTimer=0;
-			currentPlayer->invaderCount=SPRITES;
 			currentPlayer->newDelta=50;
 			currentPlayer->ufoExplosionTimer=0;
 			playerBulletExplosionTimer=0;
