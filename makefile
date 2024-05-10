@@ -93,6 +93,7 @@ dist:	convert
 git:	cleaner
 	git add .
 	git commit
+	git push
 
 github:	git
 	git push

@@ -152,8 +152,7 @@ int doHelp()
 	printAt(SCREEN,&font,30,y+=14,"JOHN ENGDAHL, SILVERIO M RS,");
 	printAt(SCREEN,&font,30,y+=14,"ALVARO ALEA, JB, SPKR/SMFS,");
 	printAt(SCREEN,&font,30,y+=14,"STEPHEN USHER, DEREK2210, XORA,");
-	printAt(SCREEN,&font,30,y+=14,"JOBDONE,STEPHEN USHER,");
-	printAt(SCREEN,&font,30,y+=14,"AND MANY OTHERS!");
+	printAt(SCREEN,&font,30,y+=14,"JOBDONE, AND MANY OTHERS!");
 
 	return keysleep(3);
 }
@@ -454,7 +453,7 @@ int handlePlayerBullet(unsigned int frames)
 					ufo.currentImage=1;
 					spritePlot(SCREEN,&ufo);
 	
-					currentPlayer->ufoExplosionTimer=frames+25;
+					currentPlayer->ufoExplosionTimer=frames+5;
 	
 					currentPlayer->score+=ufoScores[ufoScorePointer]*10;
 					printScores();
