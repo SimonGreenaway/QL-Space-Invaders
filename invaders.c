@@ -744,7 +744,7 @@ int handleInvaders(unsigned int frames)
 
 	if(frames>=invaderSoundTimer)
 	{
-		invaderSoundTimer+=max(5,currentPlayer->newDelta);
+		invaderSoundTimer+=max(5,(50*currentPlayer->invaderCount)/SPRITES);
 		
 		if(sound) do_sound(490,176,0,0,0,0,8,0);
 	}
