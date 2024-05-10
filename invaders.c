@@ -1049,7 +1049,7 @@ void initiate(unsigned int convert)
 	char name[80];
 	unsigned int timeout=getFrames()+150,loaded;
 
-	init();
+	init(8);
 
 	spriteSetup(&ufo,"UFO");
 	spriteSetup(&player_bullet,"player bullet");
