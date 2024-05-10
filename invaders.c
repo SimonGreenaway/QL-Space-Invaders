@@ -410,19 +410,13 @@ int handlePlayerBullet(unsigned int frames)
 	        {
 			unsigned int i,hit=0;
 
-			player_bullet.draw=0;
 			spriteClear(SCREEN,moon,&player_bullet,'g');
-			player_bullet.draw=1;
 
 			// Hit detection...
 
 			for(i=0;i<8;i++) // The loop limit defines player bullet speed
 			{
-				unsigned short pk;
-
-				player_bullet.y--;
-
-				pk=peek(SCREEN,player_bullet.y+2,player_bullet.x+3);
+				unsigned short pk=peek(SCREEN,2+player_bullet.y--,player_bullet.x+3);
 
 				// We need to only see white (invaders) and green (shield)
 				if(((pk&0x80C0)==0x80C0) // White bit 3
@@ -490,8 +484,11 @@ int handlePlayerBullet(unsigned int frames)
 
 						if((s->x-1<=player_bullet.x)
 						 &&(s->x+12>=player_bullet.x)
-					  	 &&(s->y<=player_bullet.y)
-						 &&(s->y+8>=player_bullet.y))
+					  	 &&(  ((s->y<=player_bullet.y)
+						        &&(s->y+8>=player_bullet.y))
+                                                    ||((s->y<=player_bullet.y+4)
+                                                        &&(s->y+8>=player_bullet.y))
+						   ))
 						{
 							currentPlayer->newDelta=(50*currentPlayer->invaderCount)/SPRITES;
 	
