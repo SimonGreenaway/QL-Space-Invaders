@@ -1,4 +1,4 @@
-COPTS=-Os -fomit-frame-pointer -std=gnu9x -Wall
+COPTS=-O3 -fomit-frame-pointer -std=gnu9x -Wall
 
 invaders:	invaders.o utils.o QL-sprites/libsprite.a
 	rm -f invaders
